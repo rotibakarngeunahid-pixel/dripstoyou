@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panduan Deploy — DRIP TO YOU Bali</title>
+<style>
+  /* ===== PRINT / PDF ===== */
+  @page {
+    size: A4;
+    margin: 18mm 18mm 20mm 18mm;
+  }
+  @media print {
+    .no-print { display: none !important; }
+    .page-break { page-break-before: always; }
+    body { font-size: 11pt; }
+    .cover { min-height: 80vh; }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f8f6f0;
+    color: #1e2828;
+    line-height: 1.7;
+  }
+
+  /* ===== COVER ===== */
+  .cover {
+    background: linear-gradient(160deg, #0e2b2b 0%, #205251 60%, #29808B 100%);
+    color: white;
+    padding: 80px 60px 60px;
+    min-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+  }
+  .cover-badge {
+    display: inline-block;
+    border: 1.5px solid rgba(255,255,255,0.3);
+    border-radius: 100px;
+    padding: 5px 16px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #8EBFBF;
+    margin-bottom: 28px;
+  }
+  .cover h1 {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .cover h1 em {
+    color: #C9944C;
+    font-style: normal;
+  }
+  .cover-sub {
+    font-size: 16px;
+    color: rgba(255,255,255,0.65);
+    max-width: 520px;
+    margin-bottom: 40px;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 32px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    font-size: 12px;
+    color: rgba(255,255,255,0.5);
+  }
+  .cover-meta strong { color: rgba(255,255,255,0.85); display: block; font-size: 14px; margin-bottom: 2px; }
+
+  /* ===== CONTENT WRAPPER ===== */
+  .content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 40px 60px;
+  }
+
+  /* ===== TOC ===== */
+  .toc {
+    background: white;
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 40px;
+    border: 1px solid #e8e4d9;
+    box-shadow: 0 2px 12px rgba(32,82,81,0.07);
+  }
+  .toc h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #6b7e7e;
+    margin-bottom: 16px;
+  }
+  .toc ol {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 24px;
+  }
+  .toc li {
+    font-size: 13px;
+    color: #1e2828;
+  }
+  .toc li::before {
+    content: attr(data-n) ". ";
+    color: #29808B;
+    font-weight: 700;
+  }
+
+  /* ===== SECTION ===== */
+  .section {
+    margin-bottom: 40px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .step-number {
+    width: 40px;
+    height: 40px;
+    background: #205251;
+    color: white;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #205251;
+  }
+  .section-header .emoji {
+    font-size: 22px;
+  }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: white;
+    border-radius: 14px;
+    padding: 24px 24px;
+    border: 1px solid #e8e4d9;
+    box-shadow: 0 2px 8px rgba(32,82,81,0.05);
+    margin-bottom: 16px;
+  }
+  .card p {
+    font-size: 14px;
+    color: #4a5e5e;
+    margin-bottom: 12px;
+  }
+  .card p:last-child { margin-bottom: 0; }
+
+  /* ===== CODE BLOCKS ===== */
+  .cmd {
+    background: #0e2b2b;
+    color: #8EBFBF;
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    margin: 12px 0;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .cmd .comment { color: #4a7a6e; }
+  .cmd .highlight { color: #C9944C; font-weight: bold; }
+  .cmd .ok { color: #25D366; }
+
+  /* ===== INLINE CODE ===== */
+  code {
+    background: #f0f9f9;
+    color: #205251;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    border: 1px solid #c8e6e6;
+  }
+
+  /* ===== ALERTS ===== */
+  .alert {
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 13px;
+    line-height: 1.7;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .alert-warning { background: #fff8ed; border: 1px solid #fde68a; color: #92400e; }
+  .alert-danger  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+  .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+  .alert-info    { background: #f0f9ff; border: 1px solid #bae6fd; color: #075985; }
+
+  /* ===== NUMBERED SUB-STEPS ===== */
+  .steps {
+    list-style: none;
+    counter-reset: substep;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .steps li {
+    counter-increment: substep;
+    display: flex;
+    gap: 12px;
+    font-size: 13.5px;
+    color: #1e2828;
+  }
+  .steps li::before {
+    content: counter(substep);
+    background: #D6EAEA;
+    color: #205251;
+    width: 24px;
+    height: 24px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 11px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* ===== KV TABLE ===== */
+  .kv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 12px 0;
+  }
+  .kv-table th {
+    background: #f8f6f0;
+    color: #205251;
+    padding: 9px 12px;
+    text-align: left;
+    font-weight: 700;
+    border-bottom: 2px solid #e8e4d9;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .kv-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #f0eeea;
+    vertical-align: top;
+  }
+  .kv-table tr:last-child td { border-bottom: none; }
+  .kv-table .key { font-family: 'Consolas', monospace; color: #29808B; font-weight: 600; }
+  .kv-table .val { font-family: 'Consolas', monospace; color: #C9944C; }
+  .kv-table .desc { color: #6b7e7e; font-size: 12px; }
+
+  /* ===== DIVIDER ===== */
+  hr {
+    border: none;
+    border-top: 1px solid #e8e4d9;
+    margin: 36px 0;
+  }
+
+  /* ===== CHECKLIST ===== */
+  .checklist {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13.5px;
+    color: #1e2828;
+  }
+  .checklist li::before {
+    content: "☐";
+    color: #29808B;
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: -1px;
+  }
+
+  /* ===== PRINT BUTTON ===== */
+  .print-bar {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 999;
+  }
+  .btn-print {
+    background: #205251;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(32,82,81,0.35);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ===== CREDENTIAL BOX ===== */
+  .cred-box {
+    background: linear-gradient(135deg, #0e2b2b, #205251);
+    border-radius: 14px;
+    padding: 24px;
+    color: white;
+    margin: 12px 0;
+  }
+  .cred-box .cred-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 13px;
+  }
+  .cred-box .cred-row:last-child { border-bottom: none; }
+  .cred-box .cred-label { color: rgba(255,255,255,0.55); }
+  .cred-box .cred-val { font-family: 'Consolas', monospace; color: #C9944C; font-weight: 600; }
+
+  /* ===== ANALOGY BOX ===== */
+  .analogy {
+    background: #f0f9f9;
+    border-left: 4px solid #29808B;
+    border-radius: 0 10px 10px 0;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #205251;
+    margin: 10px 0;
+  }
+  .analogy strong { color: #29808B; }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #205251;
+    margin: 18px 0 8px;
+  }
+
+  p { font-size: 14px; color: #4a5e5e; margin-bottom: 10px; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-left: 6px;
+  }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-orange { background: #fff7ed; color: #c2410c; }
+  .badge-blue { background: #eff6ff; color: #1d4ed8; }
+</style>
+</head>
+<body>
+
+<!-- PRINT BUTTON -->
+<div class="print-bar no-print">
+  <button class="btn-print" onclick="window.print()">
+    🖨️ Simpan sebagai PDF
+  </button>
+</div>
+
+<!-- ==============================
+     COVER
+============================== -->
+<div class="cover">
+  <div class="cover-badge">Panduan Implementasi</div>
+  <h1>Deploy Website<br><em>DRIP TO YOU</em> Bali</h1>
+  <p class="cover-sub">
+    Panduan lengkap untuk menghidupkan website IV therapy Anda —
+    ditulis dalam bahasa sederhana agar siapapun bisa mengikutinya.
+  </p>
+  <div class="cover-meta">
+    <div><strong>Dibuat untuk</strong>Tim DRIP TO YOU Bali</div>
+    <div><strong>Waktu Estimasi</strong>2–3 jam (pertama kali)</div>
+    <div><strong>Level Kesulitan</strong>Pemula</div>
+    <div><strong>Versi</strong>1.0 — Juni 2025</div>
+  </div>
+</div>
+
+<!-- ==============================
+     CONTENT
+============================== -->
+<div class="content">
+
+  <!-- PENGANTAR -->
+  <div class="card" style="margin-top: 36px; border-left: 4px solid #C9944C;">
+    <p>
+      <strong>Sebelum mulai —</strong> dokumen ini akan memandu Anda dari awal hingga website
+      DRIP TO YOU Bali live dan bisa diakses di internet. Anda tidak perlu jadi programmer
+      untuk mengikutinya. Setiap perintah sudah disiapkan, tinggal copy-paste.
+    </p>
+    <p>
+      Jika ada langkah yang membingungkan, tandai dan hubungi developer.
+      Jangan ragu untuk bertanya — lebih baik tanya daripada salah klik. 😊
+    </p>
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <h2>Daftar Langkah</h2>
+    <ol>
+      <li data-n="1">Beli Server VPS</li>
+      <li data-n="2">Masuk ke Server</li>
+      <li data-n="3">Install Software</li>
+      <li data-n="4">Upload File Website</li>
+      <li data-n="5">Setup Database</li>
+      <li data-n="6">Isi Konfigurasi (.env)</li>
+      <li data-n="7">Build & Jalankan Website</li>
+      <li data-n="8">Setup Domain & SSL</li>
+      <li data-n="9">Login Admin Pertama</li>
+      <li data-n="10">Checklist Selesai</li>
+    </ol>
+  </div>
+
+  <hr>
+
+  <!-- ==============================
+       STEP 1 — BELI VPS
+  ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-number">1</div>
+      <span class="emoji">🖥️</span>
+      <h2>Beli Server VPS</h2>
+    </div>
+
+    <div class="analogy">
+      <strong>Analoginya:</strong> VPS itu seperti menyewa komputer di tempat lain yang nyala 24 jam.
+      Website Anda "tinggal" di sana dan bisa diakses siapapun dari seluruh dunia.
+    </div>
+
+    <div class="card">
+      <p>Kami merekomendasikan salah satu dari provider berikut (harga terjangkau, kualitas bagus):</p>
+
+      <table class="kv-table">
+        <thead>
+          <tr><th>Provider</th><th>Paket</th><th>Estimasi Harga</th><th>Link</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>DigitalOcean</strong> <span class="badge badge-blue">Rekomendasi</span></td>
+            <td>Droplet Basic — 1 vCPU / 2GB RAM / 50GB</td>
+            <td>$12/bulan (~Rp 190rb)</td>
+            <td style="color:#29808B">digitalocean.com</td>
+          </tr>
+          <tr>
+            <td><strong>Vultr</strong></td>
+            <td>Cloud Compute — 1 vCPU / 2GB RAM</td>
+            <td>$10/bulan (~Rp 160rb)</td>
+            <td style="color:#29808B">vultr.com</td>
+          </tr>
+          <tr>
+            <td><strong>Hostinger VPS</strong></td>
+            <td>VPS 1 — 1 vCPU / 4GB RAM</td>
+            <td>Rp 90rb–150rb/bulan</td>
+            <td style="color:#29808B">hostinger.co.id</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Yang perlu dipilih saat order:</h3>
+      <ul class="steps">
+        <li>Sistem operasi: pilih <strong>Ubuntu 22.04 LTS</strong> (wajib)</li>
+        <li>Lokasi server: pilih <strong>Singapore</strong> (paling dekat dengan Bali)</li>
+        <li>Aktifkan SSH key (atau biarkan pakai password, lebih mudah untuk pemula)</li>
+        <li>Setelah bayar, Anda akan mendapat <strong>IP Address</strong> server (contoh: <code>103.45.67.89</code>) — catat!</li>
+      </ul>
+    </div>
+
+    <div class="alert alert-warning">
+      <span class="alert-icon">💡</span>
+      <span>Setelah server aktif, <strong>arahkan domain Anda ke IP server tersebut</strong> di pengaturan DNS domain Anda.
+      Contoh: buat record <code>A</code> untuk <code>dripstoyou.com</code> → <code>103.45.67.89</code>.
+      Proses ini bisa makan waktu 1–24 jam (propagasi DNS).</span>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==============================
+       STEP 2 — MASUK KE SERVER
+  ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-number">2</div>
+      <span class="emoji">🔐</span>
+      <h2>Masuk ke Server (SSH)</h2>
+    </div>
+
+    <div class="analogy">
+      <strong>Analoginya:</strong> SSH itu seperti "remote desktop" tapi pakai perintah teks.
+      Anda mengetik perintah di komputer Anda, tapi yang dijalankan adalah komputer server di Singapore.
+    </div>
+
+    <div class="card">
+      <h3>Cara masuk dari Windows:</h3>
+      <ul class="steps">
+        <li>Buka aplikasi <strong>Terminal</strong> atau <strong>PowerShell</strong>
+          (tekan tombol Windows, ketik "Terminal", klik Open)</li>
+        <li>Ketik perintah ini, ganti <code>IP_SERVER</code> dengan IP yang Anda dapat dari provider:</li>
+      </ul>
+      <div class="cmd">ssh root@<span class="highlight">IP_SERVER</span>
+<span class="comment"># Contoh:</span>
+ssh root@<span class="highlight">103.45.67.89</span></div>
+      <ul class="steps" style="counter-reset: substep 2;">
+        <li>Ketik <code>yes</code> jika muncul pertanyaan "Are you sure you want to continue connecting?"</li>
+        <li>Masukkan password server (yang dikirim via email dari provider)</li>
+        <li>Jika berhasil, layar akan menampilkan teks seperti <code>root@server:~#</code> — artinya Anda sudah masuk!</li>
+      </ul>
+
+      <h3>Cara masuk dari Mac:</h3>
+      <p>Sama saja — buka <strong>Terminal</strong> (Finder → Applications → Utilities → Terminal),
+      lalu ketik perintah SSH yang sama di atas.</p>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">ℹ️</span>
+      <span>Saat mengetik password di terminal, <strong>tidak akan muncul tanda apapun</strong>
+      (bintang atau titik). Ini normal! Tetap ketik passwordnya, lalu tekan Enter.</span>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ==============================
+       STEP 3 — INSTALL SOFTWARE
+  ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-number">3</div>
+      <span class="emoji">📦</span>
+      <h2>Install Software yang Dibutuhkan</h2>
+    </div>
+
+    <p>Setelah masuk ke server, copy-paste perintah berikut satu per satu.
+    Tunggu sampai selesai sebelum mengetik perintah berikutnya.</p>
+
+    <div class="card">
+      <h3>3a. Update sistem (wajib dilakukan pertama kali)</h3>
+      <div class="cmd">apt update && apt upgrade -y</div>
+      <p style="margin-top:8px; font-size: 12px; color: #6b7e7e;">⏱ Tunggu 2–5 menit hingga selesai.</p>
+    </div>
+
+    <div class="card">
+      <h3>3b. Install Node.js 20 (mesin yang menjalankan website)</h3>
+      <div class="cmd">curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs</div>
+      <p style="margin-top:8px; font-size: 12px; color: #6b7e7e;">Verifikasi berhasil:</p>
+      <div class="cmd">node --version
+<span class="comment"># Harus muncul: v20.x.x</span></div>
+    </div>
+
+    <div class="card">
+      <h3>3c. Install MySQL 8 (database — tempat menyimpan data)</h3>
+      <div class="cmd">apt install -y mysql-server
+mysql_secure_installation</div>
+      <p style="margin-top:8px; font-size: 13px; color: #4a5e5e;">
+        Saat muncul pertanyaan, jawab seperti ini:</p>
+      <table class="kv-table">
+        <thead><tr><th>Pertanyaan</th><th>Jawaban</th></tr></thead>
+        <tbody>
+          <tr><td>Would you like to setup VALIDATE PASSWORD component?</td><td><code>N</code></td></tr>
+          <tr><td>Change the password for root?</td><td><code>Y</code> → masukkan password kuat (catat!)</td></tr>
+          <tr><td>Remove anonymous users?</td><td><code>Y</code></td></tr>
+          <tr><td>Disallow root login remotely?</td><td><code>Y</code></td></tr>
+          <tr><td>Remove test database?</td><td><code>Y</code></td></tr>
+          <tr><td>Reload privilege tables?</td><td><code>Y</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>3d. Install Nginx (pintu masuk website dari internet)</h3>
+      <div class="cmd">apt install -y nginx
+systemctl start nginx
+systemctl enable nginx</div>
+    </div>
+
+    <div class="card">
+      <h3>3e. Install PM2 (menjaga website tetap nyala 24 jam)</h3>
+      <div class="cmd">npm install -g pm2</div>
+    </div>
+
+    <div class="alert alert-success">
+      <span class="alert-icon">✅</span>
+      <span>Semua software sudah terinstall! Sekarang server Anda siap untuk menjalankan website.</span>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==============================
+       STEP 4 — UPLOAD FILE
+  ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-number">4</div>
+      <span class="emoji">📁</span>
+      <h2>Upload File Website ke Server</h2>
+    </div>
+
+    <div class="card">
+      <h3>Opsi A — Menggunakan Git (direkomendasikan jika ada repository)</h3>
+      <p>Jika kode website disimpan di GitHub, ini caranya:</p>
+      <div class="cmd"><span class="comment"># Buat folder untuk website</span>
+mkdir -p /var/www/dripstoyou
+cd /var/www/dripstoyou
+
+<span class="comment"># Clone dari GitHub (ganti URL dengan repo Anda)</span>
+git clone https://github.com/NAMA_AKUN/dripstoyou-bali.git .
+
+<span class="comment"># Install dependencies</span>
+npm install</div>
+    </div>
+
+    <div class="card">
+      <h3>Opsi B — Upload Manual via FileZilla (jika tidak pakai GitHub)</h3>
+      <ul class="steps">
+        <li>Download <strong>FileZilla</strong> (gratis) di <code>filezilla-project.org</code></li>
+        <li>Buka FileZilla → <strong>File → Site Manager → New Site</strong></li>
+        <li>Isi:
+          <ul style="list-style: disc; margin-left: 20px; margin-top: 6px; font-size: 13px; color: #4a5e5e;">
+            <li>Protocol: <strong>SFTP</strong></li>
+            <li>Host: <strong>IP server Anda</strong></li>
+            <li>User: <strong>root</strong></li>
+            <li>Password: <strong>password server Anda</strong></li>
+          </ul>
+        </li>
+        <li>Klik <strong>Connect</strong></li>
+        <li>Di panel kanan (server), navigasi ke folder <code>/var/www/</code>
+            → klik kanan → buat folder baru bernama <code>dripstoyou</code></li>
+        <li>Di panel kiri (komputer Anda), buka folder project DRIP TO YOU</li>
+        <li>Pilih semua file → drag ke panel kanan (server)</li>
+        <li>Tunggu upload selesai (tergantung kecepatan internet, ~5–15 menit)</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ==============================
+       STEP 5 — SETUP DATABASE
+  ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-number">5</div>
+      <span class="emoji">🗄️</span>
+      <h2>Setup Database</h2>
+    </div>
+
+    <div class="analogy">
+      <strong>Analoginya:</strong> Database itu seperti lemari arsip digital.
+      Di sinilah semua data booking, produk, dan admin Anda tersimpan.
+    </div>
+
+    <div class="card">
+      <h3>Buat database baru</h3>
+      <p>Masuk ke MySQL, ganti <code>PASSWORD_ROOT</code> dengan password MySQL yang Anda buat tadi:</p>
+      <div class="cmd">mysql -u root -p</div>
+      <p>Masukkan password, lalu ketik perintah-perintah ini satu per satu
+         (termasuk titik koma di akhir!):</p>
+      <div class="cmd">CREATE DATABASE dripstoyou CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE USER 'drip'@'localhost' IDENTIFIED BY '<span class="highlight">GantiPasswordIni123!</span>';
+
+GRANT ALL PRIVILEGES ON dripstoyou.* TO 'drip'@'localhost';
+
+FLUSH PRIVILEGES;
+
+EXIT;</div>
+
+      <div class="alert alert-warning" style="margin-top: 12px;">
+        <span class="alert-icon">⚠️</span>
+        <span>Ganti <code>GantiPasswordIni123!</code> dengan password kuat pilihan Anda
+        (min. 12 karakter, ada huruf besar, angka, simbol). <strong>Catat password ini!</strong>
+        Anda akan butuhnya di langkah berikutnya.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==============================
+       STEP 6 — FILE .ENV
+  ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-number">6</div>
+      <span class="emoji">⚙️</span>
+      <h2>Isi File Konfigurasi (.env)</h2>
+    </div>
+
+    <div class="analogy">
+      <strong>Analoginya:</strong> File <code>.env</code> itu seperti "kartu pengaturan"
+      untuk website Anda — berisi info penting seperti password database, nomor WhatsApp, dll.
+      File ini <strong>rahasia dan tidak boleh dibagikan</strong>.
+    </div>
+
+    <div class="card">
+      <h3>Buat file .env</h3>
+      <p>Di terminal server, masuk ke folder website dan buat file .env:</p>
+      <div class="cmd">cd /var/www/dripstoyou
+cp .env.example .env
+nano .env</div>
+      <p>Ini akan membuka editor teks di terminal.
+         Anda bisa navigasi dengan tombol panah, dan edit langsung.</p>
+    </div>
+
+    <div class="card">
+      <h3>Isi setiap baris dengan nilai yang benar:</h3>
+
+      <table class="kv-table">
+        <thead>
+          <tr>
+            <th>Nama Variabel</th>
+            <th>Contoh Nilai</th>
+            <th>Penjelasan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="key">DATABASE_URL</td>
+            <td class="val">"mysql://drip:Password123!@localhost:3306/dripstoyou"</td>
+            <td class="desc">Ganti <code>Password123!</code> dengan password DB Anda (langkah 5)</td>
+          </tr>
+          <tr>
+            <td class="key">SESSION_SECRET</td>
+            <td class="val">"(hasil dari perintah di bawah)"</td>
+            <td class="desc">String acak untuk keamanan sesi login admin</td>
+          </tr>
+          <tr>
+            <td class="key">FIELD_ENCRYPTION_KEY</td>
+            <td class="val">"(hasil dari perintah di bawah)"</td>
+            <td class="desc">Kunci enkripsi data pelanggan (no HP, alamat)</td>
+          </tr>
+          <tr>
+            <td class="key">WHATSAPP_NUMBER</td>
+            <td class="val">"6281234567890"</td>
+            <td class="desc">Nomor WA bisnis tanpa + atau spasi, awali 62</td>
+          </tr>
+          <tr>
+            <td class="key">NEXT_PUBLIC_WHATSAPP_NUMBER</td>
+            <td class="val">"6281234567890"</td>
+            <td class="desc">Sama persis dengan WHATSAPP_NUMBER di atas</td>
+          </tr>
+          <tr>
+            <td class="key">NEXT_PUBLIC_APP_URL</td>
+            <td class="val">"https://dripstoyou.com"</td>
+            <td class="desc">Domain website Anda (dengan https://)</td>
+          </tr>
+          <tr>
+            <td class="key">NODE_ENV</td>
+            <td class="val">"production"</td>
+            <td class="desc">Jangan diubah</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top: 16px;">Generate SESSION_SECRET dan FIELD_ENCRYPTION_KEY:</h3>
+      <p>Buka terminal kedua (atau pause nano dengan Ctrl+Z), lalu jalankan:</p>
+      <div class="cmd"><span class="comment"># Generate SESSION_SECRET (min 32 karakter)</span>
+openssl rand -base64 32
+<span class="ok"># Contoh output: xK8mP2nQ9rL4wX7vZ1oE5jY3aH6cB0dF+sW==</span>
+
+<span class="comment"># Generate FIELD_ENCRYPTION_KEY (harus tepat 64 karakter hex)</span>
+openssl rand -hex 32
+<span class="ok"># Contoh output: a3f9b2e1d4c7a0b8e5f2d9c6a1b4e7f0a3f9b2e1d4c7a0b8e5f2d9c6a1b4e7f0</span></div>
+      <p>Copy hasilnya, lalu paste ke file .env.</p>
+
+      <h3 style="margin-top: 16px;">Simpan file .env:</h3>
+      <p>Tekan <strong>Ctrl + X</strong> → ketik <strong>Y</strong> → tekan <strong>Enter</strong></p>
+    </div>
+
+    <div class="alert alert-danger">
+      <span class="alert-icon">🔴</span>
+      <span><strong>SANGAT PENTING:</strong> Jangan pernah membagikan isi file <code>.env</code>
+      ke siapapun — termasuk via chat, email, atau screenshot. File ini berisi kunci rahasia
+      yang menjaga keamanan seluruh data bisnis Anda.</span>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==============================
+       STEP 7 — BUILD & RUN
+  ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-number">7</div>
+      <span class="emoji">🚀</span>
+      <h2>Build dan Jalankan Website</h2>
+    </div>
+
+    <p>Ini bagian di mana website "dikompilasi" dan dihidupkan.
+    Jalankan perintah-perintah berikut secara berurutan dari folder website:</p>
+
+    <div class="card">
+      <h3>7a. Masuk ke folder website</h3>
+      <div class="cmd">cd /var/www/dripstoyou</div>
+    </div>
+
+    <div class="card">
+      <h3>7b. Generate Prisma (siapkan koneksi database)</h3>
+      <div class="cmd">npx prisma generate</div>
+      <p style="font-size: 12px; color: #6b7e7e; margin-top: 6px;">
+        ⏱ Tunggu hingga muncul pesan "✔ Generated Prisma Client"</p>
+    </div>
+
+    <div class="card">
+      <h3>7c. Jalankan migrasi database (buat semua tabel)</h3>
+      <div class="cmd">npx prisma migrate deploy</div>
+      <p style="font-size: 12px; color: #6b7e7e; margin-top: 6px;">
+        ⏱ Tunggu hingga muncul pesan "All migrations have been successfully applied"</p>
+
+      <div class="alert alert-info" style="margin-top: 10px;">
+        <span class="alert-icon">ℹ️</span>
+        <span>Jika muncul error soal database, periksa kembali <code>DATABASE_URL</code>
+        di file .env — pastikan password dan nama database sudah benar.</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>7d. Isi data awal (products, area, admin)</h3>
+      <div class="cmd">npm run db:seed</div>
+      <p style="font-size: 12px; color: #6b7e7e; margin-top: 6px;">
+        ⏱ Tunggu hingga muncul pesan "✅ Seed complete!"</p>
+    </div>
+
+    <div class="card">
+      <h3>7e. Build website (proses terlama, ~5–10 menit)</h3>
+      <div class="cmd">npm run build</div>
+      <p style="font-size: 12px; color: #6b7e7e; margin-top: 6px;">
+        ⏱ Tunggu hingga muncul tabel route dan pesan berhasil. Jangan tutup terminal!</p>
+    </div>
+
+    <div class="card">
+      <h3>7f. Jalankan website dengan PM2</h3>
+      <div class="cmd">pm2 start npm --name "dripstoyou" -- start
+pm2 save
+pm2 startup</div>
+      <p style="margin-top: 8px; font-size: 13px; color: #4a5e5e;">
+        Setelah <code>pm2 startup</code>, akan muncul perintah panjang yang perlu di-copy dan dijalankan.
+        Contohnya seperti ini (jalankan perintah yang muncul, bukan contoh ini):</p>
+      <div class="cmd"><span class="comment"># Contoh perintah yang perlu dijalankan (akan berbeda di server Anda):</span>
+sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u root --hp /root</div>
+
+      <p style="margin-top: 8px; font-size: 13px; color: #4a5e5e;">Cek apakah website sudah berjalan:</p>
+      <div class="cmd">pm2 status
+<span class="comment"># Harus muncul: dripstoyou  | online</span></div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==============================
+       STEP 8 — NGINX & SSL
+  ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-number">8</div>
+      <span class="emoji">🌐</span>
+      <h2>Setup Domain dan SSL (HTTPS)</h2>
+    </div>
+
+    <div class="analogy">
+      <strong>Analoginya:</strong> Nginx itu seperti "resepsionis" yang menerima tamu (pengunjung website)
+      dan mengarahkan mereka ke dalam. SSL adalah gembok yang membuat koneksi aman (lambang 🔒 di browser).
+    </div>
+
+    <div class="card">
+      <h3>8a. Buat file konfigurasi Nginx</h3>
+      <div class="cmd">nano /etc/nginx/sites-available/dripstoyou.com</div>
+      <p>Copy-paste seluruh teks di bawah ini ke editor (ganti
+         <code>dripstoyou.com</code> dengan domain Anda jika berbeda):</p>
+      <div class="cmd">server {
+    listen 80;
+    server_name <span class="highlight">dripstoyou.com</span> <span class="highlight">www.dripstoyou.com</span>;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name <span class="highlight">dripstoyou.com</span> <span class="highlight">www.dripstoyou.com</span>;
+
+    ssl_certificate     /etc/letsencrypt/live/<span class="highlight">dripstoyou.com</span>/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/<span class="highlight">dripstoyou.com</span>/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}</div>
+      <p>Simpan: <strong>Ctrl+X → Y → Enter</strong></p>
+    </div>
+
+    <div class="card">
+      <h3>8b. Aktifkan konfigurasi Nginx</h3>
+      <div class="cmd">ln -s /etc/nginx/sites-available/dripstoyou.com /etc/nginx/sites-enabled/
+nginx -t
+<span class="comment"># Harus muncul: configuration file test is successful</span>
+systemctl reload nginx</div>
+    </div>
+
+    <div class="card">
+      <h3>8c. Install SSL gratis dengan Certbot</h3>
+      <div class="cmd">apt install -y certbot python3-certbot-nginx
+certbot --nginx -d <span class="highlight">dripstoyou.com</span> -d <span class="highlight">www.dripstoyou.com</span></div>
+      <p style="margin-top: 8px; font-size: 13px; color: #4a5e5e;">
+        Saat diminta, masukkan email Anda (untuk notifikasi expiry),
+        setujui Terms of Service (<code>A</code>),
+        pilih tidak untuk berbagi email (<code>N</code>).</p>
+
+      <div class="alert alert-success" style="margin-top: 12px;">
+        <span class="alert-icon">✅</span>
+        <span>Jika berhasil, Certbot akan otomatis update file Nginx dan SSL aktif.
+        Sertifikat SSL <strong>gratis dan auto-renew</strong> setiap 90 hari.</span>
+      </div>
+    </div>
+
+    <div class="alert alert-warning">
+      <span class="alert-icon">⚠️</span>
+      <span>SSL hanya bisa dibuat jika <strong>domain sudah mengarah ke IP server</strong>
+      (propagasi DNS sudah selesai). Jika error, tunggu beberapa jam dan coba lagi.</span>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- ==============================
+       STEP 9 — LOGIN ADMIN
+  ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-number">9</div>
+      <span class="emoji">🔑</span>
+      <h2>Login Admin Pertama Kali</h2>
+    </div>
+
+    <div class="card">
+      <p>Website Anda sekarang sudah live! Buka browser dan akses halaman admin:</p>
+
+      <div class="cred-box">
+        <div class="cred-row">
+          <span class="cred-label">URL Admin</span>
+          <span class="cred-val">https://dripstoyou.com/admin/login</span>
+        </div>
+        <div class="cred-row">
+          <span class="cred-label">Email</span>
+          <span class="cred-val">admin@dripstoyou.com</span>
+        </div>
+        <div class="cred-row">
+          <span class="cred-label">Password Awal</span>
+          <span class="cred-val">AdminDrip2025!</span>
+        </div>
+      </div>
+
+      <div class="alert alert-danger" style="margin-top: 16px;">
+        <span class="alert-icon">🔴</span>
+        <span><strong>WAJIB:</strong> Segera ganti password setelah login pertama!
+        Pergi ke menu Pengaturan → Akun Admin → Ganti Password.
+        Password awal di atas diketahui oleh developer, jadi jangan biarkan.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==============================
+       STEP 10 — CHECKLIST
+  ============================== -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-number">10</div>
+      <span class="emoji">✅</span>
+      <h2>Checklist Setelah Deploy</h2>
+    </div>
+
+    <div class="card">
+      <p>Setelah selesai deploy, centang semua item berikut:</p>
+
+      <h3>Website Publik</h3>
+      <ul class="checklist" style="margin-bottom: 20px;">
+        <li>Homepage terbuka di <code>https://dripstoyou.com</code> tanpa error</li>
+        <li>Halaman Treatments menampilkan 4 produk</li>
+        <li>Form Booking bisa diisi dan tombol submit berfungsi</li>
+        <li>Link WhatsApp di homepage dan booking mengarah ke nomor yang benar</li>
+        <li>Halaman FAQ menampilkan pertanyaan</li>
+        <li>Ikon gembok 🔒 muncul di browser (SSL aktif)</li>
+      </ul>
+
+      <h3>Panel Admin</h3>
+      <ul class="checklist" style="margin-bottom: 20px;">
+        <li>Login admin berhasil di <code>/admin/login</code></li>
+        <li>Dashboard menampilkan statistik booking</li>
+        <li>Menu Produk menampilkan 4 treatment yang sudah diseed</li>
+        <li>Menu Jadwal bisa diedit dan disimpan</li>
+        <li>Pengaturan: nomor WhatsApp sudah benar</li>
+        <li><strong>Password admin sudah diganti dari default!</strong></li>
+      </ul>
+
+      <h3>Keamanan</h3>
+      <ul class="checklist">
+        <li>File <code>.env</code> tidak bisa diakses dari browser
+            (coba buka <code>https://dripstoyou.com/.env</code> → harus 404 atau error)</li>
+        <li>HTTP redirect ke HTTPS (coba buka <code>http://dripstoyou.com</code> → harus redirect)</li>
+        <li>Backup file .env disimpan di tempat aman (bukan di server)</li>
+      </ul>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- TROUBLESHOOTING -->
+  <div class="section">
+    <div class="section-header">
+      <span class="emoji" style="font-size:28px">🔧</span>
+      <h2>Masalah Umum & Solusinya</h2>
+    </div>
+
+    <div class="card">
+      <table class="kv-table">
+        <thead>
+          <tr>
+            <th>Masalah</th>
+            <th>Kemungkinan Penyebab</th>
+            <th>Solusi</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Website tidak bisa dibuka</td>
+            <td>PM2 tidak berjalan / Nginx error</td>
+            <td><code>pm2 status</code> → jika offline, <code>pm2 restart dripstoyou</code></td>
+          </tr>
+          <tr>
+            <td>Error "Can't connect to database"</td>
+            <td>DATABASE_URL salah di .env</td>
+            <td>Cek password dan nama database di <code>.env</code></td>
+          </tr>
+          <tr>
+            <td>SSL tidak aktif / error certbot</td>
+            <td>DNS belum propagasi</td>
+            <td>Tunggu 1–24 jam, lalu coba <code>certbot --nginx</code> lagi</td>
+          </tr>
+          <tr>
+            <td>Booking tidak tersimpan</td>
+            <td>FIELD_ENCRYPTION_KEY tidak diset</td>
+            <td>Pastikan <code>FIELD_ENCRYPTION_KEY</code> ada di .env (64 karakter hex)</td>
+          </tr>
+          <tr>
+            <td>Link WA tidak berfungsi</td>
+            <td>Nomor WA salah format</td>
+            <td>Pastikan format: <code>628xxxxxxxxx</code> tanpa + atau spasi</td>
+          </tr>
+          <tr>
+            <td>Perubahan tidak muncul</td>
+            <td>Perlu rebuild setelah update kode</td>
+            <td><code>npm run build</code> → <code>pm2 restart dripstoyou</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- MAINTENANCE -->
+  <div class="section">
+    <div class="section-header">
+      <span class="emoji" style="font-size:28px">🔄</span>
+      <h2>Update Website (Setelah Perubahan Kode)</h2>
+    </div>
+    <div class="card">
+      <p>Setiap kali ada perubahan kode dari developer, jalankan perintah ini di server:</p>
+      <div class="cmd"><span class="comment"># Masuk ke folder website</span>
+cd /var/www/dripstoyou
+
+<span class="comment"># Ambil kode terbaru dari GitHub</span>
+git pull
+
+<span class="comment"># Install dependencies baru (jika ada)</span>
+npm install
+
+<span class="comment"># Update database (jika ada perubahan struktur)</span>
+npx prisma generate
+npx prisma migrate deploy
+
+<span class="comment"># Build ulang website</span>
+npm run build
+
+<span class="comment"># Restart website</span>
+pm2 restart dripstoyou
+<span class="ok"># Done! Website sudah update.</span></div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="background: linear-gradient(135deg, #0e2b2b, #205251); border-radius: 20px; padding: 36px 32px; color: white; text-align: center; margin-top: 20px;">
+    <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px;">DRIP TO YOU</div>
+    <div style="font-size: 11px; color: #8EBFBF; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 20px;">Mobile IV Therapy · Bali</div>
+    <p style="font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.7; margin: 0;">
+      Dokumen ini bersifat rahasia dan hanya untuk tim internal.<br>
+      Jangan distribusikan ke pihak luar tanpa izin.
+    </p>
+  </div>
+
+</div><!-- /content -->
+
+<script>
+  // Auto-detect and highlight the print button
+  document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+      // Normal browser print — allow it
+    }
+  });
+</script>
+</body>
+</html>
