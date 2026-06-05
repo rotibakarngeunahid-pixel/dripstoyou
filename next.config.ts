@@ -4,6 +4,8 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.pexels.com' },
+      { protocol: 'https', hostname: 'dripstoyou.com' },
+      { protocol: 'http',  hostname: 'dripstoyou.com' },
     ],
   },
 
