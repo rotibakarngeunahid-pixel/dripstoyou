@@ -1,40 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import { adminApiHandler } from '@/lib/auth';
+import { getSession } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
-export const GET = adminApiHandler('content:read', async (req: NextRequest) => {
-  const id = req.nextUrl.pathname.split('/').at(-1)!;
-  try {
-    const page = await prisma.legalPage.findUniqueOrThrow({ where: { id } });
-    return NextResponse.json({ data: page });
-  } catch {
-    return NextResponse.json({ error: 'Halaman tidak ditemukan' }, { status: 404 });
-  }
-});
+function phpUrl(id: string) {
+  return `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/legal.php?id=${encodeURIComponent(id)}`;
+}
 
-const UpdateSchema = z.object({
-  title: z.string().min(1).max(200).optional(),
-  content: z.string().min(1).optional(),
-  isPublished: z.boolean().optional(),
-});
-
-export const PUT = adminApiHandler('content:write', async (req: NextRequest, session) => {
+export async function GET(req: NextRequest) {
+  const session = await getSession();
+  if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const id = req.nextUrl.pathname.split('/').at(-1)!;
-  const body = await req.json();
-  const parsed = UpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Validasi gagal', details: parsed.error.flatten() }, { status: 400 });
-  }
-  try {
-    const page = await prisma.legalPage.update({
-      where: { id },
-      data: { ...parsed.data, updatedByAdminId: session.adminId },
-    });
-    return NextResponse.json({ data: page });
-  } catch {
-    return NextResponse.json({ error: 'Halaman tidak ditemukan' }, { status: 404 });
-  }
-});
+  const phpRes = await fetch(phpUrl(id), {
+    headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
+    cache: 'no-store',
+  });
+  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
+}
+
+export async function PATCH(req: NextRequest) {
+  const session = await getSession();
+  if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const id = req.nextUrl.pathname.split('/').at(-1)!;
+  const phpRes = await fetch(phpUrl(id), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.adminToken ?? ''}` },
+    body: await req.text(),
+    cache: 'no-store',
+  });
+  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
+}
+
+export async function DELETE(req: NextRequest) {
+  const session = await getSession();
+  if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const id = req.nextUrl.pathname.split('/').at(-1)!;
+  const phpRes = await fetch(phpUrl(id), {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
+    cache: 'no-store',
+  });
+  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
+}

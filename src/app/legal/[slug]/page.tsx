@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
-import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,17 +77,7 @@ We may update these Terms and Conditions from time to time. The latest version w
 type LegalData = { title: string; content: string; updatedAt: string };
 
 async function getLegalPage(slug: string): Promise<LegalData | null> {
-  /* 1. Try Prisma */
-  try {
-    const page = await prisma.legalPage.findFirst({ where: { slug, isPublished: true } });
-    if (page) {
-      return { title: page.title, content: page.content, updatedAt: page.updatedAt.toISOString() };
-    }
-  } catch {
-    /* DB unavailable — fall through */
-  }
-
-  /* 2. Try PHP proxy */
+  /* 1. Try PHP API */
   try {
     const phpBase = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (phpBase) {
@@ -103,10 +92,10 @@ async function getLegalPage(slug: string): Promise<LegalData | null> {
       }
     }
   } catch {
-    /* fall through */
+    /* fall through to static */
   }
 
-  /* 3. Static fallback for known pages */
+  /* 2. Static fallback for known pages */
   const staticPage = STATIC_LEGAL[slug];
   if (staticPage) {
     return { ...staticPage, updatedAt: new Date('2026-06-06').toISOString() };

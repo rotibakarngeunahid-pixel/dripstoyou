@@ -1,17 +1,8 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  try {
-    const links = await prisma.socialLink.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: 'asc' }],
-      select: { id: true, platform: true, label: true, normalizedUrl: true },
-    });
-    return NextResponse.json({ data: links });
-  } catch {
-    return NextResponse.json({ data: [] });
-  }
+  const phpRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/social-links.php`, { cache: 'no-store' });
+  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
 }

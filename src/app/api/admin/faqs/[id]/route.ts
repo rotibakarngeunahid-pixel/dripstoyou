@@ -1,39 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import { adminApiHandler } from '@/lib/auth';
+import { getSession } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
-const UpdateSchema = z.object({
-  category: z.string().min(1).max(100).optional(),
-  question: z.string().min(1).max(500).optional(),
-  answer: z.string().min(1).optional(),
-  sortOrder: z.number().int().optional(),
-  isActive: z.boolean().optional(),
-});
+function phpUrl(id: string) {
+  return `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/faqs.php?id=${encodeURIComponent(id)}`;
+}
 
-export const PUT = adminApiHandler('content:write', async (req: NextRequest, _session) => {
+export async function PATCH(req: NextRequest) {
+  const session = await getSession();
+  if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const id = req.nextUrl.pathname.split('/').at(-1)!;
-  const body = await req.json();
-  const parsed = UpdateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Validasi gagal', details: parsed.error.flatten() }, { status: 400 });
-  }
-  try {
-    const faq = await prisma.faq.update({ where: { id }, data: parsed.data });
-    return NextResponse.json({ data: faq });
-  } catch {
-    return NextResponse.json({ error: 'FAQ tidak ditemukan' }, { status: 404 });
-  }
-});
+  const phpRes = await fetch(phpUrl(id), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.adminToken ?? ''}` },
+    body: await req.text(),
+    cache: 'no-store',
+  });
+  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
+}
 
-export const DELETE = adminApiHandler('content:write', async (req: NextRequest) => {
+export async function DELETE(req: NextRequest) {
+  const session = await getSession();
+  if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const id = req.nextUrl.pathname.split('/').at(-1)!;
-  try {
-    await prisma.faq.delete({ where: { id } });
-    return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: 'FAQ tidak ditemukan' }, { status: 404 });
-  }
-});
+  const phpRes = await fetch(phpUrl(id), {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
+    cache: 'no-store',
+  });
+  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
+}

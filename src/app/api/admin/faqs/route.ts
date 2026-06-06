@@ -1,31 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import { adminApiHandler } from '@/lib/auth';
+import { getSession } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
-const CreateSchema = z.object({
-  category: z.string().min(1).max(100).default('General'),
-  question: z.string().min(1).max(500),
-  answer: z.string().min(1),
-  sortOrder: z.number().int().default(0),
-  isActive: z.boolean().default(true),
-});
+const PHP = `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/faqs.php`;
 
-export const GET = adminApiHandler('content:read', async () => {
-  const faqs = await prisma.faq.findMany({
-    orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+export async function GET() {
+  const session = await getSession();
+  if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const phpRes = await fetch(PHP, {
+    headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
+    cache: 'no-store',
   });
-  return NextResponse.json({ data: faqs });
-});
+  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
+}
 
-export const POST = adminApiHandler('content:write', async (req: NextRequest) => {
-  const body = await req.json();
-  const parsed = CreateSchema.safeParse(body);
-  if (!parsed.success) {
-    return NextResponse.json({ error: 'Validasi gagal', details: parsed.error.flatten() }, { status: 400 });
-  }
-  const faq = await prisma.faq.create({ data: parsed.data });
-  return NextResponse.json({ data: faq }, { status: 201 });
-});
+export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const phpRes = await fetch(PHP, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.adminToken ?? ''}` },
+    body: await req.text(),
+    cache: 'no-store',
+  });
+  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
+}

@@ -3,7 +3,6 @@ import ScrollRevealInit from '@/components/public/ScrollRevealInit';
 import HomeContent from '@/components/public/HomeContent';
 import SiteFooter from '@/components/public/SiteFooter';
 import type { HomepageProduct, ServiceAreaData } from '@/components/public/HomeContent';
-import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,20 +42,16 @@ async function getHomepageProducts(): Promise<HomepageProduct[]> {
 }
 
 async function getServiceAreas(): Promise<ServiceAreaData[]> {
+  const phpBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!phpBase) return [];
   try {
-    const areas = await prisma.serviceArea.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-      select: {
-        id: true,
-        name: true,
-        isActive: true,
-        estimatedArrivalMinutes: true,
-        note: true,
-        sortOrder: true,
-      },
+    const res = await fetch(`${phpBase}/areas.php`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(4000),
     });
-    return areas;
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
   } catch {
     return [];
   }

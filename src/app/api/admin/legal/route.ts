@@ -1,13 +1,28 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { adminApiHandler } from '@/lib/auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { getSession } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
-export const GET = adminApiHandler('content:read', async () => {
-  const pages = await prisma.legalPage.findMany({
-    orderBy: { type: 'asc' },
-    select: { id: true, type: true, title: true, slug: true, isPublished: true, updatedAt: true },
+const PHP = `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/legal.php`;
+
+export async function GET() {
+  const session = await getSession();
+  if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const phpRes = await fetch(PHP, {
+    headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
+    cache: 'no-store',
   });
-  return NextResponse.json({ data: pages });
-});
+  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
+}
+
+export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const phpRes = await fetch(PHP, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.adminToken ?? ''}` },
+    body: await req.text(),
+    cache: 'no-store',
+  });
+  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
+}
