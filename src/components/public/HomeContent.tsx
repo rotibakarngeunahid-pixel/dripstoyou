@@ -112,6 +112,7 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
       <HeroSection t={t} waUrl={waUrl} waBookingMsg={waBookingMsg} />
       <BenefitsStrip t={t} />
       <TreatmentsSection t={t} products={displayProducts} />
+      <ExperienceGallerySection />
       <WhyChooseUsSection />
       <HowToBookSection t={t} />
       <ServiceAreasSection t={t} areas={displayAreas} />
@@ -270,6 +271,32 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
             {t.treatments.seeAll}
             {ARROW_SVG}
           </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   EXPERIENCE GALLERY
+───────────────────────────────────────────── */
+function ExperienceGallerySection() {
+  const images = [BRAND.photo2, BRAND.photo3, BRAND.photo4, BRAND.photo5];
+  
+  return (
+    <section className="sec gallery-sec" id="gallery">
+      <div className="sec-inner">
+        <div className="sec-hdr centered reveal">
+          <div className="sec-eyebrow">Premium Experience</div>
+          <h2 className="sec-title">Drips To You <em>Moments</em></h2>
+          <p className="sec-desc">Professional IV therapy delivered directly to your villa, hotel, or home in Bali.</p>
+        </div>
+        <div className="gallery-grid">
+          {images.map((src, i) => (
+            <div key={i} className="gallery-item reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
+              <Image src={src} alt="Drips To You Bali Experience" fill sizes="(max-width: 768px) 50vw, 25vw" className="gallery-img" />
+            </div>
+          ))}
         </div>
       </div>
     </section>
