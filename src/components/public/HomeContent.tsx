@@ -44,7 +44,7 @@ const BRAND = {
 };
 
 const WA_SVG = (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
   </svg>
 );
@@ -127,55 +127,51 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
 function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLanguage>['t']; waUrl: (s: string) => string; waBookingMsg: string }) {
   return (
     <section className="hero" id="hero" aria-label="Hero">
-      <div className="hero-media" aria-hidden="true">
+      {/* Background colour base */}
+      <div className="hero-bg-solid" aria-hidden="true" />
+
+      {/* Photo — right side, portrait orientation */}
+      <div className="hero-photo-wrap" aria-hidden="true">
         <Image
           src={BRAND.photo1}
-          alt=""
+          alt="Tim medis Drips To You Bali"
           fill
           priority
-          sizes="100vw"
+          sizes="(max-width: 1024px) 100vw, 60vw"
           className="hero-photo"
         />
+        {/* Gradient overlay: left-to-right so text side is solid dark */}
+        <div className="hero-photo-fade" />
       </div>
-      <div className="hero-bg" aria-hidden="true" />
-      <div className="hero-glow-1" aria-hidden="true" />
-      <div className="hero-glow-2" aria-hidden="true" />
 
-      <svg className="hero-deco" viewBox="0 0 500 700" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <ellipse cx="380" cy="180" rx="160" ry="220" fill="rgba(142,191,191,0.5)" transform="rotate(15 380 180)" />
-        <ellipse cx="180" cy="500" rx="130" ry="170" fill="rgba(234,212,174,0.4)" transform="rotate(-20 180 500)" />
-        <rect x="200" y="80" width="100" height="160" rx="50" fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.3)" strokeWidth="2" />
-        <rect x="235" y="240" width="30" height="8" rx="4" fill="rgba(255,255,255,0.25)" />
-        <line x1="250" y1="248" x2="250" y2="380" stroke="rgba(255,255,255,0.2)" strokeWidth="3" />
-        <circle cx="250" cy="388" r="18" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.25)" strokeWidth="2" />
-        <rect x="288" y="108" width="24" height="8" rx="4" fill="rgba(255,255,255,0.4)" />
-        <rect x="296" y="100" width="8" height="24" rx="4" fill="rgba(255,255,255,0.4)" />
-        <path d="M60 420 Q150 300 230 380 Q160 440 60 420Z" fill="rgba(142,191,191,0.35)" />
-        <path d="M340 540 Q440 440 480 530 Q440 580 340 540Z" fill="rgba(142,191,191,0.25)" />
-      </svg>
-
+      {/* Text content — left column */}
       <div className="hero-content">
-        <div className="hero-pill">
-          <span className="pill-dot" />
-          {t.hero.pill}
-        </div>
+        {/* Gold divider accent */}
+        <div className="hero-accent-line" aria-hidden="true" />
 
         <h1 className="hero-title">
-          {t.hero.line1}<br />{t.hero.line2}<br />
-          <em>{t.hero.lineEm}</em>
+          {t.hero.line1}<br />
+          {t.hero.line2},<br />
+          <em>{t.hero.lineEm}.</em>
         </h1>
 
         <p className="hero-sub">{t.hero.sub}</p>
 
         <div className="hero-cta">
-          <Link href="/booking" className="btn-wa-hero" prefetch>
-            {t.hero.bookWa}
-          </Link>
-          <a href={waUrl(waBookingMsg)} className="btn-ghost-hero" target="_blank" rel="noopener noreferrer">
+          <a
+            href={waUrl(waBookingMsg)}
+            className="btn-wa-hero"
+            target="_blank"
+            rel="noopener noreferrer"
+            id="hero-cta-wa"
+          >
             {WA_SVG}
+            {t.hero.bookWa}
+          </a>
+          <Link href="/treatments" className="btn-ghost-hero" prefetch id="hero-cta-treatments">
             {t.hero.seeAll}
             {ARROW_SVG}
-          </a>
+          </Link>
         </div>
       </div>
     </section>
@@ -280,29 +276,29 @@ function ExperienceGallerySection({ t }: { t: ReturnType<typeof useLanguage>['t'
 ───────────────────────────────────────────── */
 const WHY_ICONS = [
   (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg key="why-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
       <polyline points="9 22 9 12 15 12 15 22" />
     </svg>
   ),
   (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg key="why-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     </svg>
   ),
   (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg key="why-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
     </svg>
   ),
   (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg key="why-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="8" r="4" />
       <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
     </svg>
   ),
   (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg key="why-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </svg>
   ),
