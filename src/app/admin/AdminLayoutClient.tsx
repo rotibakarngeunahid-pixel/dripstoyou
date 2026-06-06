@@ -9,7 +9,13 @@ const NAV_ITEMS = [
   { href: '/admin/bookings', label: 'Bookings' },
   { href: '/admin/products', label: 'Produk' },
   { href: '/admin/schedule', label: 'Jadwal' },
+  { href: '/admin/faqs', label: 'FAQ' },
+  { href: '/admin/coverage', label: 'Area' },
+  { href: '/admin/social-links', label: 'Social' },
+  { href: '/admin/about', label: 'About' },
+  { href: '/admin/legal', label: 'Legal' },
   { href: '/admin/settings', label: 'Pengaturan' },
+  { href: '/admin/guide', label: 'Panduan' },
 ];
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {

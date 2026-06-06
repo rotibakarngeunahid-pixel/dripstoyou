@@ -1,6 +1,7 @@
 import Header from '@/components/public/Header';
 import ScrollRevealInit from '@/components/public/ScrollRevealInit';
 import HomeContent from '@/components/public/HomeContent';
+import SiteFooter from '@/components/public/SiteFooter';
 import type { HomepageProduct } from '@/components/public/HomeContent';
 
 export const dynamic = 'force-dynamic';
@@ -56,6 +57,7 @@ export default async function HomePage() {
       <Header />
       <ScrollRevealInit />
       <HomeContent waNumber={waNumber} homepageProducts={homepageProducts} />
+      <SiteFooter waNumber={waNumber} />
     </>
   );
 }

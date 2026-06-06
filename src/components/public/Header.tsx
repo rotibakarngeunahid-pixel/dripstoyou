@@ -2,12 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/contexts/language';
+
+function sectionHref(section: string, pathname: string): string {
+  return pathname === '/' ? `#${section}` : `/#${section}`;
+}
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, setLang, t } = useLanguage();
+  const pathname = usePathname();
   const mobileTabIndex = menuOpen ? 0 : -1;
 
   useEffect(() => {
@@ -32,6 +38,8 @@ export default function Header() {
     document.body.style.overflow = next ? 'hidden' : '';
   }
 
+  const isActive = (href: string) => pathname.startsWith(href);
+
   return (
     <>
       <header className={`hdr${scrolled ? ' scrolled' : ''}`} id="hdr">
@@ -43,11 +51,11 @@ export default function Header() {
         </Link>
 
         <nav className="hdr-nav" aria-label="Main navigation">
-          <a href="#treatments">{t.nav.treatments}</a>
-          <a href="#how-to-book">{t.nav.howToBook}</a>
-          <a href="#areas">{t.nav.coverage}</a>
-          <Link href="/about">{t.nav.about}</Link>
-          <Link href="/contact">{t.nav.contact}</Link>
+          <a href={sectionHref('treatments', pathname)}>{t.nav.treatments}</a>
+          <a href={sectionHref('how-to-book', pathname)}>{t.nav.howToBook}</a>
+          <a href={sectionHref('areas', pathname)}>{t.nav.coverage}</a>
+          <Link href="/about" className={isActive('/about') ? 'nav-active' : ''}>{t.nav.about}</Link>
+          <Link href="/contact" className={isActive('/contact') ? 'nav-active' : ''}>{t.nav.contact}</Link>
         </nav>
 
         <div className="hdr-right">
@@ -84,9 +92,9 @@ export default function Header() {
         aria-hidden={!menuOpen}
         aria-label="Mobile navigation"
       >
-        <a href="#treatments" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.treatments}</a>
-        <a href="#how-to-book" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.howToBook}</a>
-        <a href="#areas" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.coverage}</a>
+        <a href={sectionHref('treatments', pathname)} onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.treatments}</a>
+        <a href={sectionHref('how-to-book', pathname)} onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.howToBook}</a>
+        <a href={sectionHref('areas', pathname)} onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.coverage}</a>
         <Link href="/about" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.about}</Link>
         <Link href="/contact" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.contact}</Link>
 

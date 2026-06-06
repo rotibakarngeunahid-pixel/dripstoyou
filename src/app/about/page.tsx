@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import Header from '@/components/public/Header';
+import SiteFooter from '@/components/public/SiteFooter';
 import { waGeneralUrl } from '@/lib/whatsapp';
 
 export const metadata: Metadata = {
@@ -31,18 +33,16 @@ const VALUES = [
 ];
 
 const AREAS = [
-  'Seminyak',
-  'Canggu',
-  'Kuta',
-  'Ubud',
-  'Nusa Dua',
-  'Jimbaran',
-  'Legian',
-  'Sanur',
-  'Denpasar',
-  'Uluwatu',
-  'Petitenget',
-  'Bukit Peninsula',
+  'Seminyak', 'Canggu', 'Kuta', 'Ubud', 'Nusa Dua', 'Jimbaran',
+  'Legian', 'Sanur', 'Denpasar', 'Uluwatu', 'Petitenget', 'Bukit Peninsula',
+];
+
+const PROCESS_STEPS = [
+  { num: '01', title: 'Pilih Treatment', desc: 'Pilih treatment sesuai kebutuhan dari website atau tanyakan via WhatsApp.' },
+  { num: '02', title: 'Isi Form Booking', desc: 'Lengkapi data diri, tanggal, waktu, dan lokasi Anda.' },
+  { num: '03', title: 'Konfirmasi WhatsApp', desc: 'Tim kami menghubungi Anda untuk konfirmasi jadwal dan detail.' },
+  { num: '04', title: 'Tim Datang ke Lokasi', desc: 'Tenaga medis hadir ke lokasi Anda dalam waktu yang disepakati.' },
+  { num: '05', title: 'Treatment Selesai', desc: 'Nikmati treatment dalam kenyamanan tempat Anda. Aman dan profesional.' },
 ];
 
 export default function AboutPage() {
@@ -50,6 +50,7 @@ export default function AboutPage() {
     <>
       <Header />
       <main className="page-shell">
+        {/* Hero */}
         <section className="page-hero centered">
           <div className="page-hero-inner">
             <div className="page-eyebrow">Tentang Kami</div>
@@ -59,10 +60,24 @@ export default function AboutPage() {
             <p className="page-subtitle">
               Drips To You - Bali membantu tamu dan warga Bali mendapatkan IV therapy tanpa meninggalkan kenyamanan tempat menginap.
             </p>
+            <div className="page-actions" style={{ justifyContent: 'center', marginTop: 28 }}>
+              <Link href="/booking" className="button button-gold">
+                Booking Sekarang
+              </Link>
+              <a
+                className="button button-ghost-dark"
+                href={waGeneralUrl('Halo, saya ingin tahu lebih lanjut tentang Drips To You Bali')}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Chat WhatsApp
+              </a>
+            </div>
           </div>
         </section>
 
         <section className="page-section narrow">
+          {/* Mission */}
           <div className="content-card">
             <h2>Misi Kami</h2>
             <p>
@@ -73,6 +88,7 @@ export default function AboutPage() {
             </p>
           </div>
 
+          {/* Values */}
           <div className="responsive-grid" style={{ marginTop: 22 }}>
             {VALUES.map((value) => (
               <article className="surface-card" key={value.title}>
@@ -83,7 +99,44 @@ export default function AboutPage() {
             ))}
           </div>
 
-          <div className="content-card">
+          {/* Process */}
+          <div className="content-card" style={{ marginTop: 22 }}>
+            <h2>Cara Kerja Layanan</h2>
+            <p style={{ marginBottom: 24, color: 'var(--ocean)' }}>Dari booking hingga treatment selesai — mudah dan aman.</p>
+            <div style={{ display: 'grid', gap: 16 }}>
+              {PROCESS_STEPS.map((step) => (
+                <div key={step.num} style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                  <div style={{
+                    minWidth: 40, height: 40, borderRadius: '50%',
+                    background: 'var(--teal)', color: 'white',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontWeight: 700, fontSize: 13, flexShrink: 0,
+                  }}>
+                    {step.num}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, color: 'var(--teal)', marginBottom: 4 }}>{step.title}</div>
+                    <p style={{ margin: 0 }}>{step.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Safety note */}
+          <div className="content-card" style={{ marginTop: 22, background: 'var(--pale-aqua)', border: '1px solid var(--soft-aqua)' }}>
+            <h2 style={{ color: 'var(--teal)' }}>Keamanan & Kenyamanan</h2>
+            <p>
+              Layanan kami dirancang untuk membantu mendukung pemulihan dan hidrasi tubuh. Bukan untuk kondisi darurat medis.
+              Jika Anda mengalami kondisi darurat, segera hubungi layanan gawat darurat setempat.
+            </p>
+            <p style={{ marginTop: 12 }}>
+              Setiap team member kami memiliki lisensi medis aktif. Peralatan sekali pakai dan steril digunakan pada setiap sesi.
+            </p>
+          </div>
+
+          {/* Areas */}
+          <div className="content-card" style={{ marginTop: 22 }}>
             <h2>Area Layanan</h2>
             <p>Kami melayani area wisata dan hunian utama di Bali.</p>
             <div className="tag-row" style={{ marginTop: 18 }}>
@@ -91,15 +144,24 @@ export default function AboutPage() {
                 <span className="soft-tag" key={area}>{area}</span>
               ))}
             </div>
+            <div style={{ marginTop: 16 }}>
+              <Link href="/booking" className="button button-secondary">
+                Cek Ketersediaan Area
+              </Link>
+            </div>
           </div>
 
+          {/* CTA */}
           <div className="page-hero centered" style={{ borderRadius: 'var(--r-card)', marginTop: 24, padding: '42px 24px' }}>
             <div className="page-hero-inner">
-              <h2 className="page-title" style={{ fontSize: '2rem' }}>Hubungi Kami</h2>
+              <h2 className="page-title" style={{ fontSize: '2rem' }}>Siap Mencoba?</h2>
               <p className="page-subtitle">
-                Pertanyaan, konsultasi, atau booking dapat langsung dikirim ke tim kami via WhatsApp.
+                Tim medis kami siap hadir ke lokasi Anda di Bali. Booking sekarang atau konsultasikan kebutuhan Anda.
               </p>
               <div className="page-actions" style={{ justifyContent: 'center' }}>
+                <Link href="/booking" className="button button-gold">
+                  Booking Sekarang
+                </Link>
                 <a className="button button-wa" href={waGeneralUrl()} target="_blank" rel="noopener noreferrer">
                   Chat di WhatsApp
                 </a>
@@ -108,6 +170,7 @@ export default function AboutPage() {
           </div>
         </section>
       </main>
+      <SiteFooter />
     </>
   );
 }

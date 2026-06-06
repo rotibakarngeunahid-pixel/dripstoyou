@@ -1,20 +1,19 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Header from '@/components/public/Header';
+import SiteFooter from '@/components/public/SiteFooter';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
-interface LegalPageData {
-  id: string;
-  type: string;
-  title: string;
-  slug: string;
-  content: string;
-  is_published: boolean;
-  updated_at: string;
-}
+async function getLegalPage(slug: string) {
+  try {
+    const page = await prisma.legalPage.findFirst({ where: { slug, isPublished: true } });
+    if (page) return { title: page.title, content: page.content, updatedAt: page.updatedAt.toISOString() };
+  } catch {
+    // DB not available — fall through to PHP
+  }
 
-async function getLegalPage(slug: string): Promise<LegalPageData | null> {
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/legal.php?slug=${encodeURIComponent(slug)}`,
@@ -22,7 +21,9 @@ async function getLegalPage(slug: string): Promise<LegalPageData | null> {
     );
     if (!res.ok) return null;
     const json = await res.json();
-    return json.data ?? null;
+    const d = json.data;
+    if (!d) return null;
+    return { title: d.title as string, content: d.content as string, updatedAt: d.updated_at as string };
   } catch {
     return null;
   }
@@ -48,7 +49,7 @@ export default async function LegalPageRoute({ params }: { params: Promise<{ slu
           <div className="page-hero-inner">
             <h1 className="page-title">{page.title}</h1>
             <p className="page-subtitle">
-              Terakhir diperbarui: {new Date(page.updated_at).toLocaleDateString('id-ID', {
+              Terakhir diperbarui: {new Date(page.updatedAt).toLocaleDateString('id-ID', {
                 day: '2-digit',
                 month: 'long',
                 year: 'numeric',
@@ -63,6 +64,7 @@ export default async function LegalPageRoute({ params }: { params: Promise<{ slu
           </article>
         </section>
       </main>
+      <SiteFooter />
     </>
   );
 }

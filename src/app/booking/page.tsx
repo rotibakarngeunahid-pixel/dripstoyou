@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/public/Header';
+import SiteFooter from '@/components/public/SiteFooter';
 import { waBookingUrl } from '@/lib/whatsapp';
 
 type ApiResponse<T> = {
@@ -293,6 +294,7 @@ export default function BookingPage() {
             </div>
           </div>
         </main>
+        <SiteFooter />
       </>
     );
   }
@@ -506,6 +508,7 @@ export default function BookingPage() {
           </form>
         </section>
       </main>
+      <SiteFooter />
     </>
   );
 }

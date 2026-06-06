@@ -3,7 +3,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Header from '@/components/public/Header';
-import { waBookingUrl } from '@/lib/whatsapp';
+import SiteFooter from '@/components/public/SiteFooter';
+import { waGeneralUrl } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,6 +68,8 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
   const product = await getProduct(slug);
   if (!product) notFound();
 
+  const waContactUrl = waGeneralUrl(`Halo, saya ingin tanya tentang treatment ${product.name}`);
+
   return (
     <>
       <Header />
@@ -74,7 +77,7 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
         <section className="page-hero">
           <div className="page-hero-inner">
             <Link href="/treatments" className="icon-link" style={{ color: 'var(--soft-aqua)', marginBottom: 22 }}>
-              Semua Treatment
+              ← Semua Treatment
             </Link>
             {product.label && (
               <div>
@@ -96,17 +99,21 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
                   sekitar {product.duration_minutes} menit
                 </span>
               )}
+              {/* PRIMARY: Booking Website — BUKAN langsung WhatsApp */}
+              <Link
+                href={`/booking?treatment=${product.slug}`}
+                className="button button-gold"
+              >
+                Pesan {product.name}
+              </Link>
               <a
-                href={waBookingUrl(product.name, product.price_label ?? undefined)}
+                href={waContactUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="button button-wa"
+                className="button button-ghost-dark"
               >
-                Pesan via WhatsApp
+                Tanya via WhatsApp
               </a>
-              <Link href={`/booking?treatment=${product.slug}`} className="button button-ghost-dark">
-                Booking Website
-              </Link>
             </div>
           </div>
         </section>
@@ -158,28 +165,36 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
             </div>
           )}
 
+          {/* Bottom CTA — booking sebagai satu-satunya pilihan utama */}
           <div className="page-hero centered" style={{ borderRadius: 'var(--r-card)', marginTop: 28, padding: '42px 24px' }}>
             <div className="page-hero-inner">
               <h2 className="page-title" style={{ fontSize: '2rem' }}>
                 Siap mencoba {product.name}?
               </h2>
               <p className="page-subtitle">
-                Tim medis kami siap hadir ke lokasi Anda dalam 30-60 menit setelah jadwal dikonfirmasi.
+                Tim medis kami siap hadir ke lokasi Anda dalam 30–60 menit setelah jadwal dikonfirmasi.
               </p>
               <div className="page-actions" style={{ justifyContent: 'center' }}>
+                <Link
+                  href={`/booking?treatment=${product.slug}`}
+                  className="button button-gold"
+                >
+                  Booking {product.name} Sekarang
+                </Link>
                 <a
-                  href={waBookingUrl(product.name, product.price_label ?? undefined)}
+                  href={waContactUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="button button-wa"
+                  className="button button-ghost-dark"
                 >
-                  Pesan {product.name}
+                  Tanya dulu via WhatsApp
                 </a>
               </div>
             </div>
           </div>
         </section>
       </main>
+      <SiteFooter />
     </>
   );
 }

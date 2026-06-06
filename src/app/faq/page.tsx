@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Header from '@/components/public/Header';
+import SiteFooter from '@/components/public/SiteFooter';
 import { waGeneralUrl } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,8 @@ interface Faq {
 
 async function getFaqs(): Promise<Faq[]> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/faqs.php`, {
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
+    const res = await fetch(`${base}/api/public/faqs`, {
       cache: 'no-store',
       signal: AbortSignal.timeout(5000),
     });
@@ -61,7 +63,7 @@ export default async function FaqPage() {
             </div>
           ) : (
             <div className="empty-state surface-card">
-              FAQ akan segera tersedia.
+              FAQ akan segera tersedia. Silakan hubungi kami via WhatsApp untuk pertanyaan.
             </div>
           )}
 
@@ -81,6 +83,7 @@ export default async function FaqPage() {
           </div>
         </section>
       </main>
+      <SiteFooter />
     </>
   );
 }
