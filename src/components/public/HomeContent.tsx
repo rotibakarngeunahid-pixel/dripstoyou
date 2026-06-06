@@ -314,7 +314,7 @@ function WhyChooseUsSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
         </div>
 
         <div className="why-img-banner reveal" style={{ position: 'relative', width: '100%', aspectRatio: '2/1', maxHeight: '450px', minHeight: '220px', borderRadius: '24px', overflow: 'hidden', marginBottom: '40px', boxShadow: 'var(--shadow-card)' }}>
-          <Image src={BRAND.photo4} alt="Drips To You - Why Choose Us" fill style={{ objectFit: 'cover', objectPosition: 'center 40%' }} sizes="(max-width: 1200px) 100vw, 1200px" />
+          <Image src={BRAND.photo4} alt="Drips To You - Why Choose Us" fill style={{ objectFit: 'cover', objectPosition: 'center' }} sizes="(max-width: 1200px) 100vw, 1200px" />
         </div>
 
         <div className="why-grid">

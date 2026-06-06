@@ -52,14 +52,16 @@ export default function Header() {
     <>
       <header className={`hdr${pathname === '/' ? ' hdr-home' : ''}${scrolled ? ' scrolled' : ''}`} id="hdr">
         <Link href="/" className="hdr-logo" aria-label="Drips To You - Bali — Home">
-          <Image
-            src="https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp"
-            alt=""
-            width={44}
-            height={44}
-            className="hdr-logo-img"
-            preload
-          />
+          <span className="hdr-logo-img-wrap">
+            <Image
+              src="https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp?tr=bg-remove"
+              alt=""
+              width={44}
+              height={44}
+              className="hdr-logo-img"
+              preload
+            />
+          </span>
           <div className="hdr-logo-text">
             Drips To You – Bali
             <small>Mobile IV Therapy</small>
