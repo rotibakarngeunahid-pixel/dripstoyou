@@ -1,0 +1,9 @@
+# Admin API folder — semua endpoint butuh Bearer token
+# Tidak ada direct-browser access yang diperbolehkan tanpa Authorization header
+
+Options -Indexes
+ServerSignature Off
+
+<FilesMatch "\.php$">
+    Header always set X-Content-Type-Options "nosniff"
+</FilesMatch>

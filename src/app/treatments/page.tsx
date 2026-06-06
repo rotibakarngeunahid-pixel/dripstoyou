@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { prisma } from '@/lib/prisma';
 import { waBookingUrl } from '@/lib/whatsapp';
 import Link from 'next/link';
 
@@ -10,15 +9,31 @@ export const metadata: Metadata = {
   description: 'Pilihan treatment IV therapy on-call terbaik di Bali. Hangover Recovery, Immune Booster, Energy Boost, dan Beauty Glow.',
 };
 
+interface Benefit { id: string; benefit_text: string; sort_order: number }
+interface Product {
+  id: string; name: string; slug: string;
+  short_description: string | null; price_amount: number; price_label: string | null;
+  duration_minutes: number | null; image_url: string | null; label: string | null;
+  show_on_homepage: boolean; benefits: Benefit[];
+  faqs: { id: string; question: string; answer: string }[];
+}
+
+async function getProducts(): Promise<Product[]> {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/products.php?include_benefits=1&include_faqs=1`,
+      { cache: 'no-store' },
+    );
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function TreatmentsPage() {
-  const products = await prisma.product.findMany({
-    where: { isActive: true },
-    orderBy: [{ homepageOrder: 'asc' }, { name: 'asc' }],
-    include: {
-      benefits: { orderBy: { sortOrder: 'asc' } },
-      faqs: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
-    },
-  });
+  const products = await getProducts();
 
   return (
     <main style={{ background: '#F3F0E7', minHeight: '100vh' }}>
@@ -35,11 +50,16 @@ export default async function TreatmentsPage() {
 
       {/* Products */}
       <section style={{ maxWidth: 1100, margin: '0 auto', padding: '64px 24px' }}>
+        {products.length === 0 && (
+          <p style={{ textAlign: 'center', color: '#6b7e7e', fontSize: 16 }}>
+            Treatment belum tersedia. Silakan hubungi kami via WhatsApp.
+          </p>
+        )}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 28 }}>
           {products.map((product) => (
             <div key={product.id} style={{ background: 'white', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 24px rgba(32,82,81,0.08)', border: '1px solid rgba(32,82,81,0.08)' }}>
-              {product.imageUrl && (
-                <div style={{ height: 200, background: `url(${product.imageUrl}) center/cover`, position: 'relative' }}>
+              {product.image_url && (
+                <div style={{ height: 200, background: `url(${product.image_url}) center/cover`, position: 'relative' }}>
                   {product.label && (
                     <span style={{ position: 'absolute', top: 12, left: 12, background: '#C9944C', color: 'white', padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase' }}>
                       {product.label}
@@ -53,14 +73,14 @@ export default async function TreatmentsPage() {
                     {product.name}
                   </h2>
                 </div>
-                <p style={{ color: '#6b7e7e', fontSize: 14, lineHeight: 1.6, marginBottom: 16 }}>{product.shortDescription}</p>
+                <p style={{ color: '#6b7e7e', fontSize: 14, lineHeight: 1.6, marginBottom: 16 }}>{product.short_description}</p>
 
-                {product.benefits.length > 0 && (
+                {product.benefits && product.benefits.length > 0 && (
                   <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {product.benefits.map((b) => (
                       <li key={b.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#1e2828' }}>
                         <span style={{ color: '#29808B', marginTop: 2, flexShrink: 0 }}>✓</span>
-                        {b.benefitText}
+                        {b.benefit_text}
                       </li>
                     ))}
                   </ul>
@@ -69,10 +89,10 @@ export default async function TreatmentsPage() {
                 <div style={{ borderTop: '1px solid #f0eeea', paddingTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: 20, fontWeight: 700, color: '#205251', fontFamily: 'Playfair Display, Georgia, serif' }}>
-                      {product.priceLabel ?? `IDR ${product.priceAmount.toLocaleString('id-ID')}`}
+                      {product.price_label ?? `IDR ${product.price_amount.toLocaleString('id-ID')}`}
                     </div>
-                    {product.durationMinutes && (
-                      <div style={{ fontSize: 12, color: '#6b7e7e' }}>± {product.durationMinutes} menit</div>
+                    {product.duration_minutes && (
+                      <div style={{ fontSize: 12, color: '#6b7e7e' }}>± {product.duration_minutes} menit</div>
                     )}
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -80,7 +100,7 @@ export default async function TreatmentsPage() {
                       Detail
                     </Link>
                     <a
-                      href={waBookingUrl(product.name, product.priceLabel ?? undefined)}
+                      href={waBookingUrl(product.name, product.price_label ?? undefined)}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ padding: '8px 16px', background: '#25D366', color: 'white', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5 }}

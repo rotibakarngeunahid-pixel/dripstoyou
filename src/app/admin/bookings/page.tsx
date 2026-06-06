@@ -1,49 +1,59 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { prisma } from '@/lib/prisma';
-import { decrypt } from '@/lib/encryption';
-import { BookingStatus } from '@prisma/client';
+
+type BookingStatus = 'BARU' | 'KONFIRMASI' | 'DIPROSES' | 'SELESAI' | 'DIBATALKAN';
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
-  BARU:        'Baru',
-  KONFIRMASI:  'Konfirmasi',
-  DIPROSES:    'Diproses',
-  SELESAI:     'Selesai',
-  DIBATALKAN:  'Dibatalkan',
+  BARU:       'Baru',
+  KONFIRMASI: 'Konfirmasi',
+  DIPROSES:   'Diproses',
+  SELESAI:    'Selesai',
+  DIBATALKAN: 'Dibatalkan',
 };
 
 const STATUS_COLORS: Record<BookingStatus, string> = {
-  BARU:        '#C9944C',
-  KONFIRMASI:  '#29808B',
-  DIPROSES:    '#8EBFBF',
-  SELESAI:     '#25D366',
-  DIBATALKAN:  '#ef4444',
+  BARU:       '#C9944C',
+  KONFIRMASI: '#29808B',
+  DIPROSES:   '#8EBFBF',
+  SELESAI:    '#25D366',
+  DIBATALKAN: '#ef4444',
 };
+
+interface Booking {
+  id: string;
+  booking_code: string;
+  customer_name: string;
+  customer_phone_last4: string;
+  booking_date: string;
+  booking_time: string;
+  people_count: number;
+  location_type: string;
+  status: BookingStatus;
+  source: string;
+  created_at: string;
+  product_name: string;
+  service_area_name: string | null;
+}
+
+async function getBookings(token: string): Promise<Booking[]> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bookings.php?limit=100`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
 
 export default async function BookingsPage() {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
 
-  const bookings = await prisma.booking.findMany({
-    orderBy: { createdAt: 'desc' },
-    take: 100,
-    select: {
-      id: true,
-      bookingCode: true,
-      customerName: true,
-      customerPhoneEncrypted: true,
-      customerPhoneLast4: true,
-      bookingDate: true,
-      bookingTime: true,
-      peopleCount: true,
-      locationType: true,
-      status: true,
-      source: true,
-      createdAt: true,
-      product: { select: { name: true } },
-      serviceArea: { select: { name: true } },
-    },
-  });
+  const bookings = await getBookings(session.adminToken);
 
   return (
     <div style={{ padding: '32px 24px', maxWidth: 1400, margin: '0 auto' }}>
@@ -66,27 +76,26 @@ export default async function BookingsPage() {
             </thead>
             <tbody>
               {bookings.map((b) => {
-                let phone = `···${b.customerPhoneLast4}`;
-                try { phone = decrypt(b.customerPhoneEncrypted); } catch {}
+                const statusColor = STATUS_COLORS[b.status] ?? '#999';
                 return (
                   <tr key={b.id} style={{ borderBottom: '1px solid #f0eeea' }}>
-                    <td style={{ padding: '10px 14px', fontWeight: 600, color: '#205251', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{b.bookingCode}</td>
-                    <td style={{ padding: '10px 14px', color: '#1e2828', whiteSpace: 'nowrap' }}>{b.customerName}</td>
-                    <td style={{ padding: '10px 14px', color: '#6b7e7e', fontFamily: 'monospace' }}>{phone}</td>
-                    <td style={{ padding: '10px 14px', color: '#1e2828', whiteSpace: 'nowrap' }}>{b.product.name}</td>
+                    <td style={{ padding: '10px 14px', fontWeight: 600, color: '#205251', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{b.booking_code}</td>
+                    <td style={{ padding: '10px 14px', color: '#1e2828', whiteSpace: 'nowrap' }}>{b.customer_name}</td>
+                    <td style={{ padding: '10px 14px', color: '#6b7e7e', fontFamily: 'monospace' }}>···{b.customer_phone_last4}</td>
+                    <td style={{ padding: '10px 14px', color: '#1e2828', whiteSpace: 'nowrap' }}>{b.product_name}</td>
                     <td style={{ padding: '10px 14px', color: '#6b7e7e', whiteSpace: 'nowrap' }}>
-                      {new Date(b.bookingDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {new Date(b.booking_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </td>
-                    <td style={{ padding: '10px 14px', color: '#6b7e7e' }}>{b.bookingTime}</td>
-                    <td style={{ padding: '10px 14px', color: '#6b7e7e', textAlign: 'center' }}>{b.peopleCount}</td>
-                    <td style={{ padding: '10px 14px', color: '#6b7e7e', whiteSpace: 'nowrap' }}>{b.serviceArea?.name ?? b.locationType}</td>
+                    <td style={{ padding: '10px 14px', color: '#6b7e7e' }}>{b.booking_time}</td>
+                    <td style={{ padding: '10px 14px', color: '#6b7e7e', textAlign: 'center' }}>{b.people_count}</td>
+                    <td style={{ padding: '10px 14px', color: '#6b7e7e', whiteSpace: 'nowrap' }}>{b.service_area_name ?? b.location_type}</td>
                     <td style={{ padding: '10px 14px' }}>
-                      <span style={{ background: STATUS_COLORS[b.status] + '22', color: STATUS_COLORS[b.status], padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, border: `1px solid ${STATUS_COLORS[b.status]}44`, whiteSpace: 'nowrap' }}>
-                        {STATUS_LABELS[b.status]}
+                      <span style={{ background: statusColor + '22', color: statusColor, padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, border: `1px solid ${statusColor}44`, whiteSpace: 'nowrap' }}>
+                        {STATUS_LABELS[b.status] ?? b.status}
                       </span>
                     </td>
                     <td style={{ padding: '10px 14px', color: '#6b7e7e', whiteSpace: 'nowrap', fontSize: 11 }}>
-                      {new Date(b.createdAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+                      {new Date(b.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
                     </td>
                   </tr>
                 );

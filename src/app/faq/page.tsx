@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { prisma } from '@/lib/prisma';
 import { waGeneralUrl } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic';
@@ -9,11 +8,21 @@ export const metadata: Metadata = {
   description: 'Jawaban atas pertanyaan umum seputar layanan IV therapy on-call DRIP TO YOU Bali.',
 };
 
+interface Faq { id: string; question: string; answer: string }
+
+async function getFaqs(): Promise<Faq[]> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/faqs.php`, { cache: 'no-store' });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
+
 export default async function FaqPage() {
-  const faqs = await prisma.faq.findMany({
-    where: { isActive: true },
-    orderBy: { sortOrder: 'asc' },
-  });
+  const faqs = await getFaqs();
 
   return (
     <main style={{ background: '#F3F0E7', minHeight: '100vh' }}>
@@ -48,7 +57,6 @@ export default async function FaqPage() {
           </div>
         )}
 
-        {/* Still have questions */}
         <div style={{ background: 'white', borderRadius: 20, padding: '32px 28px', marginTop: 40, textAlign: 'center', boxShadow: '0 4px 24px rgba(32,82,81,0.08)', border: '1px solid rgba(32,82,81,0.08)' }}>
           <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 20, fontWeight: 700, color: '#205251', marginBottom: 8 }}>
             Masih ada pertanyaan?

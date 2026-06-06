@@ -1,19 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
-import { auditLog } from '@/lib/audit';
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   const session = await getSession();
-  const adminId = session.adminId;
-  session.destroy();
+  const token   = session.adminToken;
 
-  if (adminId) {
-    await auditLog({
-      action: 'LOGOUT',
-      actorAdminId: adminId,
-      ip: req.headers.get('x-forwarded-for') ?? undefined,
-    });
+  // Revoke token on PHP side (best-effort, don't fail if PHP is down)
+  if (token) {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/logout.php`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    } catch { /* ignore */ }
   }
 
+  session.destroy();
   return NextResponse.json({ success: true });
 }

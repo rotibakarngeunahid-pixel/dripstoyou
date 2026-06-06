@@ -1,30 +1,47 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
 import { waBookingUrl } from '@/lib/whatsapp';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
+interface Benefit { id: string; benefit_text: string }
+interface Faq { id: string; question: string; answer: string }
+interface Product {
+  id: string; name: string; slug: string;
+  short_description: string | null; full_description: string | null;
+  price_amount: number; price_label: string | null;
+  duration_minutes: number | null; image_url: string | null; label: string | null;
+  benefits: Benefit[]; faqs: Faq[];
+}
+
+async function getProduct(slug: string): Promise<Product | null> {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/products.php?slug=${encodeURIComponent(slug)}&include_benefits=1&include_faqs=1`,
+      { cache: 'no-store' },
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({ where: { slug }, select: { name: true, shortDescription: true } });
+  const product  = await getProduct(slug);
   if (!product) return { title: 'Not Found' };
   return {
-    title: `${product.name} — DRIP TO YOU Bali`,
-    description: product.shortDescription ?? undefined,
+    title:       `${product.name} — DRIP TO YOU Bali`,
+    description: product.short_description ?? undefined,
   };
 }
 
 export default async function TreatmentDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await prisma.product.findUnique({
-    where: { slug, isActive: true },
-    include: {
-      benefits: { orderBy: { sortOrder: 'asc' } },
-      faqs: { where: { isActive: true }, orderBy: { sortOrder: 'asc' } },
-    },
-  });
+  const product  = await getProduct(slug);
   if (!product) notFound();
 
   return (
@@ -44,17 +61,17 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
             {product.name}
           </h1>
           <p style={{ color: 'rgba(255,255,255,.75)', fontSize: 16, lineHeight: 1.7, maxWidth: 600, marginBottom: 32 }}>
-            {product.shortDescription}
+            {product.short_description}
           </p>
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
             <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 28, fontWeight: 700, color: '#C9944C' }}>
-              {product.priceLabel ?? `IDR ${product.priceAmount.toLocaleString('id-ID')}`}
+              {product.price_label ?? `IDR ${product.price_amount.toLocaleString('id-ID')}`}
             </span>
-            {product.durationMinutes && (
-              <span style={{ color: 'rgba(255,255,255,.5)', fontSize: 14 }}>± {product.durationMinutes} menit</span>
+            {product.duration_minutes && (
+              <span style={{ color: 'rgba(255,255,255,.5)', fontSize: 14 }}>± {product.duration_minutes} menit</span>
             )}
             <a
-              href={waBookingUrl(product.name, product.priceLabel ?? undefined)}
+              href={waBookingUrl(product.name, product.price_label ?? undefined)}
               target="_blank"
               rel="noopener noreferrer"
               style={{ padding: '12px 28px', background: '#25D366', color: 'white', borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}
@@ -67,34 +84,30 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
       </section>
 
       <section style={{ maxWidth: 800, margin: '0 auto', padding: '56px 24px' }}>
-        {/* Content grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: product.fullDescription ? '1fr 1fr' : '1fr', gap: 32, marginBottom: 48 }}>
-          {/* Benefits */}
-          {product.benefits.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: product.full_description ? '1fr 1fr' : '1fr', gap: 32, marginBottom: 48 }}>
+          {product.benefits && product.benefits.length > 0 && (
             <div style={{ background: 'white', borderRadius: 20, padding: 32, boxShadow: '0 4px 24px rgba(32,82,81,0.08)' }}>
               <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 20, fontWeight: 700, color: '#205251', marginBottom: 20 }}>Kandungan & Manfaat</h2>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {product.benefits.map((b) => (
                   <li key={b.id} style={{ display: 'flex', gap: 12, fontSize: 14, color: '#1e2828', lineHeight: 1.5 }}>
                     <span style={{ width: 20, height: 20, background: '#29808B', color: 'white', borderRadius: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 1 }}>✓</span>
-                    {b.benefitText}
+                    {b.benefit_text}
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          {/* Full Description */}
-          {product.fullDescription && (
+          {product.full_description && (
             <div style={{ background: 'white', borderRadius: 20, padding: 32, boxShadow: '0 4px 24px rgba(32,82,81,0.08)' }}>
               <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 20, fontWeight: 700, color: '#205251', marginBottom: 16 }}>Tentang Treatment Ini</h2>
-              <div style={{ color: '#4a5e5e', fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{product.fullDescription}</div>
+              <div style={{ color: '#4a5e5e', fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{product.full_description}</div>
             </div>
           )}
         </div>
 
-        {/* FAQs */}
-        {product.faqs.length > 0 && (
+        {product.faqs && product.faqs.length > 0 && (
           <div style={{ background: 'white', borderRadius: 20, padding: 32, boxShadow: '0 4px 24px rgba(32,82,81,0.08)', marginBottom: 48 }}>
             <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 20, fontWeight: 700, color: '#205251', marginBottom: 24 }}>FAQ</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -108,7 +121,6 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
           </div>
         )}
 
-        {/* CTA */}
         <div style={{ background: 'linear-gradient(135deg, #0e2b2b 0%, #205251 100%)', borderRadius: 24, padding: '40px 32px', textAlign: 'center' }}>
           <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 24, fontWeight: 700, color: 'white', marginBottom: 12 }}>
             Siap mencoba {product.name}?
@@ -117,7 +129,7 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
             Tim medis kami siap hadir ke lokasi Anda dalam 30-60 menit.
           </p>
           <a
-            href={waBookingUrl(product.name, product.priceLabel ?? undefined)}
+            href={waBookingUrl(product.name, product.price_label ?? undefined)}
             target="_blank"
             rel="noopener noreferrer"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 10, padding: '14px 32px', background: '#25D366', color: 'white', borderRadius: 12, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}

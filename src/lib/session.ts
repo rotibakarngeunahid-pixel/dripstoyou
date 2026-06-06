@@ -1,12 +1,14 @@
 import { getIronSession, SessionOptions } from 'iron-session';
 import { cookies } from 'next/headers';
-import { AdminRole } from '@prisma/client';
+
+export type AdminRole = 'SUPER_ADMIN' | 'ADMIN_OPERASIONAL' | 'CONTENT_ADMIN';
 
 export interface SessionData {
   adminId: string;
   email: string;
   role: AdminRole;
   name: string;
+  adminToken: string;  // Bearer token for PHP API auth
 }
 
 const SESSION_OPTIONS: SessionOptions = {

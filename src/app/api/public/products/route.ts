@@ -1,28 +1,12 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
-  const products = await prisma.product.findMany({
-    where: { isActive: true },
-    orderBy: [{ homepageOrder: 'asc' }, { createdAt: 'asc' }],
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      shortDescription: true,
-      priceAmount: true,
-      priceLabel: true,
-      durationMinutes: true,
-      imageUrl: true,
-      label: true,
-      showOnHomepage: true,
-      homepageOrder: true,
-      category: { select: { name: true, slug: true } },
-      benefits: { select: { benefitText: true, sortOrder: true }, orderBy: { sortOrder: 'asc' } },
-    },
-  });
-
-  return NextResponse.json({ products });
+export async function GET(req: NextRequest) {
+  const api     = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const qs      = req.nextUrl.searchParams.toString();
+  const url     = `${api}/products.php${qs ? `?${qs}` : ''}`;
+  const phpRes  = await fetch(url, { cache: 'no-store' });
+  const data    = await phpRes.json();
+  return NextResponse.json(data, { status: phpRes.status });
 }

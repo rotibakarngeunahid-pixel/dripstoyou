@@ -1,19 +1,34 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
+
+interface Product {
+  id: string; name: string; slug: string;
+  short_description: string | null; price_amount: number; price_label: string | null;
+  duration_minutes: number | null; label: string | null;
+  is_active: boolean; show_on_homepage: boolean; homepage_order: number;
+  category_name: string | null; booking_count: number;
+}
+
+async function getProducts(token: string): Promise<Product[]> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/products.php`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store',
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  } catch {
+    return [];
+  }
+}
 
 export default async function ProductsPage() {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
 
-  const products = await prisma.product.findMany({
-    orderBy: [{ homepageOrder: 'asc' }, { createdAt: 'desc' }],
-    include: {
-      category: { select: { name: true } },
-      _count: { select: { bookings: true } },
-    },
-  });
+  const products = await getProducts(session.adminToken);
 
   return (
     <div style={{ padding: '32px 24px', maxWidth: 1200, margin: '0 auto' }}>
@@ -39,16 +54,16 @@ export default async function ProductsPage() {
                 {p.label && (
                   <span style={{ background: '#C9944C22', color: '#C9944C', padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600, border: '1px solid #C9944C44' }}>{p.label}</span>
                 )}
-                <span style={{ background: p.isActive ? '#25D36622' : '#ef444422', color: p.isActive ? '#25D366' : '#ef4444', padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600 }}>
-                  {p.isActive ? 'Aktif' : 'Non-aktif'}
+                <span style={{ background: p.is_active ? '#25D36622' : '#ef444422', color: p.is_active ? '#25D366' : '#ef4444', padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 600 }}>
+                  {p.is_active ? 'Aktif' : 'Non-aktif'}
                 </span>
               </div>
-              <p style={{ color: '#6b7e7e', fontSize: 13, margin: '0 0 6px' }}>{p.shortDescription}</p>
+              <p style={{ color: '#6b7e7e', fontSize: 13, margin: '0 0 6px' }}>{p.short_description}</p>
               <div style={{ display: 'flex', gap: 16, fontSize: 12, color: '#6b7e7e' }}>
-                <span>{p.priceLabel ?? `IDR ${p.priceAmount.toLocaleString('id-ID')}`}</span>
-                {p.durationMinutes && <span>{p.durationMinutes} menit</span>}
-                <span>{p._count.bookings} booking</span>
-                {p.showOnHomepage && <span style={{ color: '#29808B' }}>Homepage #{p.homepageOrder}</span>}
+                <span>{p.price_label ?? `IDR ${p.price_amount.toLocaleString('id-ID')}`}</span>
+                {p.duration_minutes && <span>{p.duration_minutes} menit</span>}
+                <span>{p.booking_count} booking</span>
+                {p.show_on_homepage && <span style={{ color: '#29808B' }}>Homepage #{p.homepage_order}</span>}
               </div>
             </div>
             <Link

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, requireSession, SessionData } from './session';
-import { AdminRole } from '@prisma/client';
+import { requireSession, SessionData, AdminRole } from './session';
 
 const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
   SUPER_ADMIN:       ['*'],

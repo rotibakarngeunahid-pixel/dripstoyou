@@ -1,21 +1,37 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
+interface LegalPageData {
+  id: string; type: string; title: string; slug: string;
+  content: string; is_published: boolean; updated_at: string;
+}
+
+async function getLegalPage(slug: string): Promise<LegalPageData | null> {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/legal.php?slug=${encodeURIComponent(slug)}`,
+      { cache: 'no-store' },
+    );
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const page = await prisma.legalPage.findUnique({ where: { slug }, select: { title: true } });
+  const page     = await getLegalPage(slug);
   if (!page) return { title: 'Not Found' };
   return { title: `${page.title} — DRIP TO YOU Bali`, robots: 'noindex' };
 }
 
-export default async function LegalPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function LegalPageRoute({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const page = await prisma.legalPage.findUnique({
-    where: { slug, isPublished: true },
-  });
+  const page     = await getLegalPage(slug);
   if (!page) notFound();
 
   return (
@@ -25,7 +41,7 @@ export default async function LegalPage({ params }: { params: Promise<{ slug: st
           {page.title}
         </h1>
         <p style={{ color: 'rgba(255,255,255,.5)', fontSize: 12, marginTop: 12 }}>
-          Terakhir diperbarui: {page.updatedAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
+          Terakhir diperbarui: {new Date(page.updated_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}
         </p>
       </section>
 

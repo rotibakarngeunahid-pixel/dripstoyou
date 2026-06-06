@@ -7,38 +7,38 @@ type Product = {
   id?: string;
   name?: string;
   slug?: string;
-  shortDescription?: string | null;
-  fullDescription?: string | null;
-  priceAmount?: number;
-  priceLabel?: string | null;
-  durationMinutes?: number | null;
-  imageUrl?: string | null;
+  short_description?: string | null;
+  full_description?: string | null;
+  price_amount?: number;
+  price_label?: string | null;
+  duration_minutes?: number | null;
+  image_url?: string | null;
   label?: string | null;
-  isActive?: boolean;
-  showOnHomepage?: boolean;
-  homepageOrder?: number;
-  benefits?: { benefitText: string }[];
+  is_active?: boolean;
+  show_on_homepage?: boolean;
+  homepage_order?: number;
+  benefits?: { benefit_text: string }[];
 };
 
 export function ProductForm({ product }: { product?: Product }) {
   const router = useRouter();
   const isEdit = !!product?.id;
 
-  const [name, setName] = useState(product?.name ?? '');
-  const [slug, setSlug] = useState(product?.slug ?? '');
-  const [shortDesc, setShortDesc] = useState(product?.shortDescription ?? '');
-  const [fullDesc, setFullDesc] = useState(product?.fullDescription ?? '');
-  const [price, setPrice] = useState(String(product?.priceAmount ?? ''));
-  const [priceLabel, setPriceLabel] = useState(product?.priceLabel ?? '');
-  const [duration, setDuration] = useState(String(product?.durationMinutes ?? '45'));
-  const [imageUrl, setImageUrl] = useState(product?.imageUrl ?? '');
-  const [label, setLabel] = useState(product?.label ?? '');
-  const [isActive, setIsActive] = useState(product?.isActive ?? true);
-  const [showOnHomepage, setShowOnHomepage] = useState(product?.showOnHomepage ?? false);
-  const [homepageOrder, setHomepageOrder] = useState(String(product?.homepageOrder ?? '0'));
-  const [benefits, setBenefits] = useState<string[]>(product?.benefits?.map((b) => b.benefitText) ?? ['']);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [name, setName]                 = useState(product?.name ?? '');
+  const [slug, setSlug]                 = useState(product?.slug ?? '');
+  const [shortDesc, setShortDesc]       = useState(product?.short_description ?? '');
+  const [fullDesc, setFullDesc]         = useState(product?.full_description ?? '');
+  const [price, setPrice]               = useState(String(product?.price_amount ?? ''));
+  const [priceLabel, setPriceLabel]     = useState(product?.price_label ?? '');
+  const [duration, setDuration]         = useState(String(product?.duration_minutes ?? '45'));
+  const [imageUrl, setImageUrl]         = useState(product?.image_url ?? '');
+  const [label, setLabel]               = useState(product?.label ?? '');
+  const [isActive, setIsActive]         = useState(product?.is_active ?? true);
+  const [showOnHomepage, setShowOnHomepage] = useState(product?.show_on_homepage ?? false);
+  const [homepageOrder, setHomepageOrder]   = useState(String(product?.homepage_order ?? '0'));
+  const [benefits, setBenefits]         = useState<string[]>(product?.benefits?.map((b) => b.benefit_text) ?? ['']);
+  const [saving, setSaving]             = useState(false);
+  const [error, setError]               = useState('');
 
   function slugify(s: string) {
     return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -52,28 +52,24 @@ export function ProductForm({ product }: { product?: Product }) {
     const payload = {
       name,
       slug,
-      shortDescription: shortDesc,
-      fullDescription: fullDesc,
-      priceAmount: parseInt(price, 10),
-      priceLabel,
-      durationMinutes: parseInt(duration, 10),
-      imageUrl: imageUrl || undefined,
-      label: label || undefined,
-      isActive,
-      showOnHomepage,
-      homepageOrder: parseInt(homepageOrder, 10),
+      short_description: shortDesc,
+      full_description: fullDesc,
+      price_amount: parseInt(price, 10),
+      price_label: priceLabel,
+      duration_minutes: parseInt(duration, 10),
+      image_url: imageUrl || null,
+      label: label || null,
+      is_active: isActive,
+      show_on_homepage: showOnHomepage,
+      homepage_order: parseInt(homepageOrder, 10),
       benefits: benefits.filter((b) => b.trim()),
     };
 
-    const url = isEdit ? `/api/admin/products/${product!.id}` : '/api/admin/products';
+    const url    = isEdit ? `/api/admin/products/${product!.id}` : '/api/admin/products';
     const method = isEdit ? 'PATCH' : 'POST';
 
     try {
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? 'Gagal menyimpan'); return; }
       router.push('/admin/products');
@@ -101,8 +97,8 @@ export function ProductForm({ product }: { product?: Product }) {
     }
   }
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 12px', border: '1px solid #DBDAD7', borderRadius: 8, fontSize: 13, boxSizing: 'border-box', outline: 'none' };
-  const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12, color: '#6b7e7e', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 };
+  const inputStyle: React.CSSProperties  = { width: '100%', padding: '10px 12px', border: '1px solid #DBDAD7', borderRadius: 8, fontSize: 13, boxSizing: 'border-box', outline: 'none' };
+  const labelStyle: React.CSSProperties  = { display: 'block', fontSize: 12, color: '#6b7e7e', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 };
 
   return (
     <form onSubmit={handleSubmit} style={{ maxWidth: 720 }}>
@@ -172,7 +168,6 @@ export function ProductForm({ product }: { product?: Product }) {
         </div>
       </div>
 
-      {/* Benefits */}
       <div style={{ marginBottom: 24 }}>
         <label style={labelStyle}>Benefit / Kandungan</label>
         {benefits.map((b, i) => (

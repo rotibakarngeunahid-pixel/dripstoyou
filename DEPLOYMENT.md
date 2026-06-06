@@ -1,202 +1,246 @@
-# DEPLOYMENT — DRIP TO YOU Bali
+# DRIP TO YOU Bali — Deployment Guide
 
-Self-hosted VPS deployment guide. This app does NOT use Vercel.
+## Arsitektur
+
+```
+Browser / Next.js (Vercel)
+        │
+        ▼ HTTPS fetch (NEXT_PUBLIC_API_BASE_URL)
+  PHP API — cPanel / Rumahweb
+  public_html/api/
+        │
+        ▼ PDO / MySQL
+  Database MySQL (cPanel)
+```
+
+- **Frontend:** Next.js di Vercel
+- **Backend API:** PHP di cPanel shared hosting
+- **Database:** MySQL di cPanel (included di paket hosting)
 
 ---
 
-## Prerequisites
+## Langkah 1 — Import Database ke MySQL cPanel
 
-- Ubuntu 22.04+ VPS (min 1 vCPU, 1GB RAM)
-- Node.js 20+ (via nvm recommended)
-- MySQL 8.0+
-- Nginx
-- PM2 (`npm install -g pm2`)
-- Domain pointing to your VPS IP
+1. Login ke **cPanel → phpMyAdmin**
+2. Buat database baru (misal: `rotw4785_dripstoyou`)
+3. Buat user MySQL, beri ALL PRIVILEGES ke database tersebut
+4. Klik database → tab **Import** → upload `database-setup.sql`
+5. Klik **Go** — semua tabel akan dibuat
 
 ---
 
-## 1. Database Setup
+## Langkah 2 — Upload PHP API ke cPanel
 
+### a) Buat config.php
+
+Salin `php-api/config.example.php` → `php-api/config.php`, isi dengan credential asli:
+
+```php
+define('DB_HOST',    'localhost');
+define('DB_NAME',    'rotw4785_dripstoyou');
+define('DB_USER',    'rotw4785_admin');
+define('DB_PASS',    'password-database-anda');
+define('DB_CHARSET', 'utf8mb4');
+
+// Key enkripsi — HARUS SAMA dengan FIELD_ENCRYPTION_KEY yang lama di .env
+// Jika database baru, generate: openssl rand -hex 32
+define('FIELD_ENCRYPTION_KEY', 'bd749e1585fe8f5e2644ad5c6bd35e6097f64af27c3bf906a4e898b6d139719a');
+
+define('ALLOWED_ORIGINS', [
+    'https://dripstoyou.com',
+    'https://www.dripstoyou.com',
+    'https://your-project.vercel.app',  // URL Vercel Anda
+    'http://localhost:3000',             // hapus di production
+]);
+
+define('WHATSAPP_NUMBER', '6281234567890');
+define('SESSION_DURATION_HOURS', 8);
+define('SEED_SECRET', 'ganti-dengan-string-acak');
+```
+
+> ⚠️ **Jangan commit config.php** ke Git. Sudah ada di `.gitignore`.
+
+### b) Upload ke cPanel (File Manager / FTP)
+
+Upload seluruh isi folder `php-api/` ke: `public_html/api/`
+
+Struktur akhir di server:
+```
+public_html/
+└── api/
+    ├── .htaccess
+    ├── config.php          ← buat manual dari config.example.php
+    ├── helpers.php
+    ├── products.php
+    ├── areas.php
+    ├── settings.php
+    ├── availability.php
+    ├── bookings.php
+    └── admin/
+        ├── .htaccess
+        ├── login.php
+        ├── logout.php
+        ├── me.php
+        ├── dashboard.php
+        ├── products.php
+        ├── bookings.php
+        ├── bookings-export.php
+        ├── schedule.php
+        ├── settings.php
+        └── seed.php
+```
+
+---
+
+## Langkah 3 — Environment Variables di Vercel
+
+Di Vercel Dashboard → Project → **Settings → Environment Variables**:
+
+| Key | Value |
+|-----|-------|
+| `NEXT_PUBLIC_API_BASE_URL` | `https://dripstoyou.com/api` |
+| `SESSION_SECRET` | (string acak ≥32 char) |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | `6281234567890` |
+| `NEXT_PUBLIC_APP_URL` | `https://dripstoyou.com` |
+
+Generate SESSION_SECRET:
 ```bash
-mysql -u root -p
-CREATE DATABASE dripstoyou CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'drip'@'localhost' IDENTIFIED BY 'StrongPassword123!';
-GRANT ALL PRIVILEGES ON dripstoyou.* TO 'drip'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
 ---
 
-## 2. Environment Variables
+## Langkah 4 — Deploy Next.js ke Vercel
 
-```bash
-cp .env.example .env
-nano .env
+1. Push code ke GitHub (pastikan `php-api/config.php` di-ignore)
+2. Import repo di Vercel
+3. Set environment variables (Langkah 3)
+4. Deploy — build command otomatis: `next build`
+
+---
+
+## Langkah 5 — Seed Database (Satu Kali)
+
+Setelah PHP API online dan database sudah diimport, jalankan seeding:
+
+```
+GET https://dripstoyou.com/api/admin/seed.php?secret=SEED_SECRET_DARI_CONFIG
 ```
 
-Fill in all values. Generate secrets:
-
-```bash
-# SESSION_SECRET (must be ≥ 32 chars)
-openssl rand -base64 32
-
-# FIELD_ENCRYPTION_KEY (must be exactly 64 hex chars = 32 bytes)
-openssl rand -hex 32
+Atau via Next.js:
+```
+GET https://your-app.vercel.app/api/admin/seed?secret=SEED_SECRET
 ```
 
-**Required env vars:**
+Seed membuat:
+- 12 service areas Bali
+- 4 produk IV Therapy
+- Jadwal 7 hari (08:00–22:00)
+- 5 FAQ, 3 Testimonial, 5 Site Settings
+- **Super Admin:** `admin@dripstoyou.com` / `AdminDrip2025!`
+
+> ⚠️ Segera ganti password admin setelah login pertama!
+
+---
+
+## Langkah 6 — Test Manual Endpoint
+
+### Public (buka di browser):
 ```
-DATABASE_URL="mysql://drip:StrongPassword123!@localhost:3306/dripstoyou"
-SESSION_SECRET="<32+ char random string>"
-FIELD_ENCRYPTION_KEY="<64 char hex string>"
-WHATSAPP_NUMBER="6281200000000"
-NEXT_PUBLIC_WHATSAPP_NUMBER="6281200000000"
-NEXT_PUBLIC_APP_URL="https://dripstoyou.com"
-NODE_ENV="production"
+https://dripstoyou.com/api/products.php
+https://dripstoyou.com/api/areas.php
+https://dripstoyou.com/api/settings.php
+https://dripstoyou.com/api/availability.php?date=2025-08-01
+```
+
+### Admin (gunakan Postman/Insomnia):
+```
+POST https://dripstoyou.com/api/admin/login.php
+Body: { "email": "admin@dripstoyou.com", "password": "AdminDrip2025!" }
+→ Response: { "success": true, "data": { "token": "...", "admin": {...} } }
+
+GET https://dripstoyou.com/api/admin/dashboard.php
+Headers: Authorization: Bearer <token dari login>
 ```
 
 ---
 
-## 3. Install & Build
+## Troubleshooting
 
-```bash
-# Clone / upload project to /var/www/dripstoyou
-cd /var/www/dripstoyou
+### ❌ CORS Error di browser
+Tambahkan domain frontend ke `ALLOWED_ORIGINS` di `config.php`, lalu re-upload.
 
-npm install --production=false
-npx prisma generate
-npx prisma migrate deploy
-npm run db:seed
-npm run build
+### ❌ 500 Internal Server Error
+Cek **cPanel → Error Logs**. Penyebab umum:
+- `config.php` belum dibuat
+- Credential database salah
+- PHP extension `openssl` tidak aktif
+
+### ❌ Database Connection Failed
+- Pastikan `DB_HOST=localhost` (bukan IP external) di cPanel
+- Pastikan user MySQL sudah diberi privilege ke database
+
+### ❌ NEXT_PUBLIC_API_BASE_URL Error
+- Tidak ada trailing slash: `https://dripstoyou.com/api` ✓
+- Verifikasi: buka URL tersebut di browser → harus kembalikan JSON
+
+### ❌ Data terenkripsi tidak terbaca
+`FIELD_ENCRYPTION_KEY` di `config.php` harus identik dengan yang dulu di `.env`:
 ```
+bd749e1585fe8f5e2644ad5c6bd35e6097f64af27c3bf906a4e898b6d139719a
+```
+
+### ❌ Admin login selalu gagal
+- Pastikan seed sudah dijalankan
+- Cek rate limit: max 5 percobaan gagal per 15 menit per IP/email
 
 ---
 
-## 4. PM2 Process Manager
+## API Endpoints Reference
 
-```bash
-# Start with PM2
-pm2 start npm --name "dripstoyou" -- start
+### Public (No Auth)
 
-# Save PM2 process list
-pm2 save
+| Method | Path | Keterangan |
+|--------|------|-----------|
+| GET | `/products.php` | Semua produk aktif |
+| GET | `/products.php?slug=xxx` | Satu produk by slug |
+| GET | `/products.php?include_benefits=1&include_faqs=1` | Dengan relasi |
+| GET | `/areas.php` | Service areas aktif |
+| GET | `/settings.php` | WhatsApp, jam, response time |
+| GET | `/availability.php?date=YYYY-MM-DD` | Slot waktu tersedia |
+| POST | `/bookings.php` | Buat booking baru |
 
-# Enable PM2 on reboot
-pm2 startup
-# Run the command it outputs (e.g. sudo env PATH=... pm2 startup systemd ...)
+### Admin (Bearer Token Required)
+
+| Method | Path | Keterangan |
+|--------|------|-----------|
+| POST | `/admin/login.php` | Login → dapat token |
+| POST | `/admin/logout.php` | Revoke token |
+| GET | `/admin/me.php` | Info admin saat ini |
+| GET | `/admin/dashboard.php` | Statistik dashboard |
+| GET | `/admin/products.php` | List semua produk |
+| POST | `/admin/products.php` | Buat produk baru |
+| GET | `/admin/products.php?id=xxx` | Detail produk |
+| PATCH | `/admin/products.php?id=xxx` | Update produk |
+| DELETE | `/admin/products.php?id=xxx` | Hapus produk |
+| GET | `/admin/bookings.php` | List booking |
+| GET | `/admin/bookings.php?id=xxx` | Detail booking (decrypted) |
+| PATCH | `/admin/bookings.php?id=xxx` | Update status booking |
+| GET | `/admin/bookings-export.php` | Export CSV |
+| GET | `/admin/schedule.php` | Jadwal operasional |
+| PUT | `/admin/schedule.php` | Update jadwal |
+| GET | `/admin/settings.php` | Site settings |
+| PATCH | `/admin/settings.php` | Update settings |
+| GET | `/admin/seed.php?secret=xxx` | Seed database (sekali saja) |
+
+### Response Format
+
+**Sukses:**
+```json
+{ "success": true, "message": "Berhasil", "data": { ... } }
 ```
 
----
-
-## 5. Nginx Reverse Proxy
-
-```nginx
-# /etc/nginx/sites-available/dripstoyou.com
-server {
-    listen 80;
-    server_name dripstoyou.com www.dripstoyou.com;
-    return 301 https://$host$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name dripstoyou.com www.dripstoyou.com;
-
-    ssl_certificate     /etc/letsencrypt/live/dripstoyou.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/dripstoyou.com/privkey.pem;
-    ssl_protocols       TLSv1.2 TLSv1.3;
-    ssl_ciphers         HIGH:!aNULL:!MD5;
-
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
-
-    # Admin panel — restrict by IP if possible
-    location /admin {
-        # Uncomment and set your IP to restrict admin access:
-        # allow 1.2.3.4;
-        # deny all;
-
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-
-    location / {
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-}
-```
-
-```bash
-ln -s /etc/nginx/sites-available/dripstoyou.com /etc/nginx/sites-enabled/
-nginx -t && systemctl reload nginx
-```
-
----
-
-## 6. SSL with Certbot
-
-```bash
-apt install certbot python3-certbot-nginx -y
-certbot --nginx -d dripstoyou.com -d www.dripstoyou.com
-```
-
----
-
-## 7. Updating the App
-
-```bash
-cd /var/www/dripstoyou
-git pull   # or upload new files
-
-npm install
-npx prisma generate
-npx prisma migrate deploy
-npm run build
-
-pm2 restart dripstoyou
-```
-
----
-
-## First Login
-
-After seeding, login at:
-- URL: `https://dripstoyou.com/admin/login`
-- Email: `admin@dripstoyou.com`
-- Password: `AdminDrip2025!`
-
-**Change the password immediately after first login.**
-
----
-
-## Ports
-
-- Next.js: `3000` (internal only, proxied by Nginx)
-- MySQL: `3306` (localhost only, never expose to internet)
-
-Firewall:
-```bash
-ufw allow 22    # SSH
-ufw allow 80    # HTTP (redirects to HTTPS)
-ufw allow 443   # HTTPS
-ufw enable
+**Error:**
+```json
+{ "success": false, "message": "Pesan error" }
 ```
