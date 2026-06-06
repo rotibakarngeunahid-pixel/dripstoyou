@@ -23,17 +23,21 @@ export const metadata: Metadata = {
   description:
     'Mobile IV therapy by certified medical team — delivered to your villa, hotel, or Airbnb across Bali. Hangover recovery, immune boost, energy, beauty glow. Available 08:00–22:00 WITA.',
   keywords: 'IV therapy Bali, mobile drip Bali, hangover recovery Bali, IV vitamin Bali, drip therapy Bali',
+  icons: {
+    icon: 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp',
+    apple: 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp',
+  },
   openGraph: {
     title: 'Drips To You - Bali | Mobile IV Therapy',
     description: 'Mobile IV therapy delivered to your villa or hotel in Bali. Certified medical team, 60-minute arrival.',
-    locale: 'id_ID',
+    locale: 'en_US',
     type: 'website',
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="id" className={`${playfair.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
       <body>
         <LanguageProvider>
           {children}

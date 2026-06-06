@@ -990,18 +990,20 @@ textarea:focus-visible {
 
 .hdr {
   height: 72px;
-  background: rgba(13, 40, 40, 0.75);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  background: var(--teal);
+  border-bottom: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   box-shadow: none;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.3s, box-shadow 0.3s;
 }
 
 .hdr.scrolled {
-  background: rgba(13, 40, 40, 0.92);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
-  border-bottom-color: rgba(212, 175, 55, 0.15);
+  background: rgba(13, 40, 40, 0.96);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.22);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.12);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .hdr-logo-text {

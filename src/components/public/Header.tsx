@@ -59,7 +59,7 @@ export default function Header() {
               width={44}
               height={44}
               className="hdr-logo-img"
-              preload
+              priority
             />
           </span>
           <div className="hdr-logo-text">

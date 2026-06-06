@@ -169,9 +169,9 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
           src={BRAND.photo1}
           alt=""
           fill
-          preload
+          priority
           quality={90}
-          sizes="(max-width: 640px) 150vw, 100vw"
+          sizes="(max-width: 640px) 300vw, 100vw"
           className="hero-photo landing-hero-photo"
         />
         <div className="hero-photo-overlay landing-hero-overlay" />
