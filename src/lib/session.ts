@@ -8,7 +8,7 @@ export interface SessionData {
   email: string;
   role: AdminRole;
   name: string;
-  adminToken: string;  // Bearer token for PHP API auth
+  adminToken?: string;  // legacy field - no longer used
 }
 
 const SESSION_OPTIONS: SessionOptions = {

@@ -1,5 +1,8 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
+import { prisma } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
 
 type BookingStatus = 'BARU' | 'KONFIRMASI' | 'DIPROSES' | 'SELESAI' | 'DIBATALKAN';
 
@@ -19,39 +22,8 @@ const STATUS_COLORS: Record<BookingStatus, string> = {
   DIBATALKAN: '#c0392b',
 };
 
-interface Booking {
-  id: string;
-  booking_code: string;
-  customer_name: string;
-  customer_phone_last4: string;
-  booking_date: string;
-  booking_time: string;
-  people_count: number;
-  location_type: string;
-  status: BookingStatus;
-  source: string;
-  created_at: string;
-  product_name: string;
-  service_area_name: string | null;
-}
-
-async function getBookings(token: string): Promise<Booking[]> {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bookings.php?limit=100`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return [];
-    const json = await res.json();
-    return Array.isArray(json.data) ? json.data : [];
-  } catch {
-    return [];
-  }
-}
-
-function formatDate(value: string, withYear = true) {
-  return new Date(value).toLocaleDateString('id-ID', {
+function formatDate(value: Date, withYear = true) {
+  return value.toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'short',
     ...(withYear ? { year: 'numeric' as const } : {}),
@@ -62,7 +34,14 @@ export default async function BookingsPage() {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
 
-  const bookings = await getBookings(session.adminToken);
+  const bookings = await prisma.booking.findMany({
+    take: 100,
+    orderBy: { createdAt: 'desc' },
+    include: {
+      product: { select: { name: true } },
+      serviceArea: { select: { name: true } },
+    },
+  });
 
   return (
     <div className="admin-page wide">
@@ -85,25 +64,28 @@ export default async function BookingsPage() {
             </thead>
             <tbody>
               {bookings.map((booking) => {
-                const color = STATUS_COLORS[booking.status] ?? '#667676';
+                const status = booking.status as BookingStatus;
+                const color = STATUS_COLORS[status] ?? '#667676';
                 return (
-                  <tr key={booking.id}>
+                  <tr key={booking.id} style={{ cursor: 'pointer' }}>
                     <td className="mono" style={{ color: 'var(--teal)', fontWeight: 800 }}>
-                      {booking.booking_code}
+                      <a href={`/admin/bookings/${booking.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                        {booking.bookingCode}
+                      </a>
                     </td>
-                    <td>{booking.customer_name}</td>
-                    <td className="mono muted-small">...{booking.customer_phone_last4}</td>
-                    <td>{booking.product_name}</td>
-                    <td className="muted-small">{formatDate(booking.booking_date)}</td>
-                    <td className="muted-small">{booking.booking_time}</td>
-                    <td className="muted-small">{booking.people_count}</td>
-                    <td className="muted-small">{booking.service_area_name ?? booking.location_type}</td>
+                    <td>{booking.customerName}</td>
+                    <td className="mono muted-small">...{booking.customerPhoneLast4}</td>
+                    <td>{booking.product.name}</td>
+                    <td className="muted-small">{formatDate(booking.bookingDate)}</td>
+                    <td className="muted-small">{booking.bookingTime}</td>
+                    <td className="muted-small">{booking.peopleCount}</td>
+                    <td className="muted-small">{booking.serviceArea?.name ?? booking.locationType}</td>
                     <td>
                       <span className="status-pill" style={{ color, background: `${color}18` }}>
-                        {STATUS_LABELS[booking.status] ?? booking.status}
+                        {STATUS_LABELS[status] ?? status}
                       </span>
                     </td>
-                    <td className="muted-small">{formatDate(booking.created_at, false)}</td>
+                    <td className="muted-small">{formatDate(booking.createdAt, false)}</td>
                   </tr>
                 );
               })}

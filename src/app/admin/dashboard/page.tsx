@@ -1,38 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-
-interface RecentBooking {
-  booking_code: string;
-  customer_name: string;
-  customer_phone_last4: string;
-  booking_date: string;
-  booking_time: string;
-  status: string;
-  product_name: string;
-}
-
-interface DashboardData {
-  totalBookings: number;
-  pendingBookings: number;
-  todayBookings: number;
-  recentBookings: RecentBooking[];
-}
-
-async function getDashboardData(token: string): Promise<DashboardData | null> {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/dashboard.php`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    return json.data ?? null;
-  } catch {
-    return null;
-  }
-}
+import { prisma } from '@/lib/prisma';
 
 const STATUS_COLORS: Record<string, string> = {
   BARU: '#b8833e',
@@ -42,8 +11,8 @@ const STATUS_COLORS: Record<string, string> = {
   DIBATALKAN: '#c0392b',
 };
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString('id-ID', {
+function formatDate(value: Date) {
+  return value.toLocaleDateString('id-ID', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -54,13 +23,26 @@ export default async function DashboardPage() {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
 
-  const data = await getDashboardData(session.adminToken);
-  if (!data) redirect('/admin/login');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const [totalBookings, pendingBookings, todayBookings, recentBookings] = await Promise.all([
+    prisma.booking.count(),
+    prisma.booking.count({ where: { status: 'BARU' } }),
+    prisma.booking.count({ where: { bookingDate: { gte: today, lt: tomorrow } } }),
+    prisma.booking.findMany({
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+      include: { product: { select: { name: true } } },
+    }),
+  ]);
 
   const stats = [
-    { label: 'Total Bookings', value: data.totalBookings, color: 'var(--teal)' },
-    { label: 'Menunggu Konfirmasi', value: data.pendingBookings, color: 'var(--gold)' },
-    { label: 'Booking Hari Ini', value: data.todayBookings, color: 'var(--ocean)' },
+    { label: 'Total Bookings', value: totalBookings, color: 'var(--teal)' },
+    { label: 'Menunggu Konfirmasi', value: pendingBookings, color: 'var(--gold)' },
+    { label: 'Booking Hari Ini', value: todayBookings, color: 'var(--ocean)' },
   ];
 
   return (
@@ -99,20 +81,20 @@ export default async function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {data.recentBookings.map((booking) => {
+              {recentBookings.map((booking) => {
                 const color = STATUS_COLORS[booking.status] ?? '#667676';
                 return (
-                  <tr key={booking.booking_code}>
+                  <tr key={booking.bookingCode}>
                     <td className="mono" style={{ color: 'var(--teal)', fontWeight: 800 }}>
-                      {booking.booking_code}
+                      {booking.bookingCode}
                     </td>
                     <td>
-                      {booking.customer_name}{' '}
-                      <span className="muted-small">...{booking.customer_phone_last4}</span>
+                      {booking.customerName}{' '}
+                      <span className="muted-small">...{booking.customerPhoneLast4}</span>
                     </td>
-                    <td>{booking.product_name}</td>
-                    <td className="muted-small">{formatDate(booking.booking_date)}</td>
-                    <td className="muted-small">{booking.booking_time}</td>
+                    <td>{booking.product.name}</td>
+                    <td className="muted-small">{formatDate(booking.bookingDate)}</td>
+                    <td className="muted-small">{booking.bookingTime}</td>
                     <td>
                       <span className="status-pill" style={{ color, background: `${color}18` }}>
                         {booking.status}
@@ -121,7 +103,7 @@ export default async function DashboardPage() {
                   </tr>
                 );
               })}
-              {data.recentBookings.length === 0 && (
+              {recentBookings.length === 0 && (
                 <tr>
                   <td colSpan={6} className="empty-state">Belum ada booking</td>
                 </tr>
