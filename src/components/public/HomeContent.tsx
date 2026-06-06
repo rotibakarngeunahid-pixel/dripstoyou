@@ -36,7 +36,7 @@ interface Props {
 const IK = 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image';
 const BRAND = {
   logo:   `${IK}/drips-to-you-bali-icon.webp`,
-  photo1: `${IK}/photo_6134052561527443398_y.webp`, // on-site service / hero
+  photo1: '/img/hero-mobile-iv-bali-branded.webp',
   photo2: `${IK}/photo_6134052561527443396_y.webp`, // medical team / preparation
   photo3: `${IK}/photo_6131724036417982600_y.webp`, // IV drip visual
   photo4: `${IK}/photo_6134052561527443397_y.webp`, // villa/hotel service
@@ -126,23 +126,23 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
 ───────────────────────────────────────────── */
 function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLanguage>['t']; waUrl: (s: string) => string; waBookingMsg: string }) {
   return (
-    <section className="hero" id="hero" aria-label="Hero">
+    <section className="hero landing-hero" id="hero" aria-label="Drips To You Bali">
       {/* Text content — left column */}
-      <div className="hero-content">
-        <h1 className="hero-title">
+      <div className="hero-content landing-hero-content">
+        <h1 className="hero-title landing-hero-title">
           {t.hero.line1}<br />
           {t.hero.line2},<br />
           <em>{t.hero.lineEm}.</em>
         </h1>
 
-        <div className="hero-accent-line" aria-hidden="true" />
+        <div className="hero-accent-line landing-hero-accent" aria-hidden="true" />
 
-        <p className="hero-sub">{t.hero.sub}</p>
+        <p className="hero-sub landing-hero-sub">{t.hero.sub}</p>
 
-        <div className="hero-cta">
+        <div className="hero-cta landing-hero-cta">
           <a
             href={waUrl(waBookingMsg)}
-            className="btn-wa-hero"
+            className="btn-wa-hero landing-hero-primary"
             target="_blank"
             rel="noopener noreferrer"
             id="hero-cta-wa"
@@ -150,7 +150,7 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
             {WA_SVG}
             {t.hero.bookWa}
           </a>
-          <Link href="/treatments" className="btn-ghost-hero" prefetch id="hero-cta-treatments">
+          <Link href="/treatments" className="btn-ghost-hero landing-hero-secondary" prefetch id="hero-cta-treatments">
             {t.hero.seeAll}
             {ARROW_SVG}
           </Link>
@@ -158,16 +158,16 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
       </div>
 
       {/* Photo — right side, no blur/filter */}
-      <div className="hero-photo-wrap" aria-hidden="true">
+      <div className="hero-photo-wrap landing-hero-media" aria-hidden="true">
         <Image
           src={BRAND.photo1}
-          alt="Tim medis Drips To You Bali"
+          alt=""
           fill
-          priority
-          sizes="(max-width: 1023px) 100vw, 55vw"
-          className="hero-photo"
+          preload
+          sizes="100vw"
+          className="hero-photo landing-hero-photo"
         />
-        <div className="hero-photo-overlay" />
+        <div className="hero-photo-overlay landing-hero-overlay" />
       </div>
     </section>
   );

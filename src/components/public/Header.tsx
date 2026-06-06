@@ -6,6 +6,13 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/contexts/language';
 
+const ARROW_SVG = (
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </svg>
+);
+
 function sectionHref(section: string, pathname: string): string {
   return pathname === '/' ? `#${section}` : `/#${section}`;
 }
@@ -43,7 +50,7 @@ export default function Header() {
 
   return (
     <>
-      <header className={`hdr${scrolled ? ' scrolled' : ''}`} id="hdr">
+      <header className={`hdr${pathname === '/' ? ' hdr-home' : ''}${scrolled ? ' scrolled' : ''}`} id="hdr">
         <Link href="/" className="hdr-logo" aria-label="Drips To You - Bali — Home">
           <Image
             src="https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp"
@@ -51,7 +58,7 @@ export default function Header() {
             width={44}
             height={44}
             className="hdr-logo-img"
-            priority
+            preload
           />
           <div className="hdr-logo-text">
             Drips To You – Bali
@@ -81,6 +88,7 @@ export default function Header() {
 
           <Link href="/booking" className="btn-hdr-book">
             {t.nav.bookNow}
+            {ARROW_SVG}
           </Link>
 
           <button
