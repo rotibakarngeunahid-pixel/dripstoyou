@@ -14,7 +14,8 @@ async function getPublicSettings(): Promise<{ whatsappNumber?: string } | null> 
       signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) return null;
-    return await res.json();
+    const json = await res.json();
+    return json.data ?? null;
   } catch {
     return null;
   }

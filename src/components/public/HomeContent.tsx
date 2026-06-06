@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/language';
 
@@ -40,10 +41,13 @@ const BOLT_SVG = (
   </svg>
 );
 
+const HERO_IMAGE =
+  'https://images.pexels.com/photos/11081177/pexels-photo-11081177.jpeg?auto=compress&cs=tinysrgb&w=1800';
+
 const FALLBACK_PRODUCTS: HomepageProduct[] = [
-  { id: '1', name: 'Hangover Recovery', slug: 'hangover-recovery', short_description: 'Rehidrasi cepat dengan elektrolit, vitamin B & C, dan anti-mual untuk pemulihan optimal setelah malam panjang.', price_amount: 750000, price_label: 'IDR 750.000', image_url: 'https://images.pexels.com/photos/3259629/pexels-photo-3259629.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop', label: 'Populer', show_on_homepage: true, homepage_order: 1 },
-  { id: '2', name: 'Immune Booster', slug: 'immune-booster', short_description: 'Tingkatkan sistem imun dengan vitamin C dosis tinggi, zinc, dan glutathione untuk perlindungan optimal.', price_amount: 650000, price_label: 'IDR 650.000', image_url: 'https://images.pexels.com/photos/4021779/pexels-photo-4021779.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop', label: 'Terlaris', show_on_homepage: true, homepage_order: 2 },
-  { id: '3', name: 'Energy Boost', slug: 'energy-boost', short_description: 'Kembalikan stamina dan energimu dengan B-complex, magnesium, dan elektrolit lengkap yang bekerja cepat.', price_amount: 550000, price_label: 'IDR 550.000', image_url: 'https://images.pexels.com/photos/3683074/pexels-photo-3683074.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop', label: null, show_on_homepage: true, homepage_order: 3 },
+  { id: '1', name: 'Hangover Recovery', slug: 'hangover-recovery', short_description: 'Rehidrasi cepat dengan elektrolit, vitamin B & C, dan anti-mual untuk pemulihan optimal setelah malam panjang.', price_amount: 750000, price_label: 'IDR 750.000', image_url: 'https://images.pexels.com/photos/6010930/pexels-photo-6010930.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop', label: 'Populer', show_on_homepage: true, homepage_order: 1 },
+  { id: '2', name: 'Immune Booster', slug: 'immune-booster', short_description: 'Tingkatkan sistem imun dengan vitamin C dosis tinggi, zinc, dan glutathione untuk perlindungan optimal.', price_amount: 650000, price_label: 'IDR 650.000', image_url: 'https://images.pexels.com/photos/6010936/pexels-photo-6010936.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop', label: 'Terlaris', show_on_homepage: true, homepage_order: 2 },
+  { id: '3', name: 'Energy Boost', slug: 'energy-boost', short_description: 'Kembalikan stamina dan energimu dengan B-complex, magnesium, dan elektrolit lengkap yang bekerja cepat.', price_amount: 550000, price_label: 'IDR 550.000', image_url: 'https://images.pexels.com/photos/11081177/pexels-photo-11081177.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop', label: null, show_on_homepage: true, homepage_order: 3 },
   { id: '4', name: 'Beauty Glow', slug: 'beauty-glow', short_description: 'Tampil lebih cerah dan glowing dengan glutathione, kolagen booster, dan antioksidan premium.', price_amount: 700000, price_label: 'IDR 700.000', image_url: 'https://images.pexels.com/photos/3762875/pexels-photo-3762875.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop', label: 'Baru', show_on_homepage: true, homepage_order: 4 },
 ];
 
@@ -93,6 +97,16 @@ export default function HomeContent({ waNumber, homepageProducts }: Props) {
 function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLanguage>['t']; waUrl: (s: string) => string; waBookingMsg: string }) {
   return (
     <section className="hero" id="hero" aria-label="Hero">
+      <div className="hero-media" aria-hidden="true">
+        <Image
+          src={HERO_IMAGE}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="hero-photo"
+        />
+      </div>
       <div className="hero-bg" aria-hidden="true" />
       <div className="hero-glow-1" aria-hidden="true" />
       <div className="hero-glow-2" aria-hidden="true" />
@@ -211,12 +225,12 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
             <div key={p.id} className="t-card reveal" style={{ transitionDelay: `${i * 0.08}s` }}>
               <div className={`t-card-img ${imgClasses[i % imgClasses.length]}`}>
                 {p.image_url ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
+                  <Image
                     className="card-photo"
                     src={p.image_url}
                     alt={`${p.name} IV Therapy`}
-                    loading="lazy"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
                   />
                 ) : null}
                 {p.label && (

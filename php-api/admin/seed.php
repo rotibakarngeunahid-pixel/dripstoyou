@@ -57,10 +57,10 @@ try {
 
     // ── Products ──────────────────────────────────────────────────────────────
     $products = [
-        ['Hangover Recovery', 'hangover-recovery', 'Rehidrasi cepat, vitamin B & C, anti-nausea', 750000, 'IDR 750.000', 45, 'Popular',    true, 1, 'https://images.pexels.com/photos/3683053/pexels-photo-3683053.jpeg?auto=compress&cs=tinysrgb&w=800'],
-        ['Immune Booster',    'immune-booster',    'Vitamin C high-dose, zinc, glutathione',        650000, 'IDR 650.000', 45, 'Best Seller', true, 2, 'https://images.pexels.com/photos/3951355/pexels-photo-3951355.jpeg?auto=compress&cs=tinysrgb&w=800'],
-        ['Energy Boost',      'energy-boost',      'B-complex, magnesium, elektrolit penuh',        550000, 'IDR 550.000', 45, null,          true, 3, 'https://images.pexels.com/photos/5327580/pexels-photo-5327580.jpeg?auto=compress&cs=tinysrgb&w=800'],
-        ['Beauty Glow',       'beauty-glow',       'Glutathione, collagen boost, antioksidan',      700000, 'IDR 700.000', 45, 'New',         true, 4, 'https://images.pexels.com/photos/3985338/pexels-photo-3985338.jpeg?auto=compress&cs=tinysrgb&w=800'],
+        ['Hangover Recovery', 'hangover-recovery', 'Rehidrasi cepat, vitamin B & C, anti-nausea', 750000, 'IDR 750.000', 45, 'Popular',    true, 1, 'https://images.pexels.com/photos/6010930/pexels-photo-6010930.jpeg?auto=compress&cs=tinysrgb&w=800'],
+        ['Immune Booster',    'immune-booster',    'Vitamin C high-dose, zinc, glutathione',        650000, 'IDR 650.000', 45, 'Best Seller', true, 2, 'https://images.pexels.com/photos/6010936/pexels-photo-6010936.jpeg?auto=compress&cs=tinysrgb&w=800'],
+        ['Energy Boost',      'energy-boost',      'B-complex, magnesium, elektrolit penuh',        550000, 'IDR 550.000', 45, null,          true, 3, 'https://images.pexels.com/photos/11081177/pexels-photo-11081177.jpeg?auto=compress&cs=tinysrgb&w=800'],
+        ['Beauty Glow',       'beauty-glow',       'Glutathione, collagen boost, antioksidan',      700000, 'IDR 700.000', 45, 'New',         true, 4, 'https://images.pexels.com/photos/3762875/pexels-photo-3762875.jpeg?auto=compress&cs=tinysrgb&w=800'],
     ];
     $now = date('Y-m-d H:i:s');
     $pInserted = 0;

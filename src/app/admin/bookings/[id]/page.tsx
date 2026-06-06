@@ -1,34 +1,58 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 const STATUS_OPTIONS = [
-  { value: 'BARU',       label: 'Baru',       color: '#C9944C' },
-  { value: 'KONFIRMASI', label: 'Konfirmasi', color: '#29808B' },
-  { value: 'DIPROSES',   label: 'Diproses',   color: '#8EBFBF' },
-  { value: 'SELESAI',    label: 'Selesai',    color: '#25D366' },
-  { value: 'DIBATALKAN', label: 'Dibatalkan', color: '#ef4444' },
+  { value: 'BARU', label: 'Baru', color: '#b8833e' },
+  { value: 'KONFIRMASI', label: 'Konfirmasi', color: '#276f73' },
+  { value: 'DIPROSES', label: 'Diproses', color: '#5e9c98' },
+  { value: 'SELESAI', label: 'Selesai', color: '#1b8f4d' },
+  { value: 'DIBATALKAN', label: 'Dibatalkan', color: '#c0392b' },
 ] as const;
+
+type ApiResponse<T> = {
+  success?: boolean;
+  message?: string;
+  data?: T;
+  error?: string;
+};
+
+type StatusHistory = {
+  old_status: string;
+  new_status: string;
+  note: string | null;
+  created_at: string;
+  changed_by_name: string | null;
+};
 
 type Booking = {
   id: string;
-  bookingCode: string;
-  customerName: string;
+  booking_code: string;
+  customer_name: string;
   phone: string;
   address: string;
   notes: string | null;
-  bookingDate: string;
-  bookingTime: string;
-  peopleCount: number;
-  locationType: string;
+  booking_date: string;
+  booking_time: string;
+  people_count: number;
+  location_type: string;
   status: string;
   source: string;
-  createdAt: string;
-  product: { name: string; priceLabel: string | null };
-  serviceArea: { name: string } | null;
-  statusHistory: { id: string; oldStatus: string; newStatus: string; note: string | null; createdAt: string; changedBy: { name: string } | null }[];
+  created_at: string;
+  product_name: string;
+  price_label: string | null;
+  service_area_name: string | null;
+  statusHistory: StatusHistory[];
 };
+
+function statusColor(status: string) {
+  return STATUS_OPTIONS.find((item) => item.value === status)?.color ?? '#667676';
+}
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString('id-ID');
+}
 
 export default function BookingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -42,13 +66,16 @@ export default function BookingDetailPage() {
 
   useEffect(() => {
     fetch(`/api/admin/bookings/${id}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setBooking(d.booking);
-        setNewStatus(d.booking?.status ?? '');
+      .then((res) => res.json() as Promise<ApiResponse<Booking>>)
+      .then((json) => {
+        setBooking(json.data ?? null);
+        setNewStatus(json.data?.status ?? '');
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setError('Gagal memuat booking.');
+        setLoading(false);
+      });
   }, [id]);
 
   async function updateStatus() {
@@ -61,9 +88,12 @@ export default function BookingDetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus, note: note.trim() || undefined }),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error); return; }
-      setBooking((b) => b ? { ...b, status: newStatus } : b);
+      const json = (await res.json()) as ApiResponse<{ status: string }>;
+      if (!res.ok) {
+        setError(json.message ?? json.error ?? 'Gagal menyimpan status');
+        return;
+      }
+      setBooking((current) => (current ? { ...current, status: json.data?.status ?? newStatus } : current));
       setNote('');
     } catch {
       setError('Network error');
@@ -72,123 +102,139 @@ export default function BookingDetailPage() {
     }
   }
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#6b7e7e' }}>Memuat...</div>;
-  if (!booking) return <div style={{ padding: 40, textAlign: 'center', color: '#ef4444' }}>Booking tidak ditemukan</div>;
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <div className="skeleton-line" style={{ width: 220, height: 28, marginBottom: 24 }} />
+        <div className="admin-detail-grid">
+          <div className="form-card"><div className="skeleton-block" /></div>
+          <div className="form-card"><div className="skeleton-block" /></div>
+        </div>
+      </div>
+    );
+  }
 
-  const statusColor = STATUS_OPTIONS.find((s) => s.value === booking.status)?.color ?? '#6b7e7e';
+  if (!booking) {
+    return (
+      <div className="admin-page">
+        <div className="alert alert-error">{error || 'Booking tidak ditemukan'}</div>
+      </div>
+    );
+  }
+
+  const currentColor = statusColor(booking.status);
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: 900, margin: '0 auto' }}>
-      <button onClick={() => router.back()} style={{ color: '#29808B', fontSize: 13, fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 20, padding: 0 }}>
-        ← Kembali
+    <div className="admin-page">
+      <button className="icon-link" onClick={() => router.back()} type="button" style={{ background: 'none', border: 0, padding: 0, marginBottom: 20 }}>
+        Kembali
       </button>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+      <div className="admin-page-head">
         <div>
-          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 26, fontWeight: 700, color: '#205251', marginBottom: 4 }}>
-            {booking.bookingCode}
-          </h1>
-          <span style={{ background: statusColor + '22', color: statusColor, padding: '4px 12px', borderRadius: 100, fontSize: 12, fontWeight: 600, border: `1px solid ${statusColor}44` }}>
+          <h1 className="admin-title">{booking.booking_code}</h1>
+          <span className="status-pill" style={{ color: currentColor, background: `${currentColor}18` }}>
             {booking.status}
           </span>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
-        {/* Customer Info */}
-        <div style={{ background: 'white', border: '1px solid #DBDAD7', borderRadius: 16, padding: 24, boxShadow: '0 2px 8px rgba(32,82,81,0.06)' }}>
-          <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 16, fontWeight: 600, color: '#205251', marginBottom: 16 }}>Info Pelanggan</h2>
-          {[
-            ['Nama', booking.customerName],
-            ['No. HP', booking.phone],
-            ['Alamat', booking.address],
-            ...(booking.notes ? [['Catatan', booking.notes]] : []),
-          ].map(([label, value]) => (
-            <div key={label} style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11, color: '#6b7e7e', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>{label}</div>
-              <div style={{ fontSize: 14, color: '#1e2828' }}>{value}</div>
-            </div>
-          ))}
-        </div>
+      <div className="admin-detail-grid">
+        <section className="form-card">
+          <h2 className="form-card-title">Info Pelanggan</h2>
+          <div className="info-list">
+            {[
+              ['Nama', booking.customer_name],
+              ['No. HP', booking.phone],
+              ['Alamat', booking.address],
+              ...(booking.notes ? [['Catatan', booking.notes]] : []),
+            ].map(([label, value]) => (
+              <div key={label}>
+                <div className="info-label">{label}</div>
+                <div className="info-value">{value}</div>
+              </div>
+            ))}
+          </div>
+        </section>
 
-        {/* Booking Info */}
-        <div style={{ background: 'white', border: '1px solid #DBDAD7', borderRadius: 16, padding: 24, boxShadow: '0 2px 8px rgba(32,82,81,0.06)' }}>
-          <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 16, fontWeight: 600, color: '#205251', marginBottom: 16 }}>Detail Booking</h2>
-          {[
-            ['Treatment', booking.product.name],
-            ['Harga', booking.product.priceLabel ?? '-'],
-            ['Tanggal', new Date(booking.bookingDate).toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })],
-            ['Waktu', booking.bookingTime],
-            ['Jumlah Orang', String(booking.peopleCount)],
-            ['Tipe Lokasi', booking.locationType],
-            ['Area', booking.serviceArea?.name ?? '-'],
-            ['Sumber', booking.source],
-            ['Dibuat', new Date(booking.createdAt).toLocaleString('id-ID')],
-          ].map(([label, value]) => (
-            <div key={label} style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: 11, color: '#6b7e7e', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>{label}</div>
-              <div style={{ fontSize: 14, color: '#1e2828' }}>{value}</div>
-            </div>
-          ))}
-        </div>
+        <section className="form-card">
+          <h2 className="form-card-title">Detail Booking</h2>
+          <div className="info-list">
+            {[
+              ['Treatment', booking.product_name],
+              ['Harga', booking.price_label ?? '-'],
+              ['Tanggal', new Date(booking.booking_date).toLocaleDateString('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })],
+              ['Waktu', booking.booking_time],
+              ['Jumlah Orang', String(booking.people_count)],
+              ['Tipe Lokasi', booking.location_type],
+              ['Area', booking.service_area_name ?? '-'],
+              ['Sumber', booking.source],
+              ['Dibuat', formatDateTime(booking.created_at)],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <div className="info-label">{label}</div>
+                <div className="info-value">{value}</div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
-      {/* Update Status */}
-      <div style={{ background: 'white', border: '1px solid #DBDAD7', borderRadius: 16, padding: 24, boxShadow: '0 2px 8px rgba(32,82,81,0.06)', marginBottom: 24 }}>
-        <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 16, fontWeight: 600, color: '#205251', marginBottom: 16 }}>Update Status</h2>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
-          {STATUS_OPTIONS.map((s) => (
+      <section className="form-card" style={{ marginBottom: 20 }}>
+        <h2 className="form-card-title">Update Status</h2>
+        <div className="status-button-row" style={{ marginBottom: 14 }}>
+          {STATUS_OPTIONS.map((status) => (
             <button
-              key={s.value}
-              onClick={() => setNewStatus(s.value)}
+              className="status-choice"
+              key={status.value}
+              onClick={() => setNewStatus(status.value)}
+              type="button"
               style={{
-                padding: '8px 16px',
-                borderRadius: 8,
-                border: `2px solid ${newStatus === s.value ? s.color : '#DBDAD7'}`,
-                background: newStatus === s.value ? s.color + '18' : 'white',
-                color: newStatus === s.value ? s.color : '#6b7e7e',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
+                borderColor: newStatus === status.value ? status.color : undefined,
+                color: newStatus === status.value ? status.color : undefined,
+                background: newStatus === status.value ? `${status.color}16` : undefined,
               }}
             >
-              {s.label}
+              {status.label}
             </button>
           ))}
         </div>
         <textarea
+          className="control"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Catatan (opsional)..."
-          style={{ width: '100%', padding: '10px 12px', border: '1px solid #DBDAD7', borderRadius: 8, fontSize: 13, resize: 'vertical', minHeight: 60, boxSizing: 'border-box', marginBottom: 12 }}
+          style={{ marginBottom: 12 }}
         />
-        {error && <div style={{ color: '#ef4444', fontSize: 13, marginBottom: 10 }}>{error}</div>}
+        {error && <div className="alert alert-error" style={{ marginBottom: 12 }}>{error}</div>}
         <button
+          className={`button button-primary${saving ? ' loading' : ''}`}
           onClick={updateStatus}
           disabled={saving || newStatus === booking.status}
-          style={{ padding: '10px 24px', background: '#205251', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: saving || newStatus === booking.status ? 'not-allowed' : 'pointer', opacity: saving || newStatus === booking.status ? 0.6 : 1 }}
+          type="button"
         >
-          {saving ? 'Menyimpan...' : 'Simpan Status'}
+          {saving ? 'Menyimpan' : 'Simpan Status'}
         </button>
-      </div>
+      </section>
 
-      {/* Status History */}
       {booking.statusHistory.length > 0 && (
-        <div style={{ background: 'white', border: '1px solid #DBDAD7', borderRadius: 16, padding: 24, boxShadow: '0 2px 8px rgba(32,82,81,0.06)' }}>
-          <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 16, fontWeight: 600, color: '#205251', marginBottom: 16 }}>Riwayat Status</h2>
-          {booking.statusHistory.map((h) => (
-            <div key={h.id} style={{ display: 'flex', gap: 12, marginBottom: 12, paddingBottom: 12, borderBottom: '1px solid #f0eeea' }}>
-              <div style={{ fontSize: 11, color: '#6b7e7e', minWidth: 120 }}>{new Date(h.createdAt).toLocaleString('id-ID')}</div>
-              <div style={{ fontSize: 13, color: '#1e2828', flex: 1 }}>
-                <span style={{ color: '#6b7e7e' }}>{h.oldStatus}</span>
-                <span style={{ color: '#29808B', margin: '0 6px' }}>→</span>
-                <span style={{ color: '#205251', fontWeight: 600 }}>{h.newStatus}</span>
-                {h.note && <span style={{ color: '#6b7e7e', marginLeft: 8 }}>· {h.note}</span>}
+        <section className="form-card">
+          <h2 className="form-card-title">Riwayat Status</h2>
+          <div className="history-list">
+            {booking.statusHistory.map((history, index) => (
+              <div className="history-item" key={`${history.created_at}-${index}`}>
+                <div className="muted-small">{formatDateTime(history.created_at)}</div>
+                <div className="info-value">
+                  <span className="muted-small">{history.old_status}</span>
+                  <span style={{ color: 'var(--ocean)', margin: '0 6px' }}>to</span>
+                  <strong style={{ color: 'var(--teal)' }}>{history.new_status}</strong>
+                  {history.note && <span className="muted-small" style={{ marginLeft: 8 }}>{history.note}</span>}
+                </div>
+                {history.changed_by_name && <div className="muted-small">{history.changed_by_name}</div>}
               </div>
-              {h.changedBy && <div style={{ fontSize: 11, color: '#6b7e7e' }}>{h.changedBy.name}</div>}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

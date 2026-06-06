@@ -4,6 +4,23 @@ import { useEffect, useState } from 'react';
 
 const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
 
+type ApiResponse<T> = {
+  success?: boolean;
+  message?: string;
+  data?: T;
+  error?: string;
+};
+
+type ApiDaySetting = {
+  day_of_week: number;
+  is_open: boolean;
+  open_time: string;
+  close_time: string;
+  slot_duration_minutes: number;
+  max_bookings_per_slot: number;
+  min_prebooking_minutes: number;
+};
+
 type DaySetting = {
   dayOfWeek: number;
   isOpen: boolean;
@@ -14,6 +31,18 @@ type DaySetting = {
   minPrebookingMinutes: number;
 };
 
+function fromApi(day: ApiDaySetting): DaySetting {
+  return {
+    dayOfWeek: day.day_of_week,
+    isOpen: day.is_open,
+    openTime: day.open_time,
+    closeTime: day.close_time,
+    slotDurationMinutes: day.slot_duration_minutes,
+    maxBookingsPerSlot: day.max_bookings_per_slot,
+    minPrebookingMinutes: day.min_prebooking_minutes,
+  };
+}
+
 export default function SchedulePage() {
   const [schedule, setSchedule] = useState<DaySetting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,13 +52,21 @@ export default function SchedulePage() {
 
   useEffect(() => {
     fetch('/api/admin/schedule')
-      .then((r) => r.json())
-      .then((d) => { setSchedule(d.schedule ?? []); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then((res) => res.json() as Promise<ApiResponse<ApiDaySetting[]>>)
+      .then((json) => {
+        setSchedule(Array.isArray(json.data) ? json.data.map(fromApi) : []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('Gagal memuat jadwal.');
+        setLoading(false);
+      });
   }, []);
 
   function update(day: number, field: keyof DaySetting, value: boolean | string | number) {
-    setSchedule((prev) => prev.map((d) => d.dayOfWeek === day ? { ...d, [field]: value } : d));
+    setSchedule((prev) => prev.map((item) => (
+      item.dayOfWeek === day ? { ...item, [field]: value } : item
+    )));
   }
 
   async function save() {
@@ -42,8 +79,12 @@ export default function SchedulePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(schedule),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error ?? 'Gagal menyimpan'); return; }
+      const json = (await res.json()) as ApiResponse<ApiDaySetting[]>;
+      if (!res.ok) {
+        setError(json.message ?? json.error ?? 'Gagal menyimpan');
+        return;
+      }
+      if (Array.isArray(json.data)) setSchedule(json.data.map(fromApi));
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch {
@@ -53,59 +94,122 @@ export default function SchedulePage() {
     }
   }
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#6b7e7e' }}>Memuat...</div>;
-
-  const inputStyle: React.CSSProperties = { padding: '8px 10px', border: '1px solid #DBDAD7', borderRadius: 6, fontSize: 13, width: '100%', boxSizing: 'border-box' };
+  if (loading) {
+    return (
+      <div className="admin-page">
+        <div className="skeleton-line" style={{ width: 240, height: 28, marginBottom: 28 }} />
+        <div className="table-shell">
+          <div style={{ padding: 22 }}>
+            {[1, 2, 3, 4, 5].map((item) => (
+              <div className="skeleton-line" key={item} style={{ marginBottom: 16 }} />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: 900, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
-        <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 28, fontWeight: 700, color: '#205251' }}>Jadwal Operasional</h1>
-        <button onClick={save} disabled={saving} style={{ padding: '10px 24px', background: '#205251', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
-          {saving ? 'Menyimpan...' : 'Simpan Jadwal'}
+    <div className="admin-page">
+      <div className="admin-page-head">
+        <div>
+          <h1 className="admin-title">Jadwal Operasional</h1>
+          <p className="admin-subtitle">Atur jam buka, slot booking, dan batas minimal pre-booking.</p>
+        </div>
+        <button className={`button button-primary${saving ? ' loading' : ''}`} onClick={save} disabled={saving} type="button">
+          {saving ? 'Menyimpan' : 'Simpan Jadwal'}
         </button>
       </div>
 
-      {error && <div style={{ background: '#fee2e222', border: '1px solid #fca5a5', borderRadius: 8, padding: '10px 14px', color: '#ef4444', fontSize: 13, marginBottom: 16 }}>{error}</div>}
-      {success && <div style={{ background: '#dcfce722', border: '1px solid #86efac', borderRadius: 8, padding: '10px 14px', color: '#16a34a', fontSize: 13, marginBottom: 16 }}>Jadwal berhasil disimpan!</div>}
+      {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
+      {success && (
+        <div className="alert" style={{ marginBottom: 16, background: '#ecfdf3', border: '1px solid #b7e4c7', color: '#167a3f' }}>
+          Jadwal berhasil disimpan.
+        </div>
+      )}
 
-      <div style={{ background: 'white', border: '1px solid #DBDAD7', borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(32,82,81,0.06)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-          <thead>
-            <tr style={{ background: '#f8f7f4' }}>
-              {['Hari', 'Buka', 'Jam Buka', 'Jam Tutup', 'Slot (menit)', 'Max/Slot', 'Min Pre-booking'].map((h) => (
-                <th key={h} style={{ textAlign: 'left', padding: '12px 14px', color: '#6b7e7e', fontWeight: 600, borderBottom: '1px solid #DBDAD7', fontSize: 11, textTransform: 'uppercase', letterSpacing: 1 }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {schedule.map((day) => (
-              <tr key={day.dayOfWeek} style={{ borderBottom: '1px solid #f0eeea' }}>
-                <td style={{ padding: '10px 14px', fontWeight: 600, color: '#205251' }}>{DAY_NAMES[day.dayOfWeek]}</td>
-                <td style={{ padding: '10px 14px' }}>
-                  <input type="checkbox" checked={day.isOpen} onChange={(e) => update(day.dayOfWeek, 'isOpen', e.target.checked)} style={{ width: 16, height: 16, cursor: 'pointer' }} />
-                </td>
-                <td style={{ padding: '8px 14px', minWidth: 100 }}>
-                  <input type="time" value={day.openTime} onChange={(e) => update(day.dayOfWeek, 'openTime', e.target.value)} disabled={!day.isOpen} style={{ ...inputStyle, opacity: day.isOpen ? 1 : 0.4 }} />
-                </td>
-                <td style={{ padding: '8px 14px', minWidth: 100 }}>
-                  <input type="time" value={day.closeTime} onChange={(e) => update(day.dayOfWeek, 'closeTime', e.target.value)} disabled={!day.isOpen} style={{ ...inputStyle, opacity: day.isOpen ? 1 : 0.4 }} />
-                </td>
-                <td style={{ padding: '8px 14px', minWidth: 80 }}>
-                  <input type="number" value={day.slotDurationMinutes} onChange={(e) => update(day.dayOfWeek, 'slotDurationMinutes', parseInt(e.target.value, 10))} min="15" max="480" disabled={!day.isOpen} style={{ ...inputStyle, opacity: day.isOpen ? 1 : 0.4 }} />
-                </td>
-                <td style={{ padding: '8px 14px', minWidth: 70 }}>
-                  <input type="number" value={day.maxBookingsPerSlot} onChange={(e) => update(day.dayOfWeek, 'maxBookingsPerSlot', parseInt(e.target.value, 10))} min="1" max="20" disabled={!day.isOpen} style={{ ...inputStyle, opacity: day.isOpen ? 1 : 0.4 }} />
-                </td>
-                <td style={{ padding: '8px 14px', minWidth: 90 }}>
-                  <input type="number" value={day.minPrebookingMinutes} onChange={(e) => update(day.dayOfWeek, 'minPrebookingMinutes', parseInt(e.target.value, 10))} min="0" disabled={!day.isOpen} style={{ ...inputStyle, opacity: day.isOpen ? 1 : 0.4 }} />
-                </td>
+      <section className="table-shell">
+        <div className="table-wrap">
+          <table className="data-table" style={{ minWidth: 900 }}>
+            <thead>
+              <tr>
+                {['Hari', 'Buka', 'Jam Buka', 'Jam Tutup', 'Slot', 'Max/Slot', 'Min Pre-booking'].map((heading) => (
+                  <th key={heading}>{heading}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p style={{ color: '#6b7e7e', fontSize: 12, marginTop: 12 }}>Min Pre-booking = menit minimum sebelum waktu booking (e.g. 120 = minimal pesan 2 jam sebelumnya)</p>
+            </thead>
+            <tbody>
+              {schedule.map((day) => (
+                <tr key={day.dayOfWeek}>
+                  <td style={{ color: 'var(--teal)', fontWeight: 800 }}>{DAY_NAMES[day.dayOfWeek]}</td>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={day.isOpen}
+                      onChange={(e) => update(day.dayOfWeek, 'isOpen', e.target.checked)}
+                      style={{ width: 18, height: 18 }}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="control"
+                      type="time"
+                      value={day.openTime}
+                      onChange={(e) => update(day.dayOfWeek, 'openTime', e.target.value)}
+                      disabled={!day.isOpen}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="control"
+                      type="time"
+                      value={day.closeTime}
+                      onChange={(e) => update(day.dayOfWeek, 'closeTime', e.target.value)}
+                      disabled={!day.isOpen}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="control"
+                      type="number"
+                      value={day.slotDurationMinutes}
+                      onChange={(e) => update(day.dayOfWeek, 'slotDurationMinutes', parseInt(e.target.value, 10))}
+                      min="15"
+                      max="480"
+                      disabled={!day.isOpen}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="control"
+                      type="number"
+                      value={day.maxBookingsPerSlot}
+                      onChange={(e) => update(day.dayOfWeek, 'maxBookingsPerSlot', parseInt(e.target.value, 10))}
+                      min="1"
+                      max="20"
+                      disabled={!day.isOpen}
+                    />
+                  </td>
+                  <td>
+                    <input
+                      className="control"
+                      type="number"
+                      value={day.minPrebookingMinutes}
+                      onChange={(e) => update(day.dayOfWeek, 'minPrebookingMinutes', parseInt(e.target.value, 10))}
+                      min="0"
+                      disabled={!day.isOpen}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <p className="admin-help" style={{ marginTop: 12 }}>
+        Min Pre-booking = menit minimum sebelum waktu booking. Contoh: 120 berarti minimal pesan 2 jam sebelumnya.
+      </p>
     </div>
   );
 }

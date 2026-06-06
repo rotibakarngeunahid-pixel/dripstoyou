@@ -8,11 +8,18 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { lang, setLang, t } = useLanguage();
+  const mobileTabIndex = menuOpen ? 0 : -1;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 16);
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, []);
 
   function closeMenu() {
@@ -77,28 +84,30 @@ export default function Header() {
         aria-hidden={!menuOpen}
         aria-label="Mobile navigation"
       >
-        <a href="#treatments" onClick={closeMenu}>{t.nav.treatments}</a>
-        <a href="#how-to-book" onClick={closeMenu}>{t.nav.howToBook}</a>
-        <a href="#areas" onClick={closeMenu}>{t.nav.coverage}</a>
-        <Link href="/about" onClick={closeMenu}>{t.nav.about}</Link>
-        <Link href="/contact" onClick={closeMenu}>{t.nav.contact}</Link>
+        <a href="#treatments" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.treatments}</a>
+        <a href="#how-to-book" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.howToBook}</a>
+        <a href="#areas" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.coverage}</a>
+        <Link href="/about" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.about}</Link>
+        <Link href="/contact" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.contact}</Link>
 
         <div className="mob-lang-row">
           <button
             onClick={() => { setLang('id'); closeMenu(); }}
             className={`mob-lang-btn${lang === 'id' ? ' active' : ''}`}
+            tabIndex={mobileTabIndex}
           >
             🇮🇩 Indonesia
           </button>
           <button
             onClick={() => { setLang('en'); closeMenu(); }}
             className={`mob-lang-btn${lang === 'en' ? ' active' : ''}`}
+            tabIndex={mobileTabIndex}
           >
             🇬🇧 English
           </button>
         </div>
 
-        <Link href="/booking" className="mob-book-btn" onClick={closeMenu}>
+        <Link href="/booking" className="mob-book-btn" onClick={closeMenu} tabIndex={mobileTabIndex}>
           {t.nav.bookNow}
         </Link>
       </nav>

@@ -1,11 +1,41 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import Header from '@/components/public/Header';
 import { waBookingUrl } from '@/lib/whatsapp';
 
-type Product = { id: string; name: string; priceLabel: string | null; priceAmount: number };
-type Area = { id: string; name: string };
+type ApiResponse<T> = {
+  success?: boolean;
+  message?: string;
+  data?: T;
+  error?: string;
+};
+
+type Product = {
+  id: string;
+  slug: string;
+  name: string;
+  price_label: string | null;
+  price_amount: number;
+};
+
+type Area = {
+  id: string;
+  name: string;
+};
+
+type AvailabilityData = {
+  available: boolean;
+  slots: string[];
+};
+
+type BookingResult = {
+  bookingCode: string;
+  bookingDate: string;
+  bookingTime: string;
+  productName: string;
+};
 
 const LOCATION_TYPES = [
   { value: 'VILLA', label: 'Villa' },
@@ -15,11 +45,30 @@ const LOCATION_TYPES = [
   { value: 'LAINNYA', label: 'Lainnya' },
 ];
 
+function formatPrice(product: Product) {
+  return product.price_label ?? `IDR ${product.price_amount.toLocaleString('id-ID')}`;
+}
+
+function OptionSkeleton() {
+  return (
+    <>
+      {[1, 2, 3, 4].map((item) => (
+        <div className="treatment-option" key={item} aria-hidden="true">
+          <div className="skeleton-line" style={{ width: '72%', marginBottom: 12 }} />
+          <div className="skeleton-line" style={{ width: '48%' }} />
+        </div>
+      ))}
+    </>
+  );
+}
+
 export default function BookingPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [areas, setAreas] = useState<Area[]>([]);
   const [slots, setSlots] = useState<string[]>([]);
+  const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [slotError, setSlotError] = useState('');
 
   const [productId, setProductId] = useState('');
   const [customerName, setCustomerName] = useState('');
@@ -35,34 +84,82 @@ export default function BookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<{ bookingCode: string; waUrl: string } | null>(null);
   const [error, setError] = useState('');
+  const slotRequestRef = useRef(0);
 
   useEffect(() => {
-    fetch('/api/public/products')
-      .then((r) => r.json())
-      .then((d) => setProducts(d.products ?? []));
-    fetch('/api/public/areas')
-      .then((r) => r.json())
-      .then((d) => setAreas([{ id: '', name: 'Pilih area layanan...' }, ...(d.areas ?? [])]));
+    let active = true;
+
+    async function loadFormOptions() {
+      setLoadingInitial(true);
+      setError('');
+
+      try {
+        const [productsRes, areasRes] = await Promise.all([
+          fetch('/api/public/products'),
+          fetch('/api/public/areas'),
+        ]);
+
+        const productsJson = (await productsRes.json()) as ApiResponse<Product[]>;
+        const areasJson = (await areasRes.json()) as ApiResponse<Area[]>;
+
+        if (!productsRes.ok || !Array.isArray(productsJson.data)) {
+          throw new Error(productsJson.message ?? 'Gagal memuat treatment');
+        }
+
+        if (!areasRes.ok || !Array.isArray(areasJson.data)) {
+          throw new Error(areasJson.message ?? 'Gagal memuat area layanan');
+        }
+
+        if (!active) return;
+
+        const nextProducts = productsJson.data;
+        setProducts(nextProducts);
+        setAreas(areasJson.data);
+
+        const requested = new URLSearchParams(window.location.search).get('treatment');
+        if (requested) {
+          const matched = nextProducts.find((product) => (
+            product.slug === requested || product.id === requested
+          ));
+          if (matched) setProductId(matched.id);
+        }
+      } catch (err) {
+        if (!active) return;
+        setError(err instanceof Error ? err.message : 'Gagal memuat data booking. Silakan coba lagi.');
+      } finally {
+        if (active) setLoadingInitial(false);
+      }
+    }
+
+    loadFormOptions();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!bookingDate) { setSlots([]); return; }
-    setLoadingSlots(true);
-    fetch(`/api/public/availability?date=${bookingDate}`)
-      .then((r) => r.json())
-      .then((d) => { setSlots(d.slots ?? []); setBookingTime(''); })
-      .finally(() => setLoadingSlots(false));
-  }, [bookingDate]);
+  const selectedProduct = useMemo(
+    () => products.find((product) => product.id === productId),
+    [productId, products],
+  );
 
-  const selectedProduct = products.find((p) => p.id === productId);
+  const minDate = useMemo(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 1);
+    return date.toISOString().split('T')[0];
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSubmitting(true);
     setError('');
 
-    const area = areas.find((a) => a.id === serviceAreaId);
+    if (!selectedProduct) {
+      setError('Pilih treatment terlebih dahulu.');
+      return;
+    }
+
+    setSubmitting(true);
+    const area = areas.find((item) => item.id === serviceAreaId);
 
     try {
       const res = await fetch('/api/public/bookings', {
@@ -82,15 +179,24 @@ export default function BookingPage() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? 'Gagal membuat booking. Silakan coba via WhatsApp.');
+      const json = (await res.json()) as ApiResponse<BookingResult>;
+      if (!res.ok || !json.data) {
+        setError(json.message ?? json.error ?? 'Gagal membuat booking. Silakan coba via WhatsApp.');
         return;
       }
 
-      const waText = `Halo, saya baru booking via website!\n\nKode Booking: *${data.bookingCode}*\nTreatment: ${selectedProduct?.name}\nTanggal: ${bookingDate} pukul ${bookingTime}\nNama: ${customerName}\nArea: ${area?.name ?? serviceAreaId}`;
+      const waText = [
+        'Halo, saya baru booking via website!',
+        '',
+        `Kode Booking: *${json.data.bookingCode}*`,
+        `Treatment: ${selectedProduct.name}`,
+        `Tanggal: ${bookingDate} pukul ${bookingTime}`,
+        `Nama: ${customerName}`,
+        `Area: ${area?.name ?? serviceAreaId}`,
+      ].join('\n');
+
       setSuccess({
-        bookingCode: data.bookingCode,
+        bookingCode: json.data.bookingCode,
         waUrl: `https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000'}?text=${encodeURIComponent(waText)}`,
       });
     } catch {
@@ -100,179 +206,306 @@ export default function BookingPage() {
     }
   }
 
-  const inputStyle: React.CSSProperties = { width: '100%', padding: '12px 14px', border: '1px solid #DBDAD7', borderRadius: 10, fontSize: 14, boxSizing: 'border-box', background: 'white', outline: 'none', color: '#1e2828' };
-  const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12, color: '#205251', fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 };
-  const minDate = new Date(); minDate.setDate(minDate.getDate() + 1);
+  async function loadSlots(date: string) {
+    const requestId = slotRequestRef.current + 1;
+    slotRequestRef.current = requestId;
+    setLoadingSlots(true);
+    setSlotError('');
+
+    try {
+      const res = await fetch(`/api/public/availability?date=${date}`);
+      const json = (await res.json()) as ApiResponse<AvailabilityData>;
+      if (slotRequestRef.current !== requestId) return;
+
+      const nextSlots = Array.isArray(json.data?.slots) ? json.data.slots : [];
+      setSlots(nextSlots);
+      setBookingTime('');
+      if (nextSlots.length === 0) {
+        setSlotError('Belum ada slot tersedia untuk tanggal ini. Pilih tanggal lain atau hubungi WhatsApp.');
+      }
+    } catch {
+      if (slotRequestRef.current !== requestId) return;
+      setSlots([]);
+      setBookingTime('');
+      setSlotError('Gagal memuat slot waktu. Silakan coba lagi atau hubungi WhatsApp.');
+    } finally {
+      if (slotRequestRef.current === requestId) {
+        setLoadingSlots(false);
+      }
+    }
+  }
+
+  function handleDateChange(value: string) {
+    setBookingDate(value);
+    setSlots([]);
+    setBookingTime('');
+    setSlotError('');
+    if (!value) {
+      slotRequestRef.current += 1;
+      setLoadingSlots(false);
+      return;
+    }
+    void loadSlots(value);
+  }
+
+  function resetForm() {
+    setSuccess(null);
+    setProductId('');
+    setCustomerName('');
+    setCustomerPhone('');
+    setBookingDate('');
+    setBookingTime('');
+    setSlots([]);
+    slotRequestRef.current += 1;
+    setPeopleCount('1');
+    setLocationType('VILLA');
+    setServiceAreaId('');
+    setAddress('');
+    setNotes('');
+    setError('');
+    setSlotError('');
+  }
 
   if (success) {
     return (
-      <main style={{ background: '#F3F0E7', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-        <div style={{ background: 'white', borderRadius: 24, padding: '48px 40px', maxWidth: 480, width: '100%', textAlign: 'center', boxShadow: '0 8px 40px rgba(32,82,81,0.12)' }}>
-          <div style={{ width: 64, height: 64, background: '#dcfce7', borderRadius: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: 28 }}>✓</div>
-          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 26, fontWeight: 700, color: '#205251', marginBottom: 8 }}>
-            Booking Diterima!
-          </h1>
-          <p style={{ color: '#6b7e7e', fontSize: 14, marginBottom: 20 }}>
-            Kode booking Anda:
-          </p>
-          <div style={{ background: '#f0f9f9', border: '1px solid #8EBFBF', borderRadius: 12, padding: '16px 20px', marginBottom: 24, fontFamily: 'monospace', fontSize: 22, fontWeight: 700, color: '#205251', letterSpacing: 2 }}>
-            {success.bookingCode}
+      <>
+        <Header />
+        <main className="page-shell">
+          <div className="center-screen">
+            <div className="surface-card success-card">
+              <div className="success-icon">OK</div>
+              <h1 className="page-title" style={{ color: 'var(--teal)', fontSize: '2rem' }}>
+                Booking Diterima
+              </h1>
+              <p className="field-help" style={{ marginTop: 10 }}>
+                Kode booking Anda:
+              </p>
+              <div className="booking-code">{success.bookingCode}</div>
+              <p className="field-help" style={{ marginBottom: 24 }}>
+                Tim kami akan menghubungi Anda via WhatsApp untuk konfirmasi jadwal.
+              </p>
+              <a className="button button-wa full" href={success.waUrl} target="_blank" rel="noopener noreferrer">
+                Konfirmasi via WhatsApp
+              </a>
+              <button className="button button-secondary full" type="button" onClick={resetForm} style={{ marginTop: 10 }}>
+                Buat Booking Baru
+              </button>
+            </div>
           </div>
-          <p style={{ color: '#6b7e7e', fontSize: 13, lineHeight: 1.7, marginBottom: 28 }}>
-            Tim kami akan menghubungi Anda via WhatsApp untuk konfirmasi jadwal. Klik tombol di bawah untuk mengirim pesan konfirmasi.
-          </p>
-          <a
-            href={success.waUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: 'block', padding: '14px 20px', background: '#25D366', color: 'white', borderRadius: 12, fontSize: 14, fontWeight: 700, textDecoration: 'none', marginBottom: 12 }}
-          >
-            Konfirmasi via WhatsApp
-          </a>
-          <button
-            onClick={() => { setSuccess(null); setProductId(''); setCustomerName(''); setCustomerPhone(''); setBookingDate(''); setBookingTime(''); setNotes(''); }}
-            style={{ background: 'none', border: 'none', color: '#29808B', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}
-          >
-            Buat booking baru
-          </button>
-        </div>
-      </main>
+        </main>
+      </>
     );
   }
 
   return (
-    <main style={{ background: '#F3F0E7', minHeight: '100vh' }}>
-      {/* Hero */}
-      <section style={{ background: 'linear-gradient(135deg, #0e2b2b 0%, #205251 100%)', padding: '64px 24px 48px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, letterSpacing: 3, textTransform: 'uppercase', color: '#8EBFBF', marginBottom: 16 }}>Booking</p>
-        <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 'clamp(1.75rem,4vw,2.5rem)', fontWeight: 700, color: 'white', marginBottom: 12 }}>
-          Pesan IV Therapy
-        </h1>
-        <p style={{ color: 'rgba(255,255,255,.7)', fontSize: 15 }}>
-          Isi form berikut, tim kami akan hadir dalam 30-60 menit.
-        </p>
-      </section>
-
-      <section style={{ maxWidth: 680, margin: '0 auto', padding: '48px 24px 64px' }}>
-        <form onSubmit={handleSubmit}>
-          <div style={{ background: 'white', borderRadius: 20, padding: '32px 28px', boxShadow: '0 4px 24px rgba(32,82,81,0.08)', marginBottom: 20 }}>
-            <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 18, fontWeight: 700, color: '#205251', marginBottom: 20 }}>Pilih Treatment</h2>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-              {products.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setProductId(p.id)}
-                  style={{
-                    padding: '16px 14px',
-                    border: `2px solid ${productId === p.id ? '#205251' : '#DBDAD7'}`,
-                    borderRadius: 12,
-                    background: productId === p.id ? '#f0f9f9' : 'white',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 15, fontWeight: 700, color: '#205251', marginBottom: 4 }}>{p.name}</div>
-                  <div style={{ fontSize: 13, color: '#C9944C', fontWeight: 600 }}>{p.priceLabel ?? `IDR ${p.priceAmount.toLocaleString('id-ID')}`}</div>
-                </button>
-              ))}
-            </div>
+    <>
+      <Header />
+      <main className="page-shell">
+        <section className="page-hero centered">
+          <div className="page-hero-inner">
+            <div className="page-eyebrow">Booking</div>
+            <h1 className="page-title">Pesan IV Therapy</h1>
+            <p className="page-subtitle">
+              Isi form singkat ini. Tim kami akan mengonfirmasi jadwal dan datang ke lokasi Anda di Bali.
+            </p>
           </div>
+        </section>
 
-          <div style={{ background: 'white', borderRadius: 20, padding: '32px 28px', boxShadow: '0 4px 24px rgba(32,82,81,0.08)', marginBottom: 20 }}>
-            <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 18, fontWeight: 700, color: '#205251', marginBottom: 20 }}>Data Diri</h2>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div>
-                <label style={labelStyle}>Nama Lengkap *</label>
-                <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} required placeholder="John Doe" style={inputStyle} />
+        <section className="booking-wrap">
+          <form className="booking-form" onSubmit={handleSubmit}>
+            <div className="form-card">
+              <h2 className="form-card-title">Pilih Treatment</h2>
+              <div className="option-grid" aria-live="polite">
+                {loadingInitial ? (
+                  <OptionSkeleton />
+                ) : (
+                  products.map((product) => (
+                    <button
+                      className={`treatment-option${productId === product.id ? ' active' : ''}`}
+                      key={product.id}
+                      type="button"
+                      onClick={() => setProductId(product.id)}
+                      aria-pressed={productId === product.id}
+                    >
+                      <div className="treatment-option-title">{product.name}</div>
+                      <div className="treatment-option-price">{formatPrice(product)}</div>
+                    </button>
+                  ))
+                )}
               </div>
-              <div>
-                <label style={labelStyle}>No. WhatsApp *</label>
-                <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} required placeholder="+62 812 3456 7890" style={inputStyle} />
-              </div>
-            </div>
-          </div>
-
-          <div style={{ background: 'white', borderRadius: 20, padding: '32px 28px', boxShadow: '0 4px 24px rgba(32,82,81,0.08)', marginBottom: 20 }}>
-            <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 18, fontWeight: 700, color: '#205251', marginBottom: 20 }}>Jadwal & Lokasi</h2>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-              <div>
-                <label style={labelStyle}>Tanggal *</label>
-                <input type="date" value={bookingDate} onChange={(e) => setBookingDate(e.target.value)} required min={minDate.toISOString().split('T')[0]} style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Waktu * {loadingSlots && <span style={{ color: '#8EBFBF', fontSize: 10 }}>Memuat...</span>}</label>
-                <select value={bookingTime} onChange={(e) => setBookingTime(e.target.value)} required disabled={!bookingDate || loadingSlots} style={{ ...inputStyle, cursor: 'pointer' }}>
-                  <option value="">Pilih waktu...</option>
-                  {slots.map((s) => <option key={s} value={s}>{s}</option>)}
-                  {bookingDate && !loadingSlots && slots.length === 0 && <option disabled>Tidak ada slot tersedia</option>}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-              <div>
-                <label style={labelStyle}>Jumlah Orang *</label>
-                <input type="number" value={peopleCount} onChange={(e) => setPeopleCount(e.target.value)} required min="1" max="10" style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Tipe Lokasi *</label>
-                <select value={locationType} onChange={(e) => setLocationType(e.target.value)} required style={{ ...inputStyle, cursor: 'pointer' }}>
-                  {LOCATION_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Area Layanan *</label>
-              <select value={serviceAreaId} onChange={(e) => setServiceAreaId(e.target.value)} required style={{ ...inputStyle, cursor: 'pointer' }}>
-                {areas.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginBottom: 16 }}>
-              <label style={labelStyle}>Alamat Lengkap *</label>
-              <textarea value={address} onChange={(e) => setAddress(e.target.value)} required placeholder="Nama villa/hotel, no. kamar, jalan..." style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }} />
-            </div>
-
-            <div>
-              <label style={labelStyle}>Catatan Tambahan</label>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Kondisi khusus, alergi, atau info tambahan..." style={{ ...inputStyle, minHeight: 64, resize: 'vertical' }} />
-            </div>
-          </div>
-
-          {error && (
-            <div style={{ background: '#fee2e222', border: '1px solid #fca5a5', borderRadius: 12, padding: '14px 16px', color: '#ef4444', fontSize: 13, marginBottom: 16, lineHeight: 1.6 }}>
-              {error}
-              {selectedProduct && (
-                <div style={{ marginTop: 8 }}>
-                  <a href={waBookingUrl(selectedProduct.name, selectedProduct.priceLabel ?? undefined)} target="_blank" rel="noopener noreferrer" style={{ color: '#25D366', fontWeight: 700 }}>
-                    → Pesan langsung via WhatsApp
-                  </a>
-                </div>
+              {!loadingInitial && products.length === 0 && (
+                <p className="field-help" style={{ marginTop: 14 }}>
+                  Treatment belum tersedia. Silakan hubungi WhatsApp untuk booking manual.
+                </p>
               )}
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={submitting || !productId}
-            style={{ width: '100%', padding: '16px', background: '#205251', color: 'white', border: 'none', borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: submitting || !productId ? 'not-allowed' : 'pointer', opacity: submitting || !productId ? 0.7 : 1 }}
-          >
-            {submitting ? 'Memproses...' : 'Kirim Booking'}
-          </button>
+            <div className="form-card">
+              <h2 className="form-card-title">Data Diri</h2>
+              <div className="form-grid">
+                <label className="field">
+                  <span className="field-label">Nama Lengkap *</span>
+                  <input
+                    className="control"
+                    value={customerName}
+                    onChange={(e) => setCustomerName(e.target.value)}
+                    required
+                    placeholder="Nama Anda"
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">No. WhatsApp *</span>
+                  <input
+                    className="control"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    required
+                    inputMode="tel"
+                    placeholder="+62 812 3456 7890"
+                  />
+                </label>
+              </div>
+            </div>
 
-          <p style={{ textAlign: 'center', color: '#6b7e7e', fontSize: 12, marginTop: 14, lineHeight: 1.6 }}>
-            Dengan mengirim form ini, Anda menyetujui{' '}
-            <Link href="/legal/syarat-dan-ketentuan" style={{ color: '#29808B' }}>Syarat & Ketentuan</Link>
-            {' '}dan{' '}
-            <Link href="/legal/kebijakan-privasi" style={{ color: '#29808B' }}>Kebijakan Privasi</Link> kami.
-          </p>
-        </form>
-      </section>
-    </main>
+            <div className="form-card">
+              <h2 className="form-card-title">Jadwal & Lokasi</h2>
+              <div className="form-grid">
+                <label className="field">
+                  <span className="field-label">Tanggal *</span>
+                  <input
+                    className="control"
+                    type="date"
+                    value={bookingDate}
+                    onChange={(e) => handleDateChange(e.target.value)}
+                    required
+                    min={minDate}
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">
+                    Waktu *
+                    {loadingSlots && <span className="inline-loading">Memuat slot</span>}
+                  </span>
+                  <select
+                    className="control"
+                    value={bookingTime}
+                    onChange={(e) => setBookingTime(e.target.value)}
+                    required
+                    disabled={!bookingDate || loadingSlots || slots.length === 0}
+                  >
+                    <option value="">{bookingDate ? 'Pilih waktu...' : 'Pilih tanggal dulu'}</option>
+                    {slots.map((slot) => (
+                      <option key={slot} value={slot}>{slot}</option>
+                    ))}
+                  </select>
+                  {slotError && <span className="field-help">{slotError}</span>}
+                </label>
+
+                <label className="field">
+                  <span className="field-label">Jumlah Orang *</span>
+                  <input
+                    className="control"
+                    type="number"
+                    value={peopleCount}
+                    onChange={(e) => setPeopleCount(e.target.value)}
+                    required
+                    min="1"
+                    max="10"
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">Tipe Lokasi *</span>
+                  <select
+                    className="control"
+                    value={locationType}
+                    onChange={(e) => setLocationType(e.target.value)}
+                    required
+                  >
+                    {LOCATION_TYPES.map((type) => (
+                      <option key={type.value} value={type.value}>{type.label}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="field full">
+                  <span className="field-label">Area Layanan *</span>
+                  <select
+                    className="control"
+                    value={serviceAreaId}
+                    onChange={(e) => setServiceAreaId(e.target.value)}
+                    required
+                    disabled={loadingInitial || areas.length === 0}
+                  >
+                    <option value="">{loadingInitial ? 'Memuat area...' : 'Pilih area layanan...'}</option>
+                    {areas.map((area) => (
+                      <option key={area.id} value={area.id}>{area.name}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="field full">
+                  <span className="field-label">Alamat Lengkap *</span>
+                  <textarea
+                    className="control"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    required
+                    placeholder="Nama villa/hotel, no. kamar, jalan..."
+                  />
+                </label>
+
+                <label className="field full">
+                  <span className="field-label">Catatan Tambahan</span>
+                  <textarea
+                    className="control"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Kondisi khusus, alergi, atau info tambahan..."
+                  />
+                </label>
+              </div>
+            </div>
+
+            {error && (
+              <div className="alert alert-error">
+                {error}
+                {selectedProduct && (
+                  <div style={{ marginTop: 8 }}>
+                    <a
+                      href={waBookingUrl(selectedProduct.name, selectedProduct.price_label ?? undefined)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#167a3f', fontWeight: 800 }}
+                    >
+                      Pesan langsung via WhatsApp
+                    </a>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              className={`button button-primary full${submitting ? ' loading' : ''}`}
+              type="submit"
+              disabled={submitting || loadingInitial || !productId}
+            >
+              {submitting ? 'Memproses Booking' : 'Kirim Booking'}
+            </button>
+
+            <p className="field-help" style={{ textAlign: 'center' }}>
+              Dengan mengirim form ini, Anda menyetujui{' '}
+              <Link href="/legal/terms-conditions" style={{ color: 'var(--ocean)', fontWeight: 700 }}>
+                Syarat & Ketentuan
+              </Link>{' '}
+              dan{' '}
+              <Link href="/legal/privacy-policy" style={{ color: 'var(--ocean)', fontWeight: 700 }}>
+                Kebijakan Privasi
+              </Link>
+              .
+            </p>
+          </form>
+        </section>
+      </main>
+    </>
   );
 }

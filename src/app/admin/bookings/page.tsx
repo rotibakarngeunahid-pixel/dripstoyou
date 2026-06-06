@@ -4,19 +4,19 @@ import { getSession } from '@/lib/session';
 type BookingStatus = 'BARU' | 'KONFIRMASI' | 'DIPROSES' | 'SELESAI' | 'DIBATALKAN';
 
 const STATUS_LABELS: Record<BookingStatus, string> = {
-  BARU:       'Baru',
+  BARU: 'Baru',
   KONFIRMASI: 'Konfirmasi',
-  DIPROSES:   'Diproses',
-  SELESAI:    'Selesai',
+  DIPROSES: 'Diproses',
+  SELESAI: 'Selesai',
   DIBATALKAN: 'Dibatalkan',
 };
 
 const STATUS_COLORS: Record<BookingStatus, string> = {
-  BARU:       '#C9944C',
-  KONFIRMASI: '#29808B',
-  DIPROSES:   '#8EBFBF',
-  SELESAI:    '#25D366',
-  DIBATALKAN: '#ef4444',
+  BARU: '#b8833e',
+  KONFIRMASI: '#276f73',
+  DIPROSES: '#5e9c98',
+  SELESAI: '#1b8f4d',
+  DIBATALKAN: '#c0392b',
 };
 
 interface Booking {
@@ -40,6 +40,7 @@ async function getBookings(token: string): Promise<Booking[]> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bookings.php?limit=100`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return [];
     const json = await res.json();
@@ -49,6 +50,14 @@ async function getBookings(token: string): Promise<Booking[]> {
   }
 }
 
+function formatDate(value: string, withYear = true) {
+  return new Date(value).toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    ...(withYear ? { year: 'numeric' as const } : {}),
+  });
+}
+
 export default async function BookingsPage() {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
@@ -56,57 +65,57 @@ export default async function BookingsPage() {
   const bookings = await getBookings(session.adminToken);
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: 1400, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
+    <div className="admin-page wide">
+      <div className="admin-page-head">
         <div>
-          <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 28, fontWeight: 700, color: '#205251', marginBottom: 4 }}>Bookings</h1>
-          <p style={{ color: '#6b7e7e', fontSize: 14 }}>{bookings.length} booking ditampilkan</p>
+          <h1 className="admin-title">Bookings</h1>
+          <p className="admin-subtitle">{bookings.length} booking ditampilkan</p>
         </div>
       </div>
 
-      <div style={{ background: 'white', border: '1px solid #DBDAD7', borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(32,82,81,0.06)' }}>
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <section className="table-shell">
+        <div className="table-wrap">
+          <table className="data-table" style={{ minWidth: 1080 }}>
             <thead>
-              <tr style={{ background: '#f8f7f4' }}>
-                {['Kode', 'Pelanggan', 'No. HP', 'Treatment', 'Tanggal', 'Waktu', 'Orang', 'Area', 'Status', 'Dibuat'].map((h) => (
-                  <th key={h} style={{ textAlign: 'left', padding: '12px 14px', color: '#6b7e7e', fontWeight: 600, borderBottom: '1px solid #DBDAD7', fontSize: 11, textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>{h}</th>
+              <tr>
+                {['Kode', 'Pelanggan', 'No. HP', 'Treatment', 'Tanggal', 'Waktu', 'Orang', 'Area', 'Status', 'Dibuat'].map((heading) => (
+                  <th key={heading}>{heading}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {bookings.map((b) => {
-                const statusColor = STATUS_COLORS[b.status] ?? '#999';
+              {bookings.map((booking) => {
+                const color = STATUS_COLORS[booking.status] ?? '#667676';
                 return (
-                  <tr key={b.id} style={{ borderBottom: '1px solid #f0eeea' }}>
-                    <td style={{ padding: '10px 14px', fontWeight: 600, color: '#205251', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{b.booking_code}</td>
-                    <td style={{ padding: '10px 14px', color: '#1e2828', whiteSpace: 'nowrap' }}>{b.customer_name}</td>
-                    <td style={{ padding: '10px 14px', color: '#6b7e7e', fontFamily: 'monospace' }}>···{b.customer_phone_last4}</td>
-                    <td style={{ padding: '10px 14px', color: '#1e2828', whiteSpace: 'nowrap' }}>{b.product_name}</td>
-                    <td style={{ padding: '10px 14px', color: '#6b7e7e', whiteSpace: 'nowrap' }}>
-                      {new Date(b.booking_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  <tr key={booking.id}>
+                    <td className="mono" style={{ color: 'var(--teal)', fontWeight: 800 }}>
+                      {booking.booking_code}
                     </td>
-                    <td style={{ padding: '10px 14px', color: '#6b7e7e' }}>{b.booking_time}</td>
-                    <td style={{ padding: '10px 14px', color: '#6b7e7e', textAlign: 'center' }}>{b.people_count}</td>
-                    <td style={{ padding: '10px 14px', color: '#6b7e7e', whiteSpace: 'nowrap' }}>{b.service_area_name ?? b.location_type}</td>
-                    <td style={{ padding: '10px 14px' }}>
-                      <span style={{ background: statusColor + '22', color: statusColor, padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, border: `1px solid ${statusColor}44`, whiteSpace: 'nowrap' }}>
-                        {STATUS_LABELS[b.status] ?? b.status}
+                    <td>{booking.customer_name}</td>
+                    <td className="mono muted-small">...{booking.customer_phone_last4}</td>
+                    <td>{booking.product_name}</td>
+                    <td className="muted-small">{formatDate(booking.booking_date)}</td>
+                    <td className="muted-small">{booking.booking_time}</td>
+                    <td className="muted-small">{booking.people_count}</td>
+                    <td className="muted-small">{booking.service_area_name ?? booking.location_type}</td>
+                    <td>
+                      <span className="status-pill" style={{ color, background: `${color}18` }}>
+                        {STATUS_LABELS[booking.status] ?? booking.status}
                       </span>
                     </td>
-                    <td style={{ padding: '10px 14px', color: '#6b7e7e', whiteSpace: 'nowrap', fontSize: 11 }}>
-                      {new Date(b.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
-                    </td>
+                    <td className="muted-small">{formatDate(booking.created_at, false)}</td>
                   </tr>
                 );
               })}
               {bookings.length === 0 && (
-                <tr><td colSpan={10} style={{ padding: '32px 14px', textAlign: 'center', color: '#6b7e7e' }}>Belum ada booking</td></tr>
+                <tr>
+                  <td colSpan={10} className="empty-state">Belum ada booking</td>
+                </tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

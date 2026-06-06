@@ -1,6 +1,6 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import Link from 'next/link';
 
 interface RecentBooking {
   booking_code: string;
@@ -24,6 +24,7 @@ async function getDashboardData(token: string): Promise<DashboardData | null> {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/dashboard.php`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return null;
     const json = await res.json();
@@ -33,6 +34,22 @@ async function getDashboardData(token: string): Promise<DashboardData | null> {
   }
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  BARU: '#b8833e',
+  KONFIRMASI: '#276f73',
+  DIPROSES: '#5e9c98',
+  SELESAI: '#1b8f4d',
+  DIBATALKAN: '#c0392b',
+};
+
+function formatDate(value: string) {
+  return new Date(value).toLocaleDateString('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 export default async function DashboardPage() {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
@@ -40,83 +57,79 @@ export default async function DashboardPage() {
   const data = await getDashboardData(session.adminToken);
   if (!data) redirect('/admin/login');
 
-  const { totalBookings, pendingBookings, todayBookings, recentBookings } = data;
-
-  const statusColors: Record<string, string> = {
-    BARU:        '#C9944C',
-    KONFIRMASI:  '#29808B',
-    DIPROSES:    '#8EBFBF',
-    SELESAI:     '#25D366',
-    DIBATALKAN:  '#ef4444',
-  };
+  const stats = [
+    { label: 'Total Bookings', value: data.totalBookings, color: 'var(--teal)' },
+    { label: 'Menunggu Konfirmasi', value: data.pendingBookings, color: 'var(--gold)' },
+    { label: 'Booking Hari Ini', value: data.todayBookings, color: 'var(--ocean)' },
+  ];
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: 1200, margin: '0 auto' }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 28, fontWeight: 700, color: '#205251', marginBottom: 4 }}>
-          Dashboard
-        </h1>
-        <p style={{ color: '#6b7e7e', fontSize: 14 }}>Welcome back, {session.name}</p>
+    <div className="admin-page">
+      <div className="admin-page-head">
+        <div>
+          <h1 className="admin-title">Dashboard</h1>
+          <p className="admin-subtitle">Welcome back, {session.name}</p>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20, marginBottom: 36 }}>
-        {[
-          { label: 'Total Bookings',          value: totalBookings,   color: '#205251' },
-          { label: 'Menunggu Konfirmasi',      value: pendingBookings, color: '#C9944C' },
-          { label: 'Booking Hari Ini',         value: todayBookings,   color: '#29808B' },
-        ].map((stat) => (
-          <div key={stat.label} style={{ background: 'white', border: '1px solid #DBDAD7', borderRadius: 16, padding: '24px 20px', boxShadow: '0 2px 8px rgba(32,82,81,0.06)' }}>
-            <div style={{ fontSize: 36, fontWeight: 700, color: stat.color, fontFamily: 'Playfair Display, Georgia, serif', marginBottom: 4 }}>
-              {stat.value}
-            </div>
-            <div style={{ fontSize: 13, color: '#6b7e7e' }}>{stat.label}</div>
+      <div className="admin-stat-grid">
+        {stats.map((stat) => (
+          <div className="admin-card" key={stat.label}>
+            <div className="admin-stat-value" style={{ color: stat.color }}>{stat.value}</div>
+            <div className="admin-stat-label">{stat.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Recent Bookings */}
-      <div style={{ background: 'white', border: '1px solid #DBDAD7', borderRadius: 16, padding: 24, boxShadow: '0 2px 8px rgba(32,82,81,0.06)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 20, fontWeight: 600, color: '#205251' }}>
-            Booking Terbaru
-          </h2>
-          <Link href="/admin/bookings" style={{ fontSize: 13, color: '#29808B', fontWeight: 500 }}>
-            Lihat semua →
+      <section className="table-shell">
+        <div className="table-head">
+          <h2 className="admin-card-title">Booking Terbaru</h2>
+          <Link href="/admin/bookings" className="icon-link">
+            Lihat semua
           </Link>
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div className="table-wrap">
+          <table className="data-table">
             <thead>
               <tr>
-                {['Kode', 'Pelanggan', 'Treatment', 'Tanggal', 'Waktu', 'Status'].map((h) => (
-                  <th key={h} style={{ textAlign: 'left', padding: '8px 12px', color: '#6b7e7e', fontWeight: 600, borderBottom: '1px solid #DBDAD7', fontSize: 11, textTransform: 'uppercase', letterSpacing: '1px' }}>{h}</th>
+                {['Kode', 'Pelanggan', 'Treatment', 'Tanggal', 'Waktu', 'Status'].map((heading) => (
+                  <th key={heading}>{heading}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {recentBookings.map((b) => (
-                <tr key={b.booking_code} style={{ borderBottom: '1px solid #f0eeea' }}>
-                  <td style={{ padding: '10px 12px', fontWeight: 600, color: '#205251', fontFamily: 'monospace' }}>{b.booking_code}</td>
-                  <td style={{ padding: '10px 12px', color: '#1e2828' }}>{b.customer_name} <span style={{ color: '#999', fontSize: 11 }}>···{b.customer_phone_last4}</span></td>
-                  <td style={{ padding: '10px 12px', color: '#1e2828' }}>{b.product_name}</td>
-                  <td style={{ padding: '10px 12px', color: '#6b7e7e' }}>{new Date(b.booking_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                  <td style={{ padding: '10px 12px', color: '#6b7e7e' }}>{b.booking_time}</td>
-                  <td style={{ padding: '10px 12px' }}>
-                    <span style={{ background: (statusColors[b.status] ?? '#999') + '22', color: statusColors[b.status] ?? '#999', padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 600, border: `1px solid ${(statusColors[b.status] ?? '#999')}44` }}>
-                      {b.status}
-                    </span>
-                  </td>
+              {data.recentBookings.map((booking) => {
+                const color = STATUS_COLORS[booking.status] ?? '#667676';
+                return (
+                  <tr key={booking.booking_code}>
+                    <td className="mono" style={{ color: 'var(--teal)', fontWeight: 800 }}>
+                      {booking.booking_code}
+                    </td>
+                    <td>
+                      {booking.customer_name}{' '}
+                      <span className="muted-small">...{booking.customer_phone_last4}</span>
+                    </td>
+                    <td>{booking.product_name}</td>
+                    <td className="muted-small">{formatDate(booking.booking_date)}</td>
+                    <td className="muted-small">{booking.booking_time}</td>
+                    <td>
+                      <span className="status-pill" style={{ color, background: `${color}18` }}>
+                        {booking.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+              {data.recentBookings.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="empty-state">Belum ada booking</td>
                 </tr>
-              ))}
-              {recentBookings.length === 0 && (
-                <tr><td colSpan={6} style={{ padding: '24px 12px', textAlign: 'center', color: '#6b7e7e' }}>Belum ada booking</td></tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
