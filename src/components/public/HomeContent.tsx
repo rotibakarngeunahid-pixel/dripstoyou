@@ -105,7 +105,7 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
   const displayProducts = homepageProducts && homepageProducts.length > 0 ? homepageProducts : FALLBACK_PRODUCTS;
   const displayAreas    = serviceAreas && serviceAreas.length > 0
     ? serviceAreas.filter((a) => a.isActive)
-    : FALLBACK_AREAS;
+    : [];
 
   return (
     <main>
@@ -284,7 +284,7 @@ function ExperienceGallerySection() {
   const images = [BRAND.photo2, BRAND.photo3, BRAND.photo4, BRAND.photo5];
   
   return (
-    <section className="sec gallery-sec" id="gallery">
+    <section className="gallery-sec" id="gallery">
       <div className="sec-inner">
         <div className="sec-hdr centered reveal">
           <div className="sec-eyebrow">Premium Experience</div>
@@ -424,6 +424,8 @@ function HowToBookSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
 function ServiceAreasSection({ t, areas }: { t: ReturnType<typeof useLanguage>['t']; areas: ServiceAreaData[] }) {
   const POPULAR_NAMES = new Set(['Seminyak', 'Canggu', 'Ubud', 'Nusa Dua']);
 
+  if (!areas || areas.length === 0) return null;
+
   return (
     <section className="areas-sec" id="areas">
       <div className="areas-orb areas-orb-1" aria-hidden="true" />
@@ -439,22 +441,7 @@ function ServiceAreasSection({ t, areas }: { t: ReturnType<typeof useLanguage>['
           {t.areas.desc}
         </p>
 
-        <div className="areas-stats">
-          <div>
-            <div className="area-stat-num">{areas.length}</div>
-            <div className="area-stat-lbl">{t.areas.areaCount}</div>
-          </div>
-          <div>
-            <div className="area-stat-num">60<sub>min</sub></div>
-            <div className="area-stat-lbl">{t.areas.responseTime}</div>
-          </div>
-          <div>
-            <div className="area-stat-num">100%</div>
-            <div className="area-stat-lbl">{t.areas.coverage}</div>
-          </div>
-        </div>
-
-        <div className="areas-live-badge">
+        <div className="areas-live-badge" style={{ marginTop: 24 }}>
           <span className="live-dot" />
           {t.areas.liveService}
         </div>
