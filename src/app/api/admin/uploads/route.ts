@@ -56,8 +56,13 @@ export const POST = adminApiHandler('products:write', async (req: NextRequest) =
   const filename  = `${randomUUID()}${ext}`;
   const uploadDir = join(process.cwd(), 'public', 'uploads', 'products');
 
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(join(uploadDir, filename), buffer);
+  try {
+    await mkdir(uploadDir, { recursive: true });
+    await writeFile(join(uploadDir, filename), buffer);
+  } catch (fsErr) {
+    const msg = fsErr instanceof Error ? fsErr.message : 'File write failed';
+    return NextResponse.json({ error: `Storage error: ${msg}` }, { status: 500 });
+  }
 
   const publicUrl = `/uploads/products/${filename}`;
   return NextResponse.json({ success: true, data: { publicUrl, mimeType: mime } });

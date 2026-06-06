@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 
 export type Lang = 'id' | 'en';
 
@@ -238,7 +238,19 @@ const LanguageContext = createContext<LangCtx>({
 });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>('en');
+  const [lang, setLangState] = useState<Lang>('en');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('drip-lang') as Lang | null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (saved === 'id' || saved === 'en') setLangState(saved);
+  }, []);
+
+  const setLang = useCallback((l: Lang) => {
+    localStorage.setItem('drip-lang', l);
+    setLangState(l);
+  }, []);
+
   return (
     <LanguageContext.Provider value={{ lang, setLang, t: translations[lang] }}>
       {children}

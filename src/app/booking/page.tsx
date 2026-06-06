@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
+import { useLanguage } from '@/contexts/language';
 
 /* ─── Types ─── */
 type ApiResponse<T> = { success?: boolean; message?: string; data?: T; error?: string };
@@ -35,15 +36,197 @@ type FormState = {
   notes: string;
 };
 
-/* ─── Constants ─── */
-const LOC_TYPES = [
-  { v: 'VILLA',   l: 'Villa' },
-  { v: 'HOTEL',   l: 'Hotel' },
-  { v: 'RUMAH',   l: 'Rumah' },
-  { v: 'AIRBNB',  l: 'Airbnb' },
-  { v: 'LAINNYA', l: 'Lainnya' },
-] as const;
+/* ─── Translations ─── */
+interface BK {
+  stepLabels: string[];
+  locTypes: { v: string; l: string }[];
+  step1Title: string; step1Sub: string; step1Next: string; step1Empty: string;
+  schedTitle: string; schedSub: string;
+  locTitle: string; locSub: string;
+  dateLabel: string; timeLabel: string; loadingSlots: string;
+  noSlots: string; slotHint: string;
+  peopleLabel: string; locTypeLabel: string;
+  areaLabel: string; areaDefault: string;
+  addressLabel: string; addressPlaceholder: string;
+  step3Title: string; step3Sub: string;
+  nameLabel: string; namePlaceholder: string;
+  phoneLabel: string; phonePlaceholder: string;
+  notesLabel: string; notesPlaceholder: string;
+  agree: (terms: React.ReactNode, privacy: React.ReactNode) => React.ReactNode;
+  btnBack: string; btnNext2: string; btnSubmit: string; btnSubmitting: string;
+  sidebarTitle: string; sidebarEmpty: string;
+  sidebarDate: string; sidebarTime: string; sidebarArea: string;
+  sidebarLoc: string; sidebarPeople: string;
+  sidebarTotal: string; sidebarNote: string;
+  waQuestion: string; waLink: string; waCaption: string;
+  successTitle: string; successSub: string; codeLabel: string;
+  btnWa: string; btnNew: string;
+  waMsg: string; waDateLabel: string; waNameLabel: string; waAreaLabel: string;
+  heroEyebrow: string; heroh1: string; heroh1em: string; heroP: string; heroPills: string[];
+  summaryEyebrow: string;
+  people1: (n: number) => string;
+  errNoTreatment: string; errLoad: string; errSubmit: string; errNetwork: string;
+  detailLabels: string[];
+}
 
+const BK_TEXT: Record<'en' | 'id', BK> = {
+  en: {
+    stepLabels: ['Treatment', 'Schedule', 'Details'],
+    locTypes: [
+      { v: 'VILLA',   l: 'Villa' },
+      { v: 'HOTEL',   l: 'Hotel' },
+      { v: 'RUMAH',   l: 'Home' },
+      { v: 'AIRBNB',  l: 'Airbnb' },
+      { v: 'LAINNYA', l: 'Other' },
+    ],
+    step1Title: 'Choose Your Treatment',
+    step1Sub: 'Each drip is formulated for your specific need',
+    step1Next: 'Continue to Schedule',
+    step1Empty: 'No treatments available. Please contact us via WhatsApp to book manually.',
+    schedTitle: 'Choose Schedule',
+    schedSub: 'Available daily, 08:00–18:00 WITA',
+    locTitle: 'Location',
+    locSub: 'We come to you anywhere in Bali',
+    dateLabel: 'Date *',
+    timeLabel: 'Time *',
+    loadingSlots: ' Loading…',
+    noSlots: 'No slots available for this date. Please choose another date.',
+    slotHint: 'Select a date first.',
+    peopleLabel: 'Number of Guests *',
+    locTypeLabel: 'Location Type *',
+    areaLabel: 'Service Area *',
+    areaDefault: 'Select service area…',
+    addressLabel: 'Full Address *',
+    addressPlaceholder: 'Villa/hotel name, room number, street name…',
+    step3Title: 'Your Details',
+    step3Sub: 'For booking confirmation and WhatsApp contact',
+    nameLabel: 'Full Name *',
+    namePlaceholder: 'Your name',
+    phoneLabel: 'WhatsApp Number *',
+    phonePlaceholder: '+62 812 3456 7890',
+    notesLabel: 'Additional Notes',
+    notesPlaceholder: 'Special conditions, allergies, or other info…',
+    agree: (terms: React.ReactNode, privacy: React.ReactNode) => (
+      <>I agree to the {terms} and {privacy} of Drips To You Bali.</>
+    ),
+    btnBack: 'Back',
+    btnNext2: 'Next: Details',
+    btnSubmit: 'Submit Booking',
+    btnSubmitting: 'Processing…',
+    sidebarTitle: 'Booking Summary',
+    sidebarEmpty: 'Select a treatment to see the summary',
+    sidebarDate: 'Date',
+    sidebarTime: 'Time',
+    sidebarArea: 'Area',
+    sidebarLoc: 'Location',
+    sidebarPeople: 'Guests',
+    sidebarTotal: 'Estimated Total',
+    sidebarNote: 'Final price confirmed via WhatsApp',
+    waQuestion: 'Have a question?',
+    waLink: 'Chat us on WhatsApp',
+    waCaption: '— available 24/7.',
+    successTitle: 'Booking Received!',
+    successSub: 'Our team will contact you via WhatsApp within 30 minutes to confirm your appointment.',
+    codeLabel: 'Your Booking Code',
+    btnWa: 'Confirm via WhatsApp',
+    btnNew: 'Make Another Booking',
+    waMsg: 'Hello! I just made a booking via the website.',
+    waDateLabel: 'Date',
+    waNameLabel: 'Name',
+    waAreaLabel: 'Area',
+    heroEyebrow: 'Mobile IV Therapy · Bali',
+    heroh1: 'Book Your',
+    heroh1em: 'Drip',
+    heroP: 'Three easy steps — choose your treatment, pick a schedule, and our team comes to you.',
+    heroPills: ['✓ Door-to-door', '✓ 45–75 minutes', '✓ Experienced doctors', '✓ Fast confirmation'],
+    summaryEyebrow: 'Summary',
+    people1: (n: number) => `${n} ${n === 1 ? 'person' : 'people'}`,
+    errNoTreatment: 'Please select a treatment first.',
+    errLoad: 'Failed to load data. Please reload the page.',
+    errSubmit: 'Failed to create booking. Please try via WhatsApp.',
+    errNetwork: 'Network error. Please try again or contact us via WhatsApp.',
+    detailLabels: ['Treatment', 'Date', 'Time', 'Area', 'Name', 'Total'],
+  },
+  id: {
+    stepLabels: ['Treatment', 'Jadwal', 'Detail'],
+    locTypes: [
+      { v: 'VILLA',   l: 'Villa' },
+      { v: 'HOTEL',   l: 'Hotel' },
+      { v: 'RUMAH',   l: 'Rumah' },
+      { v: 'AIRBNB',  l: 'Airbnb' },
+      { v: 'LAINNYA', l: 'Lainnya' },
+    ],
+    step1Title: 'Pilih Treatment',
+    step1Sub: 'Setiap drip diformulasikan untuk kebutuhan spesifik Anda',
+    step1Next: 'Lanjut ke Jadwal',
+    step1Empty: 'Treatment belum tersedia. Silakan hubungi WhatsApp untuk booking manual.',
+    schedTitle: 'Pilih Jadwal',
+    schedSub: 'Tersedia setiap hari, 08:00–18:00 WITA',
+    locTitle: 'Lokasi',
+    locSub: 'Kami datang ke tempat Anda di seluruh Bali',
+    dateLabel: 'Tanggal *',
+    timeLabel: 'Waktu *',
+    loadingSlots: ' Memuat…',
+    noSlots: 'Tidak ada slot tersedia untuk tanggal ini. Pilih tanggal lain.',
+    slotHint: 'Pilih tanggal terlebih dahulu.',
+    peopleLabel: 'Jumlah Peserta *',
+    locTypeLabel: 'Tipe Lokasi *',
+    areaLabel: 'Area Layanan *',
+    areaDefault: 'Pilih area layanan…',
+    addressLabel: 'Alamat Lengkap *',
+    addressPlaceholder: 'Nama villa/hotel, nomor kamar, nama jalan…',
+    step3Title: 'Data Diri',
+    step3Sub: 'Untuk konfirmasi jadwal dan pengiriman detail booking',
+    nameLabel: 'Nama Lengkap *',
+    namePlaceholder: 'Nama Anda',
+    phoneLabel: 'No. WhatsApp *',
+    phonePlaceholder: '+62 812 3456 7890',
+    notesLabel: 'Catatan Tambahan',
+    notesPlaceholder: 'Kondisi khusus, alergi, atau info lainnya…',
+    agree: (terms: React.ReactNode, privacy: React.ReactNode) => (
+      <>Saya menyetujui {terms} serta {privacy} Drips To You Bali.</>
+    ),
+    btnBack: 'Kembali',
+    btnNext2: 'Lanjut ke Detail',
+    btnSubmit: 'Kirim Booking',
+    btnSubmitting: 'Memproses…',
+    sidebarTitle: 'Ringkasan Booking',
+    sidebarEmpty: 'Pilih treatment untuk melihat ringkasan',
+    sidebarDate: 'Tanggal',
+    sidebarTime: 'Waktu',
+    sidebarArea: 'Area',
+    sidebarLoc: 'Lokasi',
+    sidebarPeople: 'Peserta',
+    sidebarTotal: 'Total Estimasi',
+    sidebarNote: 'Harga final dikonfirmasi via WhatsApp',
+    waQuestion: 'Ada pertanyaan?',
+    waLink: 'Chat kami di WhatsApp',
+    waCaption: '— siap membantu 24/7.',
+    successTitle: 'Booking Diterima!',
+    successSub: 'Tim kami akan menghubungi Anda via WhatsApp dalam 30 menit untuk konfirmasi jadwal.',
+    codeLabel: 'Kode Booking Anda',
+    btnWa: 'Konfirmasi via WhatsApp',
+    btnNew: 'Buat Booking Baru',
+    waMsg: 'Halo! Saya baru saja booking via website.',
+    waDateLabel: 'Tanggal',
+    waNameLabel: 'Nama',
+    waAreaLabel: 'Area',
+    heroEyebrow: 'Mobile IV Therapy · Bali',
+    heroh1: 'Book Your',
+    heroh1em: 'Drip',
+    heroP: 'Tiga langkah mudah — pilih treatment, tentukan jadwal, dan tim kami datang ke lokasi Anda.',
+    heroPills: ['✓ Door-to-door', '✓ 45–75 menit', '✓ Dokter berpengalaman', '✓ Konfirmasi cepat'],
+    summaryEyebrow: 'Ringkasan',
+    people1: (n: number) => `${n} orang`,
+    errNoTreatment: 'Pilih treatment terlebih dahulu.',
+    errLoad: 'Gagal memuat data. Silakan muat ulang halaman.',
+    errSubmit: 'Gagal membuat booking. Silakan coba via WhatsApp.',
+    errNetwork: 'Network error. Silakan coba lagi atau hubungi via WhatsApp.',
+    detailLabels: ['Treatment', 'Tanggal', 'Waktu', 'Area', 'Nama', 'Total'],
+  },
+};
+
+/* ─── Constants ─── */
 const ALL_TIMES = ['08:00','09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
 
 const GRADIENTS = [
@@ -55,13 +238,11 @@ const GRADIENTS = [
   'linear-gradient(140deg,#6a5caa,#3e307a)',
 ];
 
-const STEP_LABELS = ['Treatment', 'Jadwal', 'Detail'];
-
 /* ─── Utils ─── */
 const fmtIDR = (n: number) => 'IDR ' + n.toLocaleString('id-ID');
 const fmtDate = (s: string) => {
   if (!s) return '';
-  return new Date(s + 'T00:00:00').toLocaleDateString('id-ID', {
+  return new Date(s + 'T00:00:00').toLocaleDateString('en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
 };
@@ -167,11 +348,11 @@ const locIcon: Record<string, React.ReactNode> = {
 };
 
 /* ─── Step Bar ─── */
-function StepBar({ step }: { step: number }) {
+function StepBar({ step, bk }: { step: number; bk: BK }) {
   return (
     <div className="bk-step-bar-wrap">
       <div className="bk-step-bar">
-        {STEP_LABELS.map((lbl, i) => {
+        {bk.stepLabels.map((lbl, i) => {
           const n = i + 1;
           const state = step > n ? 'done' : step === n ? 'active' : '';
           return (
@@ -190,8 +371,9 @@ function StepBar({ step }: { step: number }) {
 
 /* ─── Sidebar ─── */
 function Sidebar({
-  product, productGrad, date, time, areaName, people, locType,
+  bk, product, productGrad, date, time, areaName, people, locType,
 }: {
+  bk: BK;
   product: Product | undefined;
   productGrad: string | undefined;
   date: string;
@@ -200,21 +382,21 @@ function Sidebar({
   people: number;
   locType: string;
 }) {
-  const loc = LOC_TYPES.find(l => l.v === locType);
+  const loc = bk.locTypes.find(l => l.v === locType);
   const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000';
   const rows = [
-    { ic: <IcCal />,    k: 'Tanggal', v: date ? fmtDate(date) : null },
-    { ic: <IcClock />,  k: 'Waktu',   v: time || null },
-    { ic: <IcPin />,    k: 'Area',    v: areaName || null },
-    { ic: <IcHome />,   k: 'Lokasi',  v: loc?.l || null },
-    { ic: <IcPeople />, k: 'Peserta', v: `${people} orang` },
+    { ic: <IcCal />,    k: bk.sidebarDate,   v: date ? fmtDate(date) : null },
+    { ic: <IcClock />,  k: bk.sidebarTime,   v: time || null },
+    { ic: <IcPin />,    k: bk.sidebarArea,   v: areaName || null },
+    { ic: <IcHome />,   k: bk.sidebarLoc,    v: loc?.l || null },
+    { ic: <IcPeople />, k: bk.sidebarPeople, v: bk.people1(people) },
   ].filter(r => r.v);
 
   return (
     <aside className="bk-sidebar bk-desktop-only">
       <div className="bk-sum-card">
         <div className="bk-sum-top">
-          <div className="bk-sum-eyebrow">Ringkasan Booking</div>
+          <div className="bk-sum-eyebrow">{bk.sidebarTitle}</div>
           {product ? (
             <>
               <div className="bk-sum-swatch" style={{ background: productGrad }} />
@@ -225,7 +407,7 @@ function Sidebar({
               )}
             </>
           ) : (
-            <div className="bk-sum-empty">Pilih treatment untuk melihat ringkasan</div>
+            <div className="bk-sum-empty">{bk.sidebarEmpty}</div>
           )}
         </div>
 
@@ -245,10 +427,10 @@ function Sidebar({
 
         {product && (
           <div className="bk-sum-footer">
-            <div className="bk-sum-total-k">Total Estimasi</div>
+            <div className="bk-sum-total-k">{bk.sidebarTotal}</div>
             <div className="bk-sum-total-v">{fmtIDR(product.price_amount * people)}</div>
             {people > 1 && <div className="bk-sum-note">{people} × {fmtIDR(product.price_amount)}</div>}
-            <div className="bk-sum-note" style={{ marginTop: 6 }}>Harga final dikonfirmasi via WhatsApp</div>
+            <div className="bk-sum-note" style={{ marginTop: 6 }}>{bk.sidebarNote}</div>
           </div>
         )}
       </div>
@@ -256,11 +438,11 @@ function Sidebar({
       <div className="bk-wa-nudge">
         <div className="bk-wa-nudge-ic"><IcWA /></div>
         <div className="bk-wa-nudge-txt">
-          Ada pertanyaan?{' '}
+          {bk.waQuestion}{' '}
           <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer">
-            <strong>Chat kami di WhatsApp</strong>
+            <strong>{bk.waLink}</strong>
           </a>{' '}
-          — siap membantu 24/7.
+          {bk.waCaption}
         </div>
       </div>
     </aside>
@@ -269,8 +451,9 @@ function Sidebar({
 
 /* ─── Step 1: Treatment ─── */
 function Step1({
-  products, loading, selectedId, onSelect, onNext,
+  bk, products, loading, selectedId, onSelect, onNext,
 }: {
+  bk: BK;
   products: Product[];
   loading: boolean;
   selectedId: string;
@@ -280,8 +463,8 @@ function Step1({
   return (
     <div className="bk-fade-in">
       <div className="bk-card">
-        <div className="bk-card-title">Pilih Treatment</div>
-        <div className="bk-card-subtitle">Setiap drip diformulasikan untuk kebutuhan spesifik Anda</div>
+        <div className="bk-card-title">{bk.step1Title}</div>
+        <div className="bk-card-subtitle">{bk.step1Sub}</div>
         <div className="bk-tc-grid">
           {loading
             ? [1, 2, 3, 4].map(i => (
@@ -317,21 +500,19 @@ function Step1({
                       <div className="bk-tc-name">{p.name}</div>
                       {p.short_description && <div className="bk-tc-desc">{p.short_description}</div>}
                       <div className="bk-tc-price">{formatPrice(p)}</div>
-                      {p.duration_minutes && <div className="bk-tc-dur">{p.duration_minutes} menit</div>}
+                      {p.duration_minutes && <div className="bk-tc-dur">{p.duration_minutes} min</div>}
                     </div>
                   </button>
                 );
               })}
         </div>
         {!loading && products.length === 0 && (
-          <p className="field-help" style={{ marginTop: 16 }}>
-            Treatment belum tersedia. Silakan hubungi WhatsApp untuk booking manual.
-          </p>
+          <p className="field-help" style={{ marginTop: 16 }}>{bk.step1Empty}</p>
         )}
       </div>
       <div className="bk-form-actions" style={{ marginTop: 14 }}>
         <button className="bk-btn bk-btn-primary" onClick={onNext} disabled={!selectedId}>
-          Lanjut ke Jadwal <IcArrowRight />
+          {bk.step1Next} <IcArrowRight />
         </button>
       </div>
     </div>
@@ -340,8 +521,9 @@ function Step1({
 
 /* ─── Step 2: Schedule + Location ─── */
 function Step2({
-  form, setForm, areas, slots, loadingSlots, slotError, onDateChange, onNext, onBack,
+  bk, form, setForm, areas, slots, loadingSlots, slotError, onDateChange, onNext, onBack,
 }: {
+  bk: BK;
   form: FormState;
   setForm: React.Dispatch<React.SetStateAction<FormState>>;
   areas: Area[];
@@ -362,13 +544,12 @@ function Step2({
 
   return (
     <div className="bk-fade-in">
-      {/* Schedule card */}
       <div className="bk-card">
-        <div className="bk-card-title">Pilih Jadwal</div>
-        <div className="bk-card-subtitle">Tersedia setiap hari, 08:00–18:00 WITA</div>
+        <div className="bk-card-title">{bk.schedTitle}</div>
+        <div className="bk-card-subtitle">{bk.schedSub}</div>
         <div className="bk-sched-grid">
           <label className="bk-field">
-            <span className="bk-field-label">Tanggal *</span>
+            <span className="bk-field-label">{bk.dateLabel}</span>
             <input
               type="date"
               className="control"
@@ -380,8 +561,8 @@ function Step2({
 
           <div className="bk-field">
             <span className="bk-field-label">
-              Waktu *
-              {loadingSlots && <span className="bk-loading-text"> Memuat…</span>}
+              {bk.timeLabel}
+              {loadingSlots && <span className="bk-loading-text">{bk.loadingSlots}</span>}
             </span>
             {loadingSlots ? (
               <div className="bk-slot-loading"><span /><span /><span /></div>
@@ -403,47 +584,46 @@ function Step2({
               <div className="bk-alert-err">{slotError}</div>
             ) : (
               <div className="bk-alert-info">
-                {form.date ? 'Memuat slot…' : 'Pilih tanggal terlebih dahulu.'}
+                {form.date ? bk.loadingSlots.trim() : bk.slotHint}
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Location card */}
       <div className="bk-card" style={{ marginTop: 14 }}>
-        <div className="bk-card-title">Lokasi</div>
-        <div className="bk-card-subtitle">Kami datang ke tempat Anda di seluruh Bali</div>
+        <div className="bk-card-title">{bk.locTitle}</div>
+        <div className="bk-card-subtitle">{bk.locSub}</div>
         <div className="bk-loc-fields">
 
           <div className="bk-field">
-            <span className="bk-field-label">Jumlah Peserta *</span>
+            <span className="bk-field-label">{bk.peopleLabel}</span>
             <div className="bk-stepper-wrap">
               <div className="bk-stepper">
                 <button
                   type="button"
                   className="bk-stepper-btn"
                   onClick={() => setForm(f => ({ ...f, people: Math.max(1, f.people - 1) }))}
-                  aria-label="Kurangi"
+                  aria-label="Decrease"
                 >−</button>
                 <div className="bk-stepper-val">{form.people}</div>
                 <button
                   type="button"
                   className="bk-stepper-btn"
                   onClick={() => setForm(f => ({ ...f, people: Math.min(10, f.people + 1) }))}
-                  aria-label="Tambah"
+                  aria-label="Increase"
                 >+</button>
               </div>
               {form.people > 1 && (
-                <span className="bk-people-badge">{form.people} orang</span>
+                <span className="bk-people-badge">{bk.people1(form.people)}</span>
               )}
             </div>
           </div>
 
           <div className="bk-field">
-            <span className="bk-field-label">Tipe Lokasi *</span>
+            <span className="bk-field-label">{bk.locTypeLabel}</span>
             <div className="bk-loc-wrap">
-              {LOC_TYPES.map(lt => (
+              {bk.locTypes.map(lt => (
                 <button
                   key={lt.v}
                   type="button"
@@ -457,13 +637,13 @@ function Step2({
           </div>
 
           <div className="bk-field">
-            <span className="bk-field-label">Area Layanan *</span>
+            <span className="bk-field-label">{bk.areaLabel}</span>
             <select
               className="control bk-select"
               value={form.areaId}
               onChange={e => setForm(f => ({ ...f, areaId: e.target.value }))}
             >
-              <option value="">Pilih area layanan…</option>
+              <option value="">{bk.areaDefault}</option>
               {areas.map(a => (
                 <option key={a.id} value={a.id}>{a.name}</option>
               ))}
@@ -471,12 +651,12 @@ function Step2({
           </div>
 
           <div className="bk-field">
-            <span className="bk-field-label">Alamat Lengkap *</span>
+            <span className="bk-field-label">{bk.addressLabel}</span>
             <textarea
               className="control"
               rows={3}
               value={form.address}
-              placeholder="Nama villa/hotel, nomor kamar, nama jalan…"
+              placeholder={bk.addressPlaceholder}
               onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
             />
           </div>
@@ -485,10 +665,10 @@ function Step2({
 
       <div className="bk-form-actions" style={{ marginTop: 14 }}>
         <button type="button" className="bk-btn bk-btn-ghost" onClick={onBack}>
-          <IcArrowLeft /> Kembali
+          <IcArrowLeft /> {bk.btnBack}
         </button>
         <button className="bk-btn bk-btn-primary" onClick={onNext} disabled={!canNext}>
-          Lanjut ke Detail <IcArrowRight />
+          {bk.btnNext2} <IcArrowRight />
         </button>
       </div>
     </div>
@@ -497,8 +677,9 @@ function Step2({
 
 /* ─── Step 3: Details + Submit ─── */
 function Step3({
-  form, setForm, product, productGrad, areaName, submitting, error, onBack, onSubmit,
+  bk, form, setForm, product, productGrad, areaName, submitting, error, onBack, onSubmit,
 }: {
+  bk: BK;
   form: FormState;
   setForm: React.Dispatch<React.SetStateAction<FormState>>;
   product: Product | undefined;
@@ -511,41 +692,41 @@ function Step3({
 }) {
   const [agreed, setAgreed] = useState(false);
   const canSubmit = form.name.trim().length > 1 && form.phone.trim().length >= 7 && agreed;
-  const loc = LOC_TYPES.find(l => l.v === form.locType);
+  const loc = bk.locTypes.find(l => l.v === form.locType);
 
   return (
     <form className="bk-fade-in" onSubmit={onSubmit}>
       <div className="bk-card">
-        <div className="bk-card-title">Data Diri</div>
-        <div className="bk-card-subtitle">Untuk konfirmasi jadwal dan pengiriman detail booking</div>
+        <div className="bk-card-title">{bk.step3Title}</div>
+        <div className="bk-card-subtitle">{bk.step3Sub}</div>
         <div className="bk-details-grid">
           <label className="bk-field">
-            <span className="bk-field-label">Nama Lengkap *</span>
+            <span className="bk-field-label">{bk.nameLabel}</span>
             <input
               type="text"
               className="control"
-              placeholder="Nama Anda"
+              placeholder={bk.namePlaceholder}
               value={form.name}
               onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
             />
           </label>
           <label className="bk-field">
-            <span className="bk-field-label">No. WhatsApp *</span>
+            <span className="bk-field-label">{bk.phoneLabel}</span>
             <input
               type="tel"
               className="control"
-              placeholder="+62 812 3456 7890"
+              placeholder={bk.phonePlaceholder}
               inputMode="tel"
               value={form.phone}
               onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
             />
           </label>
           <label className="bk-field bk-field-full">
-            <span className="bk-field-label">Catatan Tambahan</span>
+            <span className="bk-field-label">{bk.notesLabel}</span>
             <textarea
               className="control"
               rows={2}
-              placeholder="Kondisi khusus, alergi, atau info lainnya…"
+              placeholder={bk.notesPlaceholder}
               value={form.notes}
               onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
             />
@@ -553,17 +734,16 @@ function Step3({
         </div>
       </div>
 
-      {/* Mobile booking summary */}
       {product && (
         <div className="bk-mob-sum bk-mobile-only">
           <div className="bk-mob-sum-swatch" style={{ background: productGrad }} />
-          <div className="bk-mob-sum-eyebrow">Ringkasan</div>
+          <div className="bk-mob-sum-eyebrow">{bk.summaryEyebrow}</div>
           <div className="bk-mob-sum-name">{product.name}</div>
           <div className="bk-mob-sum-price">{fmtIDR(product.price_amount * form.people)}</div>
           <div className="bk-mob-sum-divider" />
           {form.date && <div className="bk-mob-sum-row">📅 {fmtDate(form.date)} · {form.time} WITA</div>}
           {areaName && <div className="bk-mob-sum-row">📍 {areaName}{loc ? ` · ${loc.l}` : ''}</div>}
-          <div className="bk-mob-sum-row">👥 {form.people} orang</div>
+          <div className="bk-mob-sum-row">👥 {bk.people1(form.people)}</div>
         </div>
       )}
 
@@ -575,9 +755,10 @@ function Step3({
             onChange={e => setAgreed(e.target.checked)}
           />
           <span className="bk-agree-txt">
-            Saya menyetujui{' '}
-            <Link href="/legal/terms-conditions">Syarat &amp; Ketentuan</Link> serta{' '}
-            <Link href="/legal/privacy-policy">Kebijakan Privasi</Link> Drips To You Bali.
+            {bk.agree(
+              <Link href="/legal/terms-conditions">Terms &amp; Conditions</Link>,
+              <Link href="/legal/privacy-policy">Privacy Policy</Link>,
+            )}
           </span>
         </label>
       </div>
@@ -586,12 +767,12 @@ function Step3({
 
       <div className="bk-form-actions" style={{ marginTop: 14 }}>
         <button type="button" className="bk-btn bk-btn-ghost" onClick={onBack} disabled={submitting}>
-          <IcArrowLeft /> Kembali
+          <IcArrowLeft /> {bk.btnBack}
         </button>
         <button type="submit" className="bk-btn bk-btn-gold" disabled={!canSubmit || submitting}>
           {submitting
-            ? <><span className="bk-spin" /> Memproses…</>
-            : <>Kirim Booking <IcArrowRight /></>}
+            ? <><span className="bk-spin" /> {bk.btnSubmitting}</>
+            : <>{bk.btnSubmit} <IcArrowRight /></>}
         </button>
       </div>
     </form>
@@ -600,8 +781,9 @@ function Step3({
 
 /* ─── Success Screen ─── */
 function SuccessScreen({
-  bookingCode, product, form, areaName, onReset,
+  bk, bookingCode, product, form, areaName, onReset,
 }: {
+  bk: BK;
   bookingCode: string;
   product: Product | undefined;
   form: FormState;
@@ -610,22 +792,22 @@ function SuccessScreen({
 }) {
   const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000';
   const waText = encodeURIComponent([
-    'Halo! Saya baru saja booking via website.',
+    bk.waMsg,
     '',
     `Kode Booking: *${bookingCode}*`,
     `Treatment: ${product?.name ?? ''}`,
-    `Tanggal: ${form.date} pukul ${form.time} WITA`,
-    `Nama: ${form.name}`,
-    `Area: ${areaName}`,
+    `${bk.waDateLabel}: ${form.date} pukul ${form.time} WITA`,
+    `${bk.waNameLabel}: ${form.name}`,
+    `${bk.waAreaLabel}: ${areaName}`,
   ].join('\n'));
 
   const details: [string, string][] = [
-    ['Treatment', product?.name ?? '—'],
-    ['Tanggal',   fmtDate(form.date) || '—'],
-    ['Waktu',     form.time ? form.time + ' WITA' : '—'],
-    ['Area',      areaName || '—'],
-    ['Nama',      form.name],
-    ['Total',     product ? fmtIDR(product.price_amount * form.people) : '—'],
+    [bk.detailLabels[0], product?.name ?? '—'],
+    [bk.detailLabels[1], fmtDate(form.date) || '—'],
+    [bk.detailLabels[2], form.time ? form.time + ' WITA' : '—'],
+    [bk.detailLabels[3], areaName || '—'],
+    [bk.detailLabels[4], form.name],
+    [bk.detailLabels[5], product ? fmtIDR(product.price_amount * form.people) : '—'],
   ];
 
   return (
@@ -636,13 +818,11 @@ function SuccessScreen({
             <polyline points="5,16 12,23 27,9" />
           </svg>
         </div>
-        <div className="bk-success-ttl">Booking Diterima!</div>
-        <div className="bk-success-sub">
-          Tim kami akan menghubungi Anda via WhatsApp dalam 30 menit untuk konfirmasi jadwal.
-        </div>
+        <div className="bk-success-ttl">{bk.successTitle}</div>
+        <div className="bk-success-sub">{bk.successSub}</div>
 
         <div className="bk-code-box">
-          <div className="bk-code-k">Kode Booking Anda</div>
+          <div className="bk-code-k">{bk.codeLabel}</div>
           <div className="bk-code-v">{bookingCode}</div>
         </div>
 
@@ -650,7 +830,7 @@ function SuccessScreen({
           {details.map(([k, v]) => (
             <div className="bk-deet-row" key={k}>
               <span className="bk-deet-k">{k}</span>
-              <span className="bk-deet-v" style={k === 'Total' ? { color: 'var(--gold)' } : {}}>{v}</span>
+              <span className="bk-deet-v" style={k === bk.detailLabels[5] ? { color: 'var(--gold)' } : {}}>{v}</span>
             </div>
           ))}
         </div>
@@ -661,7 +841,7 @@ function SuccessScreen({
           rel="noopener noreferrer"
           className="bk-btn bk-btn-wa bk-btn-full"
         >
-          <IcWA /> Konfirmasi via WhatsApp
+          <IcWA /> {bk.btnWa}
         </a>
         <button
           type="button"
@@ -669,7 +849,7 @@ function SuccessScreen({
           style={{ marginTop: 10 }}
           onClick={onReset}
         >
-          Buat Booking Baru
+          {bk.btnNew}
         </button>
       </div>
     </div>
@@ -678,10 +858,13 @@ function SuccessScreen({
 
 /* ─── Main Page ─── */
 export default function BookingPage() {
+  const { lang } = useLanguage();
+  const bk = BK_TEXT[lang];
+
   const [products, setProducts]         = useState<Product[]>([]);
   const [areas, setAreas]               = useState<Area[]>([]);
   const [slots, setSlots]               = useState<string[]>([]);
-  const [loadingInitial, setLoadingInitial] = useState(true); // true = show skeletons immediately
+  const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotError, setSlotError]       = useState('');
 
@@ -695,7 +878,6 @@ export default function BookingPage() {
 
   const slotReqRef = useRef(0);
 
-  /* Load products + areas on mount */
   useEffect(() => {
     let active = true;
 
@@ -714,15 +896,15 @@ export default function BookingPage() {
       }
       if (Array.isArray(aJson.data)) setAreas(aJson.data);
     }).catch(() => {
-      if (active) setError('Gagal memuat data. Silakan muat ulang halaman.');
+      if (active) setError(bk.errLoad);
     }).finally(() => {
       if (active) setLoadingInitial(false);
     });
 
     return () => { active = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* Load time slots for a date */
   async function loadSlots(date: string) {
     const reqId = ++slotReqRef.current;
     setLoadingSlots(true);
@@ -734,12 +916,12 @@ export default function BookingPage() {
       const next = Array.isArray(json.data?.slots) ? json.data!.slots : [];
       setSlots(next);
       setForm(f => ({ ...f, time: '' }));
-      if (!next.length) setSlotError('Tidak ada slot tersedia untuk tanggal ini. Pilih tanggal lain.');
+      if (!next.length) setSlotError(bk.noSlots);
     } catch {
       if (slotReqRef.current !== reqId) return;
       setSlots([]);
       setForm(f => ({ ...f, time: '' }));
-      setSlotError('Gagal memuat slot waktu. Silakan coba lagi atau hubungi WhatsApp.');
+      setSlotError(bk.errLoad);
     } finally {
       if (slotReqRef.current === reqId) setLoadingSlots(false);
     }
@@ -756,7 +938,7 @@ export default function BookingPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
-    if (!productId) { setError('Pilih treatment terlebih dahulu.'); return; }
+    if (!productId) { setError(bk.errNoTreatment); return; }
     setSubmitting(true);
     try {
       const res  = await fetch('/api/public/bookings', {
@@ -777,12 +959,12 @@ export default function BookingPage() {
       });
       const json = await res.json() as ApiResponse<BookingResult>;
       if (!res.ok || !json.data) {
-        setError(json.message ?? json.error ?? 'Gagal membuat booking. Silakan coba via WhatsApp.');
+        setError(json.message ?? json.error ?? bk.errSubmit);
         return;
       }
       setSuccess({ bookingCode: json.data.bookingCode });
     } catch {
-      setError('Network error. Silakan coba lagi atau hubungi via WhatsApp.');
+      setError(bk.errNetwork);
     } finally {
       setSubmitting(false);
     }
@@ -804,13 +986,13 @@ export default function BookingPage() {
   const productGrad = productIdx >= 0 ? GRADIENTS[productIdx % GRADIENTS.length] : undefined;
   const areaName    = areas.find(a => a.id === form.areaId)?.name ?? '';
 
-  /* Success screen */
   if (success) {
     return (
       <>
         <Header />
         <div style={{ paddingTop: 64 }}>
           <SuccessScreen
+            bk={bk}
             bookingCode={success.bookingCode}
             product={product}
             form={form}
@@ -827,31 +1009,26 @@ export default function BookingPage() {
     <>
       <Header />
       <div style={{ paddingTop: 64 }}>
-        {/* Hero */}
         <section className="bk-hero">
           <div className="bk-hero-glow-1" aria-hidden="true" />
           <div className="bk-hero-glow-2" aria-hidden="true" />
           <div className="bk-hero-inner">
             <div className="bk-hero-eyebrow">
               <span className="bk-hero-dot" aria-hidden="true" />
-              Mobile IV Therapy · Bali
+              {bk.heroEyebrow}
             </div>
-            <h1 className="bk-hero-h1">Book Your <em>Drip</em></h1>
-            <p className="bk-hero-p">
-              Tiga langkah mudah — pilih treatment, tentukan jadwal, dan tim kami datang ke lokasi Anda.
-            </p>
+            <h1 className="bk-hero-h1">{bk.heroh1} <em>{bk.heroh1em}</em></h1>
+            <p className="bk-hero-p">{bk.heroP}</p>
             <div className="bk-hero-pills">
-              {['✓ Door-to-door','✓ 45–75 menit','✓ Dokter berpengalaman','✓ Konfirmasi cepat'].map(pill => (
+              {bk.heroPills.map(pill => (
                 <span className="bk-hero-pill" key={pill}>{pill}</span>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Step progress bar */}
-        <StepBar step={step} />
+        <StepBar step={step} bk={bk} />
 
-        {/* Main layout */}
         <div className="bk-layout">
           <main className="bk-main">
             {error && step === 1 && (
@@ -860,6 +1037,7 @@ export default function BookingPage() {
 
             {step === 1 && (
               <Step1
+                bk={bk}
                 products={products}
                 loading={loadingInitial}
                 selectedId={productId}
@@ -869,6 +1047,7 @@ export default function BookingPage() {
             )}
             {step === 2 && (
               <Step2
+                bk={bk}
                 form={form}
                 setForm={setForm}
                 areas={areas}
@@ -882,6 +1061,7 @@ export default function BookingPage() {
             )}
             {step === 3 && (
               <Step3
+                bk={bk}
                 form={form}
                 setForm={setForm}
                 product={product}
@@ -896,6 +1076,7 @@ export default function BookingPage() {
           </main>
 
           <Sidebar
+            bk={bk}
             product={product}
             productGrad={productGrad}
             date={form.date}

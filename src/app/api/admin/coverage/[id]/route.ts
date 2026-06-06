@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
+import { phpProxy } from '@/lib/php-fetch';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,34 +12,26 @@ export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const id = req.nextUrl.pathname.split('/').at(-1)!;
-  const phpRes = await fetch(phpUrl(id), {
-    headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
-    cache: 'no-store',
-  });
-  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
+  return phpProxy(phpUrl(id), { headers: { Authorization: `Bearer ${session.adminToken ?? ''}` } });
 }
 
 export async function PUT(req: NextRequest) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const id = req.nextUrl.pathname.split('/').at(-1)!;
-  const phpRes = await fetch(phpUrl(id), {
+  return phpProxy(phpUrl(id), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.adminToken ?? ''}` },
     body: await req.text(),
-    cache: 'no-store',
   });
-  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
 }
 
 export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const id = req.nextUrl.pathname.split('/').at(-1)!;
-  const phpRes = await fetch(phpUrl(id), {
+  return phpProxy(phpUrl(id), {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
-    cache: 'no-store',
   });
-  return NextResponse.json(await phpRes.json(), { status: phpRes.status });
 }
