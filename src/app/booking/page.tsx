@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { waBookingUrl } from '@/lib/whatsapp';
 
 type Product = { id: string; name: string; priceLabel: string | null; priceAmount: number };
@@ -45,6 +46,7 @@ export default function BookingPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!bookingDate) { setSlots([]); return; }
     setLoadingSlots(true);
     fetch(`/api/public/availability?date=${bookingDate}`)
@@ -265,9 +267,9 @@ export default function BookingPage() {
 
           <p style={{ textAlign: 'center', color: '#6b7e7e', fontSize: 12, marginTop: 14, lineHeight: 1.6 }}>
             Dengan mengirim form ini, Anda menyetujui{' '}
-            <a href="/legal/syarat-dan-ketentuan" style={{ color: '#29808B' }}>Syarat & Ketentuan</a>
+            <Link href="/legal/syarat-dan-ketentuan" style={{ color: '#29808B' }}>Syarat & Ketentuan</Link>
             {' '}dan{' '}
-            <a href="/legal/kebijakan-privasi" style={{ color: '#29808B' }}>Kebijakan Privasi</a> kami.
+            <Link href="/legal/kebijakan-privasi" style={{ color: '#29808B' }}>Kebijakan Privasi</Link> kami.
           </p>
         </form>
       </section>
