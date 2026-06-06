@@ -5,7 +5,7 @@ import Header from '@/components/public/Header';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Treatments — DRIP TO YOU Bali | Mobile IV Therapy',
+  title: 'Treatments — Drips To You - Bali | Mobile IV Therapy',
   description: 'Pilihan treatment IV therapy on-call terbaik di Bali. Hangover Recovery, Immune Booster, Energy Boost, dan Beauty Glow.',
 };
 

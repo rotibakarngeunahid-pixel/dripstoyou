@@ -39,7 +39,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
         boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
       }}>
         <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 15, fontWeight: 700, color: 'white', flexShrink: 0 }}>
-          DRIP TO YOU{' '}
+          Drips To You - Bali{' '}
           <span style={{
             fontFamily: 'DM Sans, system-ui, sans-serif', fontSize: 10, fontWeight: 400,
             color: '#8EBFBF', letterSpacing: 2, textTransform: 'uppercase', marginLeft: 4,

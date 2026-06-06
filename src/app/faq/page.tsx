@@ -4,8 +4,8 @@ import { waGeneralUrl } from '@/lib/whatsapp';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'FAQ — DRIP TO YOU Bali | Pertanyaan Umum',
-  description: 'Jawaban atas pertanyaan umum seputar layanan IV therapy on-call DRIP TO YOU Bali.',
+  title: 'FAQ — Drips To You - Bali | Pertanyaan Umum',
+  description: 'Jawaban atas pertanyaan umum seputar layanan IV therapy on-call Drips To You - Bali.',
 };
 
 interface Faq { id: string; question: string; answer: string }
@@ -65,7 +65,7 @@ export default async function FaqPage() {
             Tim kami siap membantu Anda melalui WhatsApp.
           </p>
           <a
-            href={waGeneralUrl('Halo, saya punya pertanyaan tentang layanan DRIP TO YOU Bali')}
+            href={waGeneralUrl('Halo, saya punya pertanyaan tentang layanan Drips To You - Bali')}
             target="_blank"
             rel="noopener noreferrer"
             style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: '#25D366', color: 'white', borderRadius: 10, fontSize: 13, fontWeight: 700, textDecoration: 'none' }}

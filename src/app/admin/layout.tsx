@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import AdminLayoutClient from './AdminLayoutClient';
 
 export const metadata: Metadata = {
-  title: 'Admin — DRIP TO YOU Bali',
+  title: 'Admin — Drips To You - Bali',
   robots: 'noindex, nofollow',
 };
 

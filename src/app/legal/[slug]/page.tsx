@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const page     = await getLegalPage(slug);
   if (!page) return { title: 'Not Found' };
-  return { title: `${page.title} — DRIP TO YOU Bali`, robots: 'noindex' };
+  return { title: `${page.title} — Drips To You - Bali`, robots: 'noindex' };
 }
 
 export default async function LegalPageRoute({ params }: { params: Promise<{ slug: string }> }) {

@@ -19,7 +19,7 @@ export interface Translations {
   };
   treatments: {
     eyebrow: string; title: string; titleEm: string; desc: string;
-    bookNow: string; perSession: string; seeAll: string;
+    bookNow: string; perSession: string; seeAll: string; seeMore: string;
     badge: { popular: string; bestSeller: string; new: string };
     cards: { name: string; detail: string }[];
   };
@@ -32,6 +32,7 @@ export interface Translations {
     areaCount: string; responseTime: string; coverage: string;
     liveService: string; popular: string; active: string;
     ocean: string; north: string;
+    arrivalTime?: string; notInList?: string; contactUs?: string;
   };
   testimonials: {
     eyebrow: string; title: string; titleEm: string; sub: string;
@@ -55,20 +56,21 @@ export const translations: Record<Lang, Translations> = {
       about: 'Tentang', contact: 'Kontak', bookNow: 'Book Sekarang',
     },
     hero: {
-      pill: 'Tersedia di Bali', line1: 'Hidrasi &', line2: 'Pemulihan', lineEm: 'Diantar ke Kamu',
-      sub: 'Mobile IV therapy oleh tim medis bersertifikat — langsung ke villa, hotel, atau Airbnb kamu di seluruh Bali.',
-      bookWa: 'Booking via WhatsApp', seeAll: 'Lihat Semua Treatment',
+      pill: 'Tersedia di Seluruh Bali',
+      line1: 'Hidrasi &', line2: 'Pemulihan', lineEm: 'Diantar ke Kamu',
+      sub: 'Mobile IV therapy oleh tim medis bersertifikat — langsung ke villa, hotel, atau Airbnb kamu di seluruh Bali. Tanpa perlu ke klinik, kami yang datang.',
+      bookWa: 'Konsultasi via WhatsApp', seeAll: 'Lihat Semua Treatment',
     },
     benefits: {
-      fast: 'Respon Cepat', fastDesc: 'Tim tiba dalam 60 menit ke lokasi Anda',
-      licensed: 'Tim Bersertifikat', licensedDesc: 'Tenaga medis & perawat bersertifikat',
-      mobile: 'Layanan Mobile', mobileDesc: 'Datang ke villa, hotel, atau Airbnb',
-      premium: 'Perawatan Premium', premiumDesc: 'Produk & peralatan medis berkualitas',
+      fast: 'Respon Cepat', fastDesc: 'Tim medis tiba dalam 60 menit ke lokasi Anda di Bali',
+      licensed: 'Tim Bersertifikat', licensedDesc: 'Tenaga medis & perawat berlisensi resmi',
+      mobile: 'Layanan Mobile', mobileDesc: 'Kami datang ke villa, hotel, Airbnb, atau mana saja',
+      premium: 'Perawatan Premium', premiumDesc: 'Produk & peralatan medis steril berkualitas tinggi',
     },
     treatments: {
-      eyebrow: 'Treatment Kami', title: 'Rasakan Manfaat', titleEm: 'dalam Hitungan Jam',
-      desc: 'Pilih treatment yang sesuai kebutuhanmu — dari pemulihan hangover hingga energy boost dan glowing skin.',
-      bookNow: 'Book Sekarang', perSession: '/ sesi', seeAll: 'Lihat Semua Treatment',
+      eyebrow: 'Treatment Kami', title: 'Rasakan Manfaatnya', titleEm: 'dalam Hitungan Jam',
+      desc: 'Setiap treatment dirancang oleh tenaga medis profesional untuk membantu mendukung pemulihan, energi, dan kesehatan optimal kamu di Bali.',
+      bookNow: 'Book Sekarang', perSession: '/ sesi', seeAll: 'Lihat Semua Treatment', seeMore: 'Lihat Selengkapnya',
       badge: { popular: 'Populer', bestSeller: 'Terlaris', new: 'Baru' },
       cards: [
         { name: 'Hangover Recovery', detail: 'Rehidrasi cepat · Vitamin B & C · Anti-mual' },
@@ -78,37 +80,38 @@ export const translations: Record<Lang, Translations> = {
       ],
     },
     howToBook: {
-      eyebrow: 'Cara Kerja', title: 'Booking', titleEm: 'dalam 3 Langkah',
-      sub: 'Semudah mengisi form online — tim medis profesional kami siap hadir ke lokasi kamu.',
+      eyebrow: 'Cara Kerja', title: 'Booking', titleEm: 'dalam 3 Langkah Mudah',
+      sub: 'Prosesnya sangat mudah — cukup pilih treatment, isi form, dan tim medis profesional kami akan hadir ke lokasi kamu dalam waktu singkat.',
       steps: [
-        { title: 'Pilih Treatment', desc: 'Browse pilihan IV therapy kami dan tentukan treatment yang paling sesuai dengan kondisi & kebutuhanmu.' },
-        { title: 'Isi Form Booking', desc: 'Isi form booking online — nama, nomor WhatsApp, tanggal, waktu, dan lokasi kamu di Bali.' },
-        { title: 'Tim Datang ke Anda', desc: 'Tim medis profesional tiba dalam 60 menit, siap memberikan treatment terbaik langsung di tempatmu.' },
+        { title: 'Pilih Treatment', desc: 'Jelajahi pilihan IV therapy kami dan tentukan treatment yang paling sesuai dengan kondisi serta kebutuhan kamu saat ini.' },
+        { title: 'Isi Form Booking', desc: 'Isi form booking online dengan nama, nomor WhatsApp, tanggal, waktu, dan alamat lengkap lokasi kamu di Bali.' },
+        { title: 'Tim Datang ke Kamu', desc: 'Tim medis profesional kami tiba dalam 60 menit, membawa semua perlengkapan yang dibutuhkan untuk memberikan treatment terbaik.' },
       ],
     },
     areas: {
-      eyebrow: 'Area Layanan', title: 'Wilayah', titleEm: 'Layanan Kami',
-      desc: 'Kami menjangkau seluruh kawasan wisata utama Bali — dari pantai barat hingga pegunungan Ubud dan semenanjung Bukit.',
-      areaCount: 'Area Layanan', responseTime: 'Waktu Respons', coverage: 'Cakupan Bali Selatan',
+      eyebrow: 'Area Layanan', title: 'Kami Menjangkau', titleEm: 'Seluruh Bali',
+      desc: 'Dari pantai Canggu hingga resort Nusa Dua, dari kawasan budaya Ubud hingga tebing Uluwatu — tim kami siap hadir ke mana pun kamu berada di Bali.',
+      areaCount: 'Area Dilayani', responseTime: 'Waktu Respons', coverage: 'Cakupan Bali Selatan',
       liveService: 'Layanan Aktif · 08:00 – 22:00 WITA',
       popular: '★ Populer', active: 'Aktif', ocean: 'Samudra Hindia', north: 'BALI UTARA',
+      arrivalTime: 'Estimasi tiba', notInList: 'Area kamu tidak ada di list?', contactUs: 'Tanyakan via booking',
     },
     testimonials: {
-      eyebrow: 'Testimoni', title: 'Kata', titleEm: 'Mereka',
-      sub: 'Lebih dari 500 tamu Bali telah merasakan manfaat IV therapy kami.',
+      eyebrow: 'Testimoni', title: 'Apa Kata', titleEm: 'Tamu Kami',
+      sub: 'Lebih dari 500 tamu di seluruh Bali telah mempercayakan pemulihan mereka kepada Drips To You - Bali.',
       cards: [
-        { text: 'Pelayanannya sangat cepat dan profesional. Tim datang ke villa kami dalam 45 menit. Setelah treatment, langsung bisa jalan-jalan lagi! Sangat recommended.', name: 'Sarah Johnson', loc: 'Villa di Seminyak', tag: 'Hangover Recovery' },
-        { text: 'Tried the Hangover Recovery after a night in Canggu. Genuinely felt better within 2 hours. Equipment was clean and the team was super professional. Worth every rupiah!', name: 'James Miller', loc: 'Hotel di Canggu', tag: 'Hangover Recovery' },
-        { text: 'Tim medisnya sangat ramah dan peralatan terlihat steril dan berkualitas tinggi. Harga worth it banget untuk kualitas yang diberikan. Pasti akan repeat!', name: 'Maria Santos', loc: 'Airbnb di Ubud', tag: 'Immune Booster' },
+        { text: 'Pelayanannya luar biasa cepat dan profesional. Tim tiba ke villa kami hanya dalam 45 menit. Setelah treatment Hangover Recovery, saya langsung segar dan bisa lanjut liburan!', name: 'Sarah Johnson', loc: 'Villa di Seminyak', tag: 'Hangover Recovery' },
+        { text: 'Tried the Hangover Recovery after a big night in Canggu. Felt genuinely better within 2 hours. Equipment was clearly sterile and the medical team was super professional. Absolutely worth it!', name: 'James Miller', loc: 'Hotel di Canggu', tag: 'Hangover Recovery' },
+        { text: 'Tim medisnya sangat ramah, peralatan steril, dan kualitasnya jauh melebihi ekspektasi saya. Harga sangat worth it. Sudah jadi andalan setiap kali ke Bali — pasti repeat!', name: 'Maria Santos', loc: 'Airbnb di Ubud', tag: 'Immune Booster' },
       ],
     },
     cta: {
-      badge: 'Tersedia 08.00 – 22.00 WITA', title: 'Siap Merasa', titleEm: 'Lebih Baik?',
-      sub: 'Jangan biarkan dehidrasi atau kelelahan merusak liburan Bali-mu. Tim medis profesional kami siap datang ke tempat kamu berada.',
-      bookNow: 'Book Sekarang', bookWa: 'Booking via WhatsApp', seeAll: 'Lihat Semua Treatment',
+      badge: 'Tersedia 08:00 – 22:00 WITA', title: 'Siap Merasa', titleEm: 'Lebih Baik Sekarang?',
+      sub: 'Jangan biarkan dehidrasi, kelelahan, atau rasa tidak enak badan merusak pengalaman Bali-mu. Tim medis kami siap hadir ke lokasi kamu dalam 60 menit.',
+      bookNow: 'Book Sekarang', bookWa: 'Konsultasi via WhatsApp', seeAll: 'Lihat Semua Treatment',
     },
     footer: {
-      brandDesc: 'Mobile IV Therapy premium yang datang langsung ke villa, hotel, atau Airbnb kamu di seluruh Bali.',
+      brandDesc: 'Layanan mobile IV therapy premium yang hadir langsung ke villa, hotel, atau Airbnb kamu di seluruh Bali. Dipercaya lebih dari 500 tamu.',
       colTreatments: 'Treatment', colInfo: 'Info', colContact: 'Kontak',
       seeAll: 'Lihat Semua →', about: 'Tentang Kami', howToBook: 'Cara Booking',
       faq: 'FAQ', hours: '08:00 – 22:00 WITA',
@@ -121,20 +124,21 @@ export const translations: Record<Lang, Translations> = {
       about: 'About', contact: 'Contact', bookNow: 'Book Now',
     },
     hero: {
-      pill: 'Now Available in Bali', line1: 'Hydration &', line2: 'Recovery', lineEm: 'Delivered to You',
-      sub: 'Mobile IV therapy by certified medical team — delivered to your villa, hotel, or Airbnb across Bali.',
-      bookWa: 'Book via WhatsApp', seeAll: 'See All Treatments',
+      pill: 'Available Across Bali',
+      line1: 'Hydration &', line2: 'Recovery', lineEm: 'Delivered to You',
+      sub: 'Mobile IV therapy by certified medical team — delivered straight to your villa, hotel, or Airbnb anywhere in Bali. No need to go anywhere.',
+      bookWa: 'Consult via WhatsApp', seeAll: 'See All Treatments',
     },
     benefits: {
-      fast: 'Fast Response', fastDesc: 'Team arrives within 60 minutes to your location',
-      licensed: 'Licensed Team', licensedDesc: 'Certified medical staff & registered nurses',
-      mobile: 'Mobile Service', mobileDesc: 'We come to your villa, hotel, or Airbnb',
-      premium: 'Premium Care', premiumDesc: 'High-quality medical products & equipment',
+      fast: 'Fast Response', fastDesc: 'Medical team arrives within 60 minutes to your location',
+      licensed: 'Licensed Team', licensedDesc: 'Certified medical professionals & registered nurses',
+      mobile: 'Mobile Service', mobileDesc: 'We come to your villa, hotel, Airbnb, or anywhere',
+      premium: 'Premium Care', premiumDesc: 'High-quality sterile medical products & equipment',
     },
     treatments: {
-      eyebrow: 'Our Treatments', title: 'Feel Good', titleEm: 'in Hours',
-      desc: 'Choose the treatment that suits your needs — from hangover recovery to energy boost and glowing skin.',
-      bookNow: 'Book Now', perSession: '/ session', seeAll: 'See All Treatments',
+      eyebrow: 'Our Treatments', title: 'Feel the Difference', titleEm: 'in Hours',
+      desc: 'Each treatment is designed by medical professionals to help support your recovery, energy, and overall wellbeing during your Bali stay.',
+      bookNow: 'Book Now', perSession: '/ session', seeAll: 'See All Treatments', seeMore: 'Learn More',
       badge: { popular: 'Popular', bestSeller: 'Best Seller', new: 'New' },
       cards: [
         { name: 'Hangover Recovery', detail: 'Fast rehydration · Vitamin B & C · Anti-nausea' },
@@ -145,36 +149,37 @@ export const translations: Record<Lang, Translations> = {
     },
     howToBook: {
       eyebrow: 'How It Works', title: 'Book in', titleEm: '3 Simple Steps',
-      sub: 'As easy as filling an online form — our professional medical team is ready to come to you.',
+      sub: 'The process is effortless — choose your treatment, fill in the form, and our professional medical team will be at your location in no time.',
       steps: [
-        { title: 'Choose Treatment', desc: 'Browse our IV therapy options and select the treatment best suited for your current condition and needs.' },
-        { title: 'Fill Booking Form', desc: 'Fill out the online booking form — your name, WhatsApp number, preferred date, time, and Bali location.' },
-        { title: 'Team Comes to You', desc: 'Our professional medical team arrives within 60 minutes, ready to deliver the best treatment right at your location.' },
+        { title: 'Choose Treatment', desc: 'Browse our IV therapy options and select the treatment best suited for your current condition and what you need right now.' },
+        { title: 'Fill Booking Form', desc: 'Complete the online booking form with your name, WhatsApp number, preferred date, time, and your Bali address.' },
+        { title: 'Team Comes to You', desc: 'Our certified medical team arrives within 60 minutes, fully equipped to deliver the best treatment right at your location.' },
       ],
     },
     areas: {
-      eyebrow: 'Coverage Area', title: 'Our Service', titleEm: 'Areas',
-      desc: 'We cover all major tourist areas in Bali — from the western beaches to Ubud highlands and the Bukit peninsula.',
-      areaCount: 'Service Areas', responseTime: 'Response Time', coverage: 'South Bali Coverage',
+      eyebrow: 'Coverage Area', title: 'We Cover', titleEm: 'All of Bali',
+      desc: 'From Canggu beach clubs to Nusa Dua resorts, from Ubud rice terraces to Uluwatu cliffs — our team comes wherever you are in Bali.',
+      areaCount: 'Areas Covered', responseTime: 'Response Time', coverage: 'South Bali Coverage',
       liveService: 'Active Service · 08:00 – 22:00 WITA',
       popular: '★ Popular', active: 'Active', ocean: 'Indian Ocean', north: 'NORTH BALI',
+      arrivalTime: 'Est. arrival', notInList: "Your area not on the list?", contactUs: 'Ask via booking',
     },
     testimonials: {
       eyebrow: 'Testimonials', title: 'What Our', titleEm: 'Guests Say',
-      sub: 'Over 500 Bali guests have experienced the benefits of our IV therapy.',
+      sub: 'Over 500 guests across Bali have trusted Drips To You - Bali for their recovery and wellness needs.',
       cards: [
-        { text: 'The service was incredibly fast and professional. The team arrived at our villa in just 45 minutes. After the treatment, we were ready to explore again! Highly recommended.', name: 'Sarah Johnson', loc: 'Villa in Seminyak', tag: 'Hangover Recovery' },
-        { text: 'Tried the Hangover Recovery after a night in Canggu. Genuinely felt better within 2 hours. Equipment was clean and the team was super professional. Worth every rupiah!', name: 'James Miller', loc: 'Hotel in Canggu', tag: 'Hangover Recovery' },
-        { text: 'The medical team was very friendly and the equipment looked sterile and high quality. Absolutely worth it for the quality provided. Will definitely repeat!', name: 'Maria Santos', loc: 'Airbnb in Ubud', tag: 'Immune Booster' },
+        { text: 'The service was incredibly fast and professional. The team arrived at our villa in just 45 minutes. After the Hangover Recovery treatment, I felt completely refreshed — ready to keep exploring!', name: 'Sarah Johnson', loc: 'Villa in Seminyak', tag: 'Hangover Recovery' },
+        { text: 'Tried the Hangover Recovery after a big night in Canggu. Genuinely felt better within 2 hours. Equipment was clearly sterile and the medical team was super professional. Absolutely worth it!', name: 'James Miller', loc: 'Hotel in Canggu', tag: 'Hangover Recovery' },
+        { text: 'The medical team was incredibly friendly and the equipment looked sterile and top quality. Far exceeded my expectations. Absolutely worth every rupiah — this is now my go-to every time I visit Bali!', name: 'Maria Santos', loc: 'Airbnb in Ubud', tag: 'Immune Booster' },
       ],
     },
     cta: {
-      badge: 'Available 08:00 – 22:00 WITA', title: 'Ready to Feel', titleEm: 'Better?',
-      sub: "Don't let dehydration or fatigue ruin your Bali holiday. Our professional medical team is ready to come to you.",
-      bookNow: 'Book Now', bookWa: 'Book via WhatsApp', seeAll: 'See All Treatments',
+      badge: 'Available 08:00 – 22:00 WITA', title: 'Ready to Feel', titleEm: 'Better Right Now?',
+      sub: "Don't let dehydration, fatigue, or illness ruin your Bali experience. Our medical team is ready to come to your location within 60 minutes.",
+      bookNow: 'Book Now', bookWa: 'Consult via WhatsApp', seeAll: 'See All Treatments',
     },
     footer: {
-      brandDesc: 'Premium mobile IV therapy delivered to your villa, hotel, or Airbnb anywhere in Bali.',
+      brandDesc: 'Premium mobile IV therapy delivered to your villa, hotel, or Airbnb across Bali. Trusted by 500+ guests.',
       colTreatments: 'Treatments', colInfo: 'Info', colContact: 'Contact',
       seeAll: 'See All →', about: 'About Us', howToBook: 'How to Book',
       faq: 'FAQ', hours: '08:00 – 22:00 WITA',

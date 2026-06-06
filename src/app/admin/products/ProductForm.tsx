@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Product = {
@@ -39,6 +39,27 @@ export function ProductForm({ product }: { product?: Product }) {
   const [benefits, setBenefits]         = useState<string[]>(product?.benefits?.map((b) => b.benefit_text) ?? ['']);
   const [saving, setSaving]             = useState(false);
   const [error, setError]               = useState('');
+
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(product?.image_url ?? '');
+  const [imageStatus, setImageStatus]         = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const previewDebounceRef                    = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
+    const delay = imageUrl.trim() ? 600 : 0;
+    previewDebounceRef.current = setTimeout(() => {
+      if (!imageUrl.trim()) {
+        setImagePreviewUrl('');
+        setImageStatus('idle');
+      } else {
+        setImageStatus('loading');
+        setImagePreviewUrl(imageUrl.trim());
+      }
+    }, delay);
+    return () => {
+      if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
+    };
+  }, [imageUrl]);
 
   function slugify(s: string) {
     return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -138,15 +159,70 @@ export function ProductForm({ product }: { product?: Product }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 16 }}>
-        <div>
-          <label style={labelStyle}>URL Gambar</label>
-          <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." style={inputStyle} />
+      {/* ── Image upload section ─────────────────────────────── */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 8 }}>
+          <div>
+            <label style={labelStyle}>URL Gambar Produk</label>
+            <input
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://images.pexels.com/..."
+              style={inputStyle}
+            />
+            <p style={{ color: '#6b7e7e', fontSize: 11, marginTop: 5 }}>
+              Rekomendasi: rasio <strong>1:1 (square)</strong>, min. 600×600px · Format: JPG/PNG/WebP
+            </p>
+          </div>
+          <div>
+            <label style={labelStyle}>Label Badge</label>
+            <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Popular, New..." style={inputStyle} maxLength={50} />
+          </div>
         </div>
-        <div>
-          <label style={labelStyle}>Label Badge</label>
-          <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Popular, New..." style={inputStyle} maxLength={50} />
-        </div>
+
+        {/* Preview panel */}
+        {imageUrl.trim() && (
+          <div style={{
+            border: '1px solid #DBDAD7', borderRadius: 12, overflow: 'hidden',
+            background: '#f8f7f4', maxWidth: 260,
+          }}>
+            <div style={{
+              position: 'relative', width: '100%', aspectRatio: '1/1',
+              background: '#DBDAD7', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {imageStatus === 'loading' && (
+                <div style={{ color: '#6b7e7e', fontSize: 12 }}>Memuat preview...</div>
+              )}
+              {imagePreviewUrl && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={imagePreviewUrl}
+                  alt="Preview gambar produk"
+                  onLoad={() => setImageStatus('ok')}
+                  onError={() => setImageStatus('error')}
+                  style={{
+                    position: 'absolute', inset: 0,
+                    width: '100%', height: '100%',
+                    objectFit: 'cover',
+                    display: imageStatus === 'error' ? 'none' : 'block',
+                  }}
+                />
+              )}
+              {imageStatus === 'error' && (
+                <div style={{ textAlign: 'center', padding: 12 }}>
+                  <div style={{ fontSize: 24, marginBottom: 6 }}>⚠️</div>
+                  <div style={{ color: '#ef4444', fontSize: 12, fontWeight: 600 }}>Gambar tidak dapat dimuat</div>
+                  <div style={{ color: '#6b7e7e', fontSize: 11, marginTop: 4 }}>Periksa URL atau gunakan URL lain</div>
+                </div>
+              )}
+            </div>
+            {imageStatus === 'ok' && (
+              <div style={{ padding: '8px 12px', background: '#dcfce7', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ color: '#16a34a', fontSize: 12, fontWeight: 600 }}>✓ Gambar berhasil dimuat</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 16 }}>
@@ -161,6 +237,9 @@ export function ProductForm({ product }: { product?: Product }) {
             <input type="checkbox" checked={showOnHomepage} onChange={(e) => setShowOnHomepage(e.target.checked)} style={{ width: 14, height: 14 }} />
             Tampil di Homepage
           </label>
+          {showOnHomepage && (
+            <p style={{ color: '#29808B', fontSize: 11, marginTop: 4 }}>Akan tampil di section treatment homepage</p>
+          )}
         </div>
         <div>
           <label style={labelStyle}>Urutan Homepage</label>

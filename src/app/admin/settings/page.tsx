@@ -48,7 +48,17 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) return <div style={{ padding: 40, textAlign: 'center', color: '#6b7e7e' }}>Memuat...</div>;
+  if (loading) return (
+    <div style={{ padding: '32px 24px', maxWidth: 700, margin: '0 auto' }}>
+      <div style={{ height: 32, width: 220, borderRadius: 8, marginBottom: 28, background: 'linear-gradient(90deg,#e8e6e1 25%,#f3f1ec 50%,#e8e6e1 75%)', backgroundSize: '800px 100%', animation: 'shimmer 1.4s infinite linear' }} />
+      {[1,2,3].map((i) => (
+        <div key={i} style={{ background: 'white', border: '1px solid #DBDAD7', borderRadius: 16, padding: 28, marginBottom: 20 }}>
+          <div style={{ height: 20, width: 180, borderRadius: 6, marginBottom: 20, background: 'linear-gradient(90deg,#e8e6e1 25%,#f3f1ec 50%,#e8e6e1 75%)', backgroundSize: '800px 100%', animation: 'shimmer 1.4s infinite linear' }} />
+          <div style={{ height: 40, borderRadius: 8, background: 'linear-gradient(90deg,#e8e6e1 25%,#f3f1ec 50%,#e8e6e1 75%)', backgroundSize: '800px 100%', animation: 'shimmer 1.4s infinite linear' }} />
+        </div>
+      ))}
+    </div>
+  );
 
   const inputStyle: React.CSSProperties = { width: '100%', padding: '10px 12px', border: '1px solid #DBDAD7', borderRadius: 8, fontSize: 13, boxSizing: 'border-box', outline: 'none' };
   const labelStyle: React.CSSProperties = { display: 'block', fontSize: 12, color: '#6b7e7e', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 };
@@ -96,7 +106,7 @@ export default function SettingsPage() {
 
           <div>
             <label style={labelStyle}>Nama Situs</label>
-            <input value={settings.site_name ?? ''} onChange={(e) => updateField('site_name', e.target.value)} placeholder="DRIP TO YOU Bali" style={inputStyle} />
+            <input value={settings.site_name ?? ''} onChange={(e) => updateField('site_name', e.target.value)} placeholder="Drips To You - Bali" style={inputStyle} />
           </div>
         </div>
 

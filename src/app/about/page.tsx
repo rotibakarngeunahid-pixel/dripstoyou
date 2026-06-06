@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { waGeneralUrl } from '@/lib/whatsapp';
 
 export const metadata: Metadata = {
-  title: 'Tentang Kami — DRIP TO YOU Bali | Mobile IV Therapy',
-  description: 'DRIP TO YOU adalah layanan IV therapy on-call profesional yang hadir langsung ke villa, hotel, atau tempat menginap Anda di Bali.',
+  title: 'Tentang Kami — Drips To You - Bali Bali | Mobile IV Therapy',
+  description: 'Drips To You - Bali adalah layanan IV therapy on-call profesional yang hadir langsung ke villa, hotel, atau tempat menginap Anda di Bali.',
 };
 
 export default function AboutPage() {
@@ -16,7 +16,7 @@ export default function AboutPage() {
           Kesehatan di <em>Ujung Jari</em> Anda
         </h1>
         <p style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 16, color: 'rgba(255,255,255,.7)', maxWidth: 560, margin: '0 auto' }}>
-          DRIP TO YOU hadir untuk memastikan perjalanan Anda di Bali selalu menyenangkan — tanpa gangguan kesehatan yang tidak perlu.
+          Drips To You - Bali hadir untuk memastikan perjalanan Anda di Bali selalu menyenangkan — tanpa gangguan kesehatan yang tidak perlu.
         </p>
       </section>
 
@@ -26,7 +26,7 @@ export default function AboutPage() {
         <div style={{ background: 'white', borderRadius: 24, padding: '40px 36px', marginBottom: 28, boxShadow: '0 4px 24px rgba(32,82,81,0.08)' }}>
           <h2 style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 24, fontWeight: 700, color: '#205251', marginBottom: 16 }}>Misi Kami</h2>
           <p style={{ color: '#4a5e5e', fontSize: 15, lineHeight: 1.8, marginBottom: 16 }}>
-            Kami percaya bahwa semua orang berhak mendapatkan perawatan kesehatan premium tanpa harus meninggalkan kenyamanan tempat mereka berada. Dengan menghadirkan tenaga medis berpengalaman langsung ke villa, hotel, atau Airbnb Anda, DRIP TO YOU menghilangkan hambatan antara Anda dan kesehatan optimal.
+            Kami percaya bahwa semua orang berhak mendapatkan perawatan kesehatan premium tanpa harus meninggalkan kenyamanan tempat mereka berada. Dengan menghadirkan tenaga medis berpengalaman langsung ke villa, hotel, atau Airbnb Anda, Drips To You - Bali menghilangkan hambatan antara Anda dan kesehatan optimal.
           </p>
           <p style={{ color: '#4a5e5e', fontSize: 15, lineHeight: 1.8 }}>
             Setiap sesi IV therapy dilakukan oleh tenaga medis terlisensi dengan peralatan steril berstandar medis. Kami tidak berkompromi dalam hal keselamatan dan kualitas.

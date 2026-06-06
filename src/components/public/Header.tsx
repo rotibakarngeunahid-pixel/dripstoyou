@@ -28,10 +28,10 @@ export default function Header() {
   return (
     <>
       <header className={`hdr${scrolled ? ' scrolled' : ''}`} id="hdr">
-        <Link href="/" className="hdr-logo" aria-label="DRIP TO YOU Bali — Home">
+        <Link href="/" className="hdr-logo" aria-label="Drips To You - Bali — Home">
           <div className="hdr-logo-text">
-            DRIP TO YOU
-            <small>Bali — Mobile IV Therapy</small>
+            Drips To You - Bali
+            <small>Mobile IV Therapy</small>
           </div>
         </Link>
 

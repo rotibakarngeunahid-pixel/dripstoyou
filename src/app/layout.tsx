@@ -19,13 +19,13 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'DRIP TO YOU Bali — Mobile IV Therapy Delivered to You',
+  title: 'Drips To You - Bali | Mobile IV Therapy Delivered to You',
   description:
-    'Mobile IV therapy by certified medical team — delivered to your villa, hotel, or Airbnb across Bali. Hangover recovery, immune boost, energy, beauty glow.',
-  keywords: 'IV therapy Bali, mobile drip Bali, hangover recovery Bali, IV vitamin Bali',
+    'Mobile IV therapy by certified medical team — delivered to your villa, hotel, or Airbnb across Bali. Hangover recovery, immune boost, energy, beauty glow. Available 08:00–22:00 WITA.',
+  keywords: 'IV therapy Bali, mobile drip Bali, hangover recovery Bali, IV vitamin Bali, drip therapy Bali',
   openGraph: {
-    title: 'DRIP TO YOU Bali — Mobile IV Therapy',
-    description: 'Mobile IV therapy delivered to your villa or hotel in Bali.',
+    title: 'Drips To You - Bali | Mobile IV Therapy',
+    description: 'Mobile IV therapy delivered to your villa or hotel in Bali. Certified medical team, 60-minute arrival.',
     locale: 'id_ID',
     type: 'website',
   },

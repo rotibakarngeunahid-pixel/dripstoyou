@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
       <div style={{ background: '#162e2e', borderRadius: 16, padding: '40px 36px', width: '100%', maxWidth: 420, boxShadow: '0 8px 32px rgba(0,0,0,0.3)' }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: 22, fontWeight: 700, color: 'white', marginBottom: 4 }}>
-            DRIP TO YOU
+            Drips To You - Bali
           </div>
           <div style={{ fontSize: 11, color: '#8EBFBF', letterSpacing: 2, textTransform: 'uppercase' }}>
             Admin Panel
