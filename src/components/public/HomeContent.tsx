@@ -56,6 +56,12 @@ const ARROW_SVG = (
   </svg>
 );
 
+const TESTI_PHOTOS = [
+  'https://i.pravatar.cc/150?img=47',
+  'https://i.pravatar.cc/150?img=53',
+  'https://i.pravatar.cc/150?img=35',
+];
+
 const BOLT_SVG = (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -164,7 +170,8 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
           alt=""
           fill
           preload
-          sizes="100vw"
+          quality={90}
+          sizes="(max-width: 640px) 150vw, 100vw"
           className="hero-photo landing-hero-photo"
         />
         <div className="hero-photo-overlay landing-hero-overlay" />
@@ -478,7 +485,11 @@ function TestimonialsSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) 
               <div className="testi-stars">{Array.from({ length: 5 }).map((_, j) => <span key={j}>★</span>)}</div>
               <p className="testi-text">{c.text}</p>
               <div className="testi-author">
-                <div className="testi-av">{c.name.charAt(0)}</div>
+                <div className="testi-av">
+                  {TESTI_PHOTOS[i]
+                    ? <Image src={TESTI_PHOTOS[i]} alt={c.name} width={48} height={48} className="testi-av-photo" />
+                    : c.name.charAt(0)}
+                </div>
                 <div>
                   <div className="testi-name">{c.name}</div>
                   <div className="testi-loc">{c.loc}</div>

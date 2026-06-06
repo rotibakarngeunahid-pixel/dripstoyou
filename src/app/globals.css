@@ -4,23 +4,23 @@
    BRAND TOKENS
 ───────────────────────────────────────────── */
 :root {
-  --teal:        #0d2828;
-  --ocean:       #164e52;
-  --soft-aqua:   #7fb5b5;
-  --light-aqua:  #a6d1d1;
-  --pale-aqua:   #dceeee;
-  --gold:        #d4af37;
-  --champagne:   #f4e8c1;
+  --teal:        #205251;
+  --ocean:       #29808B;
+  --soft-aqua:   #8EBFBF;
+  --light-aqua:  #9ABFC1;
+  --pale-aqua:   #D6EAEA;
+  --gold:        #C9944C;
+  --champagne:   #EAD4AE;
   --white:       #FFFFFF;
-  --off-white:   #fcfbf9;
-  --grey:        #e3e1db;
+  --off-white:   #F3F0E7;
+  --grey:        #DBDAD7;
   --wa:          #25D366;
   --text:        #111a1a;
-  --text-muted:  #5e6b6b;
+  --text-muted:  #4d6060;
   --r-card:      20px;
   --r-btn:       12px;
-  --shadow-card: 0 4px 24px rgba(13, 40, 40, 0.06);
-  --shadow-hover: 0 16px 40px rgba(13, 40, 40, 0.12);
+  --shadow-card: 0 4px 24px rgba(32, 82, 81, 0.07);
+  --shadow-hover: 0 16px 40px rgba(32, 82, 81, 0.14);
 }
 
 @theme inline {
@@ -102,7 +102,7 @@ a { text-decoration: none; }
 }
 .hdr.scrolled { box-shadow: 0 2px 24px rgba(0,0,0,0.22); }
 .hdr-logo { display: flex; align-items: center; gap: 10px; }
-.hdr-logo-img-wrap { display: flex; flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%; overflow: hidden; background: transparent; }
+.hdr-logo-img-wrap { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 46px; height: 46px; border-radius: 50%; overflow: hidden; background: transparent; }
 .hdr-logo-img { height: 46px; width: 46px; object-fit: cover; }
 .hdr-logo-text {
   font-family: var(--font-playfair, 'Playfair Display', Georgia, serif);
@@ -692,12 +692,14 @@ a { text-decoration: none; }
 .testi-text { font-size: 14px; font-style: italic; color: #555; line-height: 1.8; margin-bottom: 22px; }
 .testi-author { display: flex; align-items: center; gap: 13px; }
 .testi-av {
-  width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+  width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
   background: linear-gradient(135deg, var(--soft-aqua), var(--ocean));
   display: flex; align-items: center; justify-content: center;
   font-family: var(--font-playfair, 'Playfair Display', Georgia, serif);
-  font-size: 17px; font-weight: 600; color: white;
+  font-size: 18px; font-weight: 600; color: white;
+  overflow: hidden;
 }
+.testi-av-photo { width: 100%; height: 100%; object-fit: cover; display: block; }
 .testi-name { font-size: 14px; font-weight: 600; color: var(--teal); }
 .testi-loc  { font-size: 12px; color: #999; margin-top: 1px; }
 .testi-tag  {
@@ -948,20 +950,21 @@ a { text-decoration: none; }
 
 /* UI refresh: calmer brand system, responsive shells, and clear loading states */
 :root {
-  --teal: #0d2828;
-  --ocean: #164e52;
-  --soft-aqua: #7fb5b5;
-  --pale-aqua: #dceeee;
-  --gold: #d4af37;
-  --champagne: #f4e8c1;
-  --off-white: #fcfbf9;
-  --grey: #e3e1db;
+  --teal: #205251;
+  --ocean: #29808B;
+  --soft-aqua: #8EBFBF;
+  --light-aqua: #9ABFC1;
+  --pale-aqua: #D6EAEA;
+  --gold: #C9944C;
+  --champagne: #EAD4AE;
+  --off-white: #F3F0E7;
+  --grey: #DBDAD7;
   --text: #111a1a;
-  --text-muted: #5e6b6b;
+  --text-muted: #4d6060;
   --r-card: 20px;
   --r-btn: 12px;
-  --shadow-card: 0 4px 24px rgba(13, 40, 40, 0.06);
-  --shadow-hover: 0 16px 40px rgba(13, 40, 40, 0.12);
+  --shadow-card: 0 4px 24px rgba(32, 82, 81, 0.07);
+  --shadow-hover: 0 16px 40px rgba(32, 82, 81, 0.14);
 }
 
 body {
@@ -3631,6 +3634,11 @@ textarea.control {
     flex: 1;
   }
 
+  .hdr.hdr-home .hdr-logo-img-wrap {
+    width: 40px;
+    height: 40px;
+  }
+
   .hdr.hdr-home .hdr-logo-img {
     width: 40px;
     height: 40px;
@@ -3659,7 +3667,7 @@ textarea.control {
   }
 
   .landing-hero-photo {
-    object-position: 88% center;
+    object-position: 72% center;
   }
 
   .landing-hero-content {
