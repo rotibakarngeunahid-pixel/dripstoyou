@@ -110,10 +110,9 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
   return (
     <main>
       <HeroSection t={t} waUrl={waUrl} waBookingMsg={waBookingMsg} />
-      <BenefitsStrip t={t} />
       <TreatmentsSection t={t} products={displayProducts} />
-      <ExperienceGallerySection />
-      <WhyChooseUsSection />
+      <ExperienceGallerySection t={t} />
+      <WhyChooseUsSection t={t} />
       <HowToBookSection t={t} />
       <ServiceAreasSection t={t} areas={displayAreas} />
       <TestimonialsSection t={t} />
@@ -183,33 +182,6 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
   );
 }
 
-/* ─────────────────────────────────────────────
-   BENEFITS STRIP
-───────────────────────────────────────────── */
-function BenefitsStrip({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
-  const items = [
-    { icon: <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>, title: t.benefits.fast, desc: t.benefits.fastDesc },
-    { icon: <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>, title: t.benefits.licensed, desc: t.benefits.licensedDesc },
-    { icon: <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>, title: t.benefits.mobile, desc: t.benefits.mobileDesc },
-    { icon: <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>, title: t.benefits.premium, desc: t.benefits.premiumDesc },
-  ];
-
-  return (
-    <section className="benefits" aria-label="Key benefits">
-      <div className="benefits-inner">
-        {items.map((item, i) => (
-          <div key={i} className="bene-item reveal" style={{ transitionDelay: `${i * 0.08}s` }}>
-            <div className="bene-icon">{item.icon}</div>
-            <div>
-              <div className="bene-title">{item.title}</div>
-              <div className="bene-desc">{item.desc}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
 
 /* ─────────────────────────────────────────────
    TREATMENTS
@@ -280,16 +252,16 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
 /* ─────────────────────────────────────────────
    EXPERIENCE GALLERY
 ───────────────────────────────────────────── */
-function ExperienceGallerySection() {
+function ExperienceGallerySection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
   const images = [BRAND.photo2, BRAND.photo3, BRAND.photo4, BRAND.photo5];
   
   return (
     <section className="gallery-sec" id="gallery">
       <div className="sec-inner">
         <div className="sec-hdr centered reveal">
-          <div className="sec-eyebrow">Premium Experience</div>
-          <h2 className="sec-title">Drips To You <em>Moments</em></h2>
-          <p className="sec-desc">Professional IV therapy delivered directly to your villa, hotel, or home in Bali.</p>
+          <div className="sec-eyebrow">{t.gallery.eyebrow}</div>
+          <h2 className="sec-title">{t.gallery.title} <em>{t.gallery.titleEm}</em></h2>
+          <p className="sec-desc">{t.gallery.desc}</p>
         </div>
         <div className="gallery-grid">
           {images.map((src, i) => (
@@ -306,74 +278,58 @@ function ExperienceGallerySection() {
 /* ─────────────────────────────────────────────
    WHY CHOOSE US
 ───────────────────────────────────────────── */
-const WHY_ITEMS = [
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg>
-    ),
-    title: 'Convenient On-Site Service',
-    desc:  'No hassle, no travel. We bring professional medical care directly to your villa, hotel, home, or office anywhere in Bali.',
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-      </svg>
-    ),
-    title: 'Expert Medical Team',
-    desc:  'Your health is in good hands. All treatments are delivered by certified, highly experienced healthcare professionals.',
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-      </svg>
-    ),
-    title: 'Fast & Responsive Care',
-    desc:  'No long queues or waiting times. Our team is ready to respond swiftly whenever you need us.',
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-      </svg>
-    ),
-    title: 'Accessible for Everyone',
-    desc:  'Whether you are a tourist enjoying a vacation, an expat, or a local resident, we are here for you.',
-  },
-  {
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-      </svg>
-    ),
-    title: 'Safe, Comfortable & Trusted',
-    desc:  'Experience premium, stress-free wellness care in the comfort of your own space.',
-  },
+const WHY_ICONS = [
+  (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  ),
+  (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  ),
+  (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  ),
+  (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  ),
+  (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  ),
 ];
 
-function WhyChooseUsSection() {
+function WhyChooseUsSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
   return (
     <section className="why-sec" id="why-choose-us" aria-labelledby="why-title">
       <div className="sec-inner">
         <div className="sec-hdr centered reveal">
-          <div className="sec-eyebrow">Why Choose Us</div>
+          <div className="sec-eyebrow">{t.whyChooseUs.eyebrow}</div>
           <h2 className="sec-title" id="why-title">
-            The Drips To You <em>Difference</em>
+            {t.whyChooseUs.title} <em>{t.whyChooseUs.titleEm}</em>
           </h2>
           <p className="sec-desc">
-            We believe exceptional wellness care should come to you — wherever you are in Bali.
+            {t.whyChooseUs.desc}
           </p>
         </div>
 
+        <div className="why-img-banner reveal" style={{ position: 'relative', width: '100%', aspectRatio: '2/1', maxHeight: '450px', minHeight: '220px', borderRadius: '24px', overflow: 'hidden', marginBottom: '40px', boxShadow: 'var(--shadow-card)' }}>
+          <Image src={BRAND.photo4} alt="Drips To You - Why Choose Us" fill style={{ objectFit: 'cover', objectPosition: 'center 40%' }} sizes="(max-width: 1200px) 100vw, 1200px" />
+        </div>
+
         <div className="why-grid">
-          {WHY_ITEMS.map((item, i) => (
+          {t.whyChooseUs.items.map((item, i) => (
             <div key={i} className="why-card reveal" style={{ transitionDelay: `${i * 0.08}s` }}>
-              <div className="why-card-icon">{item.icon}</div>
+              <div className="why-card-icon">{WHY_ICONS[i]}</div>
               <h3 className="why-card-title">{item.title}</h3>
               <p className="why-card-desc">{item.desc}</p>
             </div>

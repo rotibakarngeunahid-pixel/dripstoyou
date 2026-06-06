@@ -34,6 +34,13 @@ export interface Translations {
     ocean: string; north: string;
     arrivalTime?: string; notInList?: string; contactUs?: string;
   };
+  gallery: {
+    eyebrow: string; title: string; titleEm: string; desc: string;
+  };
+  whyChooseUs: {
+    eyebrow: string; title: string; titleEm: string; desc: string;
+    items: { title: string; desc: string }[];
+  };
   testimonials: {
     eyebrow: string; title: string; titleEm: string; sub: string;
     cards: { text: string; name: string; loc: string; tag: string }[];
@@ -95,6 +102,21 @@ export const translations: Record<Lang, Translations> = {
       liveService: 'Layanan Aktif · 08:00 – 22:00 WITA',
       popular: '★ Populer', active: 'Aktif', ocean: 'Samudra Hindia', north: 'BALI UTARA',
       arrivalTime: 'Estimasi tiba', notInList: 'Area kamu tidak ada di list?', contactUs: 'Tanyakan via booking',
+    },
+    gallery: {
+      eyebrow: 'Pengalaman Premium', title: 'Momen', titleEm: 'Drips To You',
+      desc: 'IV therapy profesional yang diantarkan langsung ke villa, hotel, atau rumah Anda di Bali.',
+    },
+    whyChooseUs: {
+      eyebrow: 'Kenapa Memilih Kami', title: 'Perbedaan', titleEm: 'Drips To You',
+      desc: 'Kami percaya layanan kesehatan dan kebugaran yang luar biasa harus datang kepada Anda — di mana pun Anda berada di Bali.',
+      items: [
+        { title: 'Layanan Di Tempat yang Praktis', desc: 'Tanpa repot, tanpa perjalanan. Kami membawa layanan medis profesional langsung ke villa, hotel, rumah, atau kantor Anda di mana saja di Bali.' },
+        { title: 'Tim Medis Ahli', desc: 'Kesehatan Anda berada di tangan yang tepat. Semua perawatan diberikan oleh tenaga kesehatan bersertifikat dan sangat berpengalaman.' },
+        { title: 'Layanan Cepat & Responsif', desc: 'Tanpa antrean atau waktu tunggu yang lama. Tim kami siap merespons dengan cepat kapan pun Anda membutuhkan kami.' },
+        { title: 'Dapat Diakses Siapa Saja', desc: 'Baik Anda seorang turis yang sedang menikmati liburan, ekspatriat, atau penduduk lokal, kami ada untuk Anda.' },
+        { title: 'Aman, Nyaman & Terpercaya', desc: 'Nikmati perawatan kebugaran premium bebas stres dalam kenyamanan ruang Anda sendiri.' },
+      ],
     },
     testimonials: {
       eyebrow: 'Testimoni', title: 'Apa Kata', titleEm: 'Tamu Kami',
@@ -163,6 +185,21 @@ export const translations: Record<Lang, Translations> = {
       liveService: 'Active Service · 08:00 – 22:00 WITA',
       popular: '★ Popular', active: 'Active', ocean: 'Indian Ocean', north: 'NORTH BALI',
       arrivalTime: 'Est. arrival', notInList: "Your area not on the list?", contactUs: 'Ask via booking',
+    },
+    gallery: {
+      eyebrow: 'Premium Experience', title: 'Drips To You', titleEm: 'Moments',
+      desc: 'Professional IV therapy delivered directly to your villa, hotel, or home in Bali.',
+    },
+    whyChooseUs: {
+      eyebrow: 'Why Choose Us', title: 'The Drips To You', titleEm: 'Difference',
+      desc: 'We believe exceptional wellness care should come to you — wherever you are in Bali.',
+      items: [
+        { title: 'Convenient On-Site Service', desc: 'No hassle, no travel. We bring professional medical care directly to your villa, hotel, home, or office anywhere in Bali.' },
+        { title: 'Expert Medical Team', desc: 'Your health is in good hands. All treatments are delivered by certified, highly experienced healthcare professionals.' },
+        { title: 'Fast & Responsive Care', desc: 'No long queues or waiting times. Our team is ready to respond swiftly whenever you need us.' },
+        { title: 'Accessible for Everyone', desc: 'Whether you are a tourist enjoying a vacation, an expat, or a local resident, we are here for you.' },
+        { title: 'Safe, Comfortable & Trusted', desc: 'Experience premium, stress-free wellness care in the comfort of your own space.' },
+      ],
     },
     testimonials: {
       eyebrow: 'Testimonials', title: 'What Our', titleEm: 'Guests Say',
