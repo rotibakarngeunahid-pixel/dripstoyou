@@ -17,10 +17,31 @@ export interface HomepageProduct {
   homepage_order: number;
 }
 
+export interface ServiceAreaData {
+  id: string;
+  name: string;
+  isActive: boolean;
+  estimatedArrivalMinutes: number | null;
+  note: string | null;
+  sortOrder: number;
+}
+
 interface Props {
   waNumber: string;
   homepageProducts?: HomepageProduct[];
+  serviceAreas?: ServiceAreaData[];
 }
+
+/* ── Brand image URLs ── */
+const IK = 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image';
+const BRAND = {
+  logo:   `${IK}/drips-to-you-bali-icon.webp`,
+  photo1: `${IK}/photo_6134052561527443398_y.webp`, // on-site service / hero
+  photo2: `${IK}/photo_6134052561527443396_y.webp`, // medical team / preparation
+  photo3: `${IK}/photo_6131724036417982600_y.webp`, // IV drip visual
+  photo4: `${IK}/photo_6134052561527443397_y.webp`, // villa/hotel service
+  photo5: `${IK}/photo_6134052561527443395_y.webp`, // team portrait
+};
 
 const WA_SVG = (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true">
@@ -41,17 +62,36 @@ const BOLT_SVG = (
   </svg>
 );
 
-const HERO_IMAGE =
-  'https://images.pexels.com/photos/11081177/pexels-photo-11081177.jpeg?auto=compress&cs=tinysrgb&w=1800';
-
 const FALLBACK_PRODUCTS: HomepageProduct[] = [
-  { id: '1', name: 'Hangover Recovery', slug: 'hangover-recovery', short_description: 'Rehidrasi cepat dengan elektrolit, vitamin B & C, dan anti-mual untuk pemulihan optimal setelah malam panjang.', price_amount: 750000, price_label: 'IDR 750.000', image_url: 'https://images.pexels.com/photos/6010930/pexels-photo-6010930.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop', label: 'Populer', show_on_homepage: true, homepage_order: 1 },
-  { id: '2', name: 'Immune Booster', slug: 'immune-booster', short_description: 'Tingkatkan sistem imun dengan vitamin C dosis tinggi, zinc, dan glutathione untuk perlindungan optimal.', price_amount: 650000, price_label: 'IDR 650.000', image_url: 'https://images.pexels.com/photos/6010936/pexels-photo-6010936.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop', label: 'Terlaris', show_on_homepage: true, homepage_order: 2 },
-  { id: '3', name: 'Energy Boost', slug: 'energy-boost', short_description: 'Kembalikan stamina dan energimu dengan B-complex, magnesium, dan elektrolit lengkap yang bekerja cepat.', price_amount: 550000, price_label: 'IDR 550.000', image_url: 'https://images.pexels.com/photos/11081177/pexels-photo-11081177.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop', label: null, show_on_homepage: true, homepage_order: 3 },
-  { id: '4', name: 'Beauty Glow', slug: 'beauty-glow', short_description: 'Tampil lebih cerah dan glowing dengan glutathione, kolagen booster, dan antioksidan premium.', price_amount: 700000, price_label: 'IDR 700.000', image_url: 'https://images.pexels.com/photos/3762875/pexels-photo-3762875.jpeg?auto=compress&cs=tinysrgb&w=600&h=600&fit=crop', label: 'Baru', show_on_homepage: true, homepage_order: 4 },
+  { id: '1', name: 'Hangover Recovery', slug: 'hangover-recovery', short_description: 'Rehidrasi cepat dengan elektrolit, vitamin B & C, dan anti-mual untuk pemulihan optimal setelah malam panjang.', price_amount: 750000, price_label: 'IDR 750.000', image_url: BRAND.photo3, label: 'Populer', show_on_homepage: true, homepage_order: 1 },
+  { id: '2', name: 'Immune Booster',    slug: 'immune-booster',    short_description: 'Tingkatkan sistem imun dengan vitamin C dosis tinggi, zinc, dan glutathione untuk perlindungan optimal.', price_amount: 650000, price_label: 'IDR 650.000', image_url: BRAND.photo2, label: 'Terlaris', show_on_homepage: true, homepage_order: 2 },
+  { id: '3', name: 'Energy Boost',      slug: 'energy-boost',      short_description: 'Kembalikan stamina dan energimu dengan B-complex, magnesium, dan elektrolit lengkap yang bekerja cepat.', price_amount: 550000, price_label: 'IDR 550.000', image_url: BRAND.photo4, label: null, show_on_homepage: true, homepage_order: 3 },
+  { id: '4', name: 'Beauty Glow',       slug: 'beauty-glow',       short_description: 'Tampil lebih cerah dan glowing dengan glutathione, kolagen booster, dan antioksidan premium.', price_amount: 700000, price_label: 'IDR 700.000', image_url: BRAND.photo5, label: 'Baru', show_on_homepage: true, homepage_order: 4 },
 ];
 
-export default function HomeContent({ waNumber, homepageProducts }: Props) {
+const FALLBACK_AREAS: ServiceAreaData[] = [
+  { id: '1',  name: 'Seminyak',        isActive: true, estimatedArrivalMinutes: 20,  note: 'Villa · Beach · Nightlife', sortOrder: 1  },
+  { id: '2',  name: 'Canggu',          isActive: true, estimatedArrivalMinutes: 27,  note: 'Surf · Lifestyle',          sortOrder: 2  },
+  { id: '3',  name: 'Kuta',            isActive: true, estimatedArrivalMinutes: 20,  note: 'Tourist · Beach',           sortOrder: 3  },
+  { id: '4',  name: 'Ubud',            isActive: true, estimatedArrivalMinutes: 52,  note: 'Culture · Nature',          sortOrder: 4  },
+  { id: '5',  name: 'Nusa Dua',        isActive: true, estimatedArrivalMinutes: 32,  note: 'Resort · Luxury',           sortOrder: 5  },
+  { id: '6',  name: 'Jimbaran',        isActive: true, estimatedArrivalMinutes: 37,  note: 'Beach · Sunset',            sortOrder: 6  },
+  { id: '7',  name: 'Legian',          isActive: true, estimatedArrivalMinutes: 20,  note: 'Beach · Shopping',          sortOrder: 7  },
+  { id: '8',  name: 'Sanur',           isActive: true, estimatedArrivalMinutes: 32,  note: 'Calm · Beach',              sortOrder: 8  },
+  { id: '9',  name: 'Denpasar',        isActive: true, estimatedArrivalMinutes: 27,  note: 'City · Local',              sortOrder: 9  },
+  { id: '10', name: 'Uluwatu',         isActive: true, estimatedArrivalMinutes: 47,  note: 'Cliff · Surf',              sortOrder: 10 },
+  { id: '11', name: 'Petitenget',      isActive: true, estimatedArrivalMinutes: 22,  note: 'Trendy · Villa',            sortOrder: 11 },
+  { id: '12', name: 'Bukit Peninsula', isActive: true, estimatedArrivalMinutes: 42,  note: 'Scenic · Luxury',           sortOrder: 12 },
+];
+
+function arrivalLabel(minutes: number | null): string {
+  if (!minutes) return '30–60 min';
+  const lo = Math.max(10, minutes - 10);
+  const hi = minutes + 10;
+  return `${lo}–${hi} min`;
+}
+
+export default function HomeContent({ waNumber, homepageProducts, serviceAreas }: Props) {
   const { lang, t } = useLanguage();
 
   function waUrl(text: string) {
@@ -62,17 +102,19 @@ export default function HomeContent({ waNumber, homepageProducts }: Props) {
     ? 'Hello Drips To You - Bali, I would like to book an IV therapy treatment'
     : 'Halo Drips To You - Bali, saya ingin booking treatment IV therapy';
 
-  const displayProducts = (homepageProducts && homepageProducts.length > 0)
-    ? homepageProducts
-    : FALLBACK_PRODUCTS;
+  const displayProducts = homepageProducts && homepageProducts.length > 0 ? homepageProducts : FALLBACK_PRODUCTS;
+  const displayAreas    = serviceAreas && serviceAreas.length > 0
+    ? serviceAreas.filter((a) => a.isActive)
+    : FALLBACK_AREAS;
 
   return (
     <main>
       <HeroSection t={t} waUrl={waUrl} waBookingMsg={waBookingMsg} />
       <BenefitsStrip t={t} />
       <TreatmentsSection t={t} products={displayProducts} />
+      <WhyChooseUsSection />
       <HowToBookSection t={t} />
-      <ServiceAreasSection t={t} />
+      <ServiceAreasSection t={t} areas={displayAreas} />
       <TestimonialsSection t={t} />
       <CtaSection t={t} waUrl={waUrl} waBookingMsg={waBookingMsg} />
     </main>
@@ -87,7 +129,7 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
     <section className="hero" id="hero" aria-label="Hero">
       <div className="hero-media" aria-hidden="true">
         <Image
-          src={HERO_IMAGE}
+          src={BRAND.photo1}
           alt=""
           fill
           priority
@@ -126,7 +168,7 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
         <p className="hero-sub">{t.hero.sub}</p>
 
         <div className="hero-cta">
-          <Link href="/booking" className="btn-wa-hero">
+          <Link href="/booking" className="btn-wa-hero" prefetch>
             {t.hero.bookWa}
           </Link>
           <a href={waUrl(waBookingMsg)} className="btn-ghost-hero" target="_blank" rel="noopener noreferrer">
@@ -145,35 +187,14 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
 ───────────────────────────────────────────── */
 function BenefitsStrip({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
   const items = [
-    {
-      icon: <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>,
-      title: t.benefits.fast,
-      desc: t.benefits.fastDesc,
-    },
-    {
-      icon: <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
-      title: t.benefits.licensed,
-      desc: t.benefits.licensedDesc,
-    },
-    {
-      icon: (
-        <svg viewBox="0 0 24 24">
-          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-          <polyline points="9 22 9 12 15 12 15 22" />
-        </svg>
-      ),
-      title: t.benefits.mobile,
-      desc: t.benefits.mobileDesc,
-    },
-    {
-      icon: <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>,
-      title: t.benefits.premium,
-      desc: t.benefits.premiumDesc,
-    },
+    { icon: <svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>, title: t.benefits.fast, desc: t.benefits.fastDesc },
+    { icon: <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>, title: t.benefits.licensed, desc: t.benefits.licensedDesc },
+    { icon: <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>, title: t.benefits.mobile, desc: t.benefits.mobileDesc },
+    { icon: <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>, title: t.benefits.premium, desc: t.benefits.premiumDesc },
   ];
 
   return (
-    <section className="benefits" aria-label="Why choose us">
+    <section className="benefits" aria-label="Key benefits">
       <div className="benefits-inner">
         {items.map((item, i) => (
           <div key={i} className="bene-item reveal" style={{ transitionDelay: `${i * 0.08}s` }}>
@@ -212,15 +233,15 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
           {products.slice(0, 4).map((p, i) => (
             <div key={p.id} className="t-card reveal" style={{ transitionDelay: `${i * 0.08}s` }}>
               <div className={`t-card-img ${imgClasses[i % imgClasses.length]}`}>
-                {p.image_url ? (
+                {p.image_url && (
                   <Image
                     className="card-photo"
                     src={p.image_url}
-                    alt={`${p.name} IV Therapy`}
+                    alt={`${p.name} IV Therapy Bali`}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
                   />
-                ) : null}
+                )}
                 {p.label && (
                   <span className={`t-badge${p.label === 'Baru' || p.label === 'New' ? ' new' : ''}`}>
                     {p.label}
@@ -229,15 +250,13 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
               </div>
               <div className="t-body">
                 <div className="t-name">{p.name}</div>
-                {p.short_description && (
-                  <div className="t-detail">{p.short_description}</div>
-                )}
+                {p.short_description && <div className="t-detail">{p.short_description}</div>}
                 <div className="t-price">{formatPrice(p)} <span>{t.treatments.perSession}</span></div>
                 <div className="t-actions">
-                  <Link href={`/treatments/${p.slug}`} className="btn-see-more">
+                  <Link href={`/treatments/${p.slug}`} className="btn-see-more" prefetch>
                     {t.treatments.seeMore}
                   </Link>
-                  <Link href={`/booking?treatment=${p.slug}`} className="btn-book">
+                  <Link href={`/booking?treatment=${p.slug}`} className="btn-book" prefetch>
                     {t.treatments.bookNow}
                   </Link>
                 </div>
@@ -247,10 +266,91 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
         </div>
 
         <div className="treatments-foot reveal">
-          <Link href="/treatments" className="btn-view-all">
+          <Link href="/treatments" className="btn-view-all" prefetch>
             {t.treatments.seeAll}
             {ARROW_SVG}
           </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   WHY CHOOSE US
+───────────────────────────────────────────── */
+const WHY_ITEMS = [
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+        <polyline points="9 22 9 12 15 12 15 22" />
+      </svg>
+    ),
+    title: 'Convenient On-Site Service',
+    desc:  'No hassle, no travel. We bring professional medical care directly to your villa, hotel, home, or office anywhere in Bali.',
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      </svg>
+    ),
+    title: 'Expert Medical Team',
+    desc:  'Your health is in good hands. All treatments are delivered by certified, highly experienced healthcare professionals.',
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+      </svg>
+    ),
+    title: 'Fast & Responsive Care',
+    desc:  'No long queues or waiting times. Our team is ready to respond swiftly whenever you need us.',
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+      </svg>
+    ),
+    title: 'Accessible for Everyone',
+    desc:  'Whether you are a tourist enjoying a vacation, an expat, or a local resident, we are here for you.',
+  },
+  {
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+      </svg>
+    ),
+    title: 'Safe, Comfortable & Trusted',
+    desc:  'Experience premium, stress-free wellness care in the comfort of your own space.',
+  },
+];
+
+function WhyChooseUsSection() {
+  return (
+    <section className="why-sec" id="why-choose-us" aria-labelledby="why-title">
+      <div className="sec-inner">
+        <div className="sec-hdr centered reveal">
+          <div className="sec-eyebrow">Why Choose Us</div>
+          <h2 className="sec-title" id="why-title">
+            The Drips To You <em>Difference</em>
+          </h2>
+          <p className="sec-desc">
+            We believe exceptional wellness care should come to you — wherever you are in Bali.
+          </p>
+        </div>
+
+        <div className="why-grid">
+          {WHY_ITEMS.map((item, i) => (
+            <div key={i} className="why-card reveal" style={{ transitionDelay: `${i * 0.08}s` }}>
+              <div className="why-card-icon">{item.icon}</div>
+              <h3 className="why-card-title">{item.title}</h3>
+              <p className="why-card-desc">{item.desc}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -281,7 +381,7 @@ function HowToBookSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
           ))}
         </div>
         <div style={{ textAlign: 'center', marginTop: 40 }} className="reveal">
-          <Link href="/booking" className="btn-view-all">
+          <Link href="/booking" className="btn-view-all" prefetch>
             {t.cta.bookNow}
             {ARROW_SVG}
           </Link>
@@ -294,21 +394,8 @@ function HowToBookSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
 /* ─────────────────────────────────────────────
    SERVICE AREAS
 ───────────────────────────────────────────── */
-function ServiceAreasSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
-  const areas = [
-    { name: 'Seminyak',        type: 'Villa · Beach · Nightlife', popular: true,  time: '15–30 min' },
-    { name: 'Canggu',          type: 'Surf · Lifestyle',          popular: true,  time: '20–35 min' },
-    { name: 'Kuta',            type: 'Tourist · Beach',           popular: false, time: '15–25 min' },
-    { name: 'Ubud',            type: 'Culture · Nature',          popular: true,  time: '45–60 min' },
-    { name: 'Nusa Dua',        type: 'Resort · Luxury',           popular: true,  time: '25–40 min' },
-    { name: 'Jimbaran',        type: 'Beach · Sunset',            popular: false, time: '30–45 min' },
-    { name: 'Legian',          type: 'Beach · Shopping',          popular: false, time: '15–25 min' },
-    { name: 'Sanur',           type: 'Calm · Beach',              popular: false, time: '25–40 min' },
-    { name: 'Denpasar',        type: 'City · Local',              popular: false, time: '20–35 min' },
-    { name: 'Uluwatu',         type: 'Cliff · Surf',              popular: false, time: '40–55 min' },
-    { name: 'Petitenget',      type: 'Trendy · Villa',            popular: false, time: '15–30 min' },
-    { name: 'Bukit Peninsula', type: 'Scenic · Luxury',           popular: false, time: '35–50 min' },
-  ];
+function ServiceAreasSection({ t, areas }: { t: ReturnType<typeof useLanguage>['t']; areas: ServiceAreaData[] }) {
+  const POPULAR_NAMES = new Set(['Seminyak', 'Canggu', 'Ubud', 'Nusa Dua']);
 
   return (
     <section className="areas-sec" id="areas">
@@ -327,7 +414,7 @@ function ServiceAreasSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) 
 
         <div className="areas-stats">
           <div>
-            <div className="area-stat-num">12</div>
+            <div className="area-stat-num">{areas.length}</div>
             <div className="area-stat-lbl">{t.areas.areaCount}</div>
           </div>
           <div>
@@ -347,37 +434,50 @@ function ServiceAreasSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) 
       </div>
 
       <div className="areas-content-pad">
-        <div className="areas-cards-grid">
-          {areas.map((a, i) => (
-            <div
-              key={a.name}
-              className={`area-card${a.popular ? ' area-card-popular' : ''}`}
-              style={{ animationDelay: `${i * 0.06}s` }}
-            >
-              <div className="area-card-top">
-                <div className="area-card-pin">
-                  <svg viewBox="0 0 14 18" xmlns="http://www.w3.org/2000/svg" width="10" height="13">
-                    <path d="M7 0C3.13 0 0 3.13 0 7c0 4.87 7 11 7 11s7-6.13 7-11C14 3.13 10.87 0 7 0zm0 9.5C5.62 9.5 4.5 8.38 4.5 7S5.62 4.5 7 4.5 9.5 5.62 9.5 7 8.38 9.5 7 9.5z" />
-                  </svg>
+        {areas.length === 0 ? (
+          <div style={{ textAlign: 'center', color: 'rgba(255,255,255,.6)', padding: 40 }}>
+            Informasi area layanan segera tersedia.{' '}
+            <Link href="/booking" style={{ color: 'var(--soft-aqua)', fontWeight: 600 }}>Hubungi kami</Link>
+          </div>
+        ) : (
+          <div className="areas-cards-grid">
+            {areas.map((a, i) => {
+              const popular = POPULAR_NAMES.has(a.name);
+              return (
+                <div
+                  key={a.id}
+                  className={`area-card${popular ? ' area-card-popular' : ''}`}
+                  style={{ animationDelay: `${i * 0.06}s` }}
+                >
+                  <div className="area-card-top">
+                    <div className="area-card-pin">
+                      <svg viewBox="0 0 14 18" xmlns="http://www.w3.org/2000/svg" width="10" height="13">
+                        <path d="M7 0C3.13 0 0 3.13 0 7c0 4.87 7 11 7 11s7-6.13 7-11C14 3.13 10.87 0 7 0zm0 9.5C5.62 9.5 4.5 8.38 4.5 7S5.62 4.5 7 4.5 9.5 5.62 9.5 7 8.38 9.5 7 9.5z" />
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="area-card-name">{a.name}</div>
+                      {a.note && <div className="area-card-type">{a.note}</div>}
+                    </div>
+                    {popular && (
+                      <span className="area-card-badge-popular">{t.areas.popular?.replace('★ ', '') ?? 'Popular'}</span>
+                    )}
+                  </div>
+                  <div className="area-card-footer">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, flexShrink: 0 }}>
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                    <span>
+                      {t.areas.arrivalTime ?? 'Estimasi tiba'}:{' '}
+                      <strong>{arrivalLabel(a.estimatedArrivalMinutes)}</strong>
+                    </span>
+                  </div>
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="area-card-name">{a.name}</div>
-                  <div className="area-card-type">{a.type}</div>
-                </div>
-                {a.popular && (
-                  <span className="area-card-badge-popular">{t.areas.popular.replace('★ ', '')}</span>
-                )}
-              </div>
-              <div className="area-card-footer">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, flexShrink: 0 }}>
-                  <circle cx="12" cy="12" r="10" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span>{t.areas.arrivalTime ?? 'Estimasi tiba'}: <strong>{a.time}</strong></span>
-              </div>
-            </div>
-          ))}
-        </div>
+              );
+            })}
+          </div>
+        )}
 
         <div style={{ textAlign: 'center', marginTop: 32, color: 'rgba(255,255,255,.5)', fontSize: 13, lineHeight: 1.6 }}>
           {t.areas.notInList ?? 'Area kamu tidak ada di list?'}{' '}
@@ -446,7 +546,7 @@ function CtaSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangua
         <h2 className="cta-title">{t.cta.title} <em>{t.cta.titleEm}</em></h2>
         <p className="cta-sub">{t.cta.sub}</p>
         <div className="cta-btns">
-          <Link href="/booking" className="btn-cta-primary">
+          <Link href="/booking" className="btn-cta-primary" prefetch>
             {t.cta.bookNow}
             {ARROW_SVG}
           </Link>

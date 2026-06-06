@@ -61,6 +61,7 @@ export default function AdminSocialLinksPage() {
     }
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void load(); }, []);
 
   function openCreate() {

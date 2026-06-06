@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Product = {
@@ -20,55 +20,163 @@ type Product = {
   benefits?: { benefit_text: string }[];
 };
 
-type ApiResponse = {
-  error?: string;
-  message?: string;
-};
+type ApiResponse = { error?: string; message?: string };
+type UploadResponse = { success?: boolean; data?: { publicUrl: string; mimeType: string }; error?: string };
 
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+/* ─── Image upload component ─────────────────── */
+function ImageUpload({
+  currentUrl,
+  productName,
+  onUploaded,
+}: {
+  currentUrl: string;
+  productName: string;
+  onUploaded: (url: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading]   = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [previewUrl, setPreviewUrl] = useState(currentUrl);
+
+  async function handleFile(file: File) {
+    setUploadError('');
+    setUploading(true);
+
+    const form = new FormData();
+    form.append('file', file);
+
+    try {
+      const res  = await fetch('/api/admin/uploads', { method: 'POST', body: form });
+      const data = (await res.json()) as UploadResponse;
+      if (!res.ok || !data.success || !data.data) {
+        setUploadError(data.error ?? 'Upload gagal. Coba lagi.');
+        return;
+      }
+      setPreviewUrl(data.data.publicUrl);
+      onUploaded(data.data.publicUrl);
+    } catch {
+      setUploadError('Koneksi gagal. Periksa jaringan.');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function onInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) handleFile(file);
+    e.target.value = '';
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  }
+
+  function handleRemove() {
+    setPreviewUrl('');
+    setUploadError('');
+    onUploaded('');
+  }
+
+  const altText = productName ? `${productName} IV Therapy Bali` : 'Preview gambar produk';
+
+  if (previewUrl) {
+    return (
+      <div className="upload-preview-wrap">
+        <div className="upload-preview-img">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={previewUrl} alt={altText} />
+        </div>
+        <div className="upload-preview-actions">
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+          >
+            {uploading ? 'Mengunggah…' : 'Ganti Foto'}
+          </button>
+          <button
+            type="button"
+            className="button"
+            style={{ background: '#fee2e2', color: '#dc2626', border: 'none' }}
+            onClick={handleRemove}
+            disabled={uploading}
+          >
+            Hapus Foto
+          </button>
+        </div>
+        {uploadError && <div className="alert alert-error" style={{ marginTop: 8 }}>{uploadError}</div>}
+        <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onInputChange} style={{ display: 'none' }} />
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`upload-dropzone${uploading ? ' uploading' : ''}`}
+      onClick={() => !uploading && inputRef.current?.click()}
+      onDrop={onDrop}
+      onDragOver={(e) => e.preventDefault()}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click(); }}
+      aria-label="Upload gambar produk"
+    >
+      {uploading ? (
+        <>
+          <div className="upload-spinner" aria-hidden="true" />
+          <span className="upload-hint">Mengunggah gambar…</span>
+        </>
+      ) : (
+        <>
+          <svg className="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="3" y="3" width="18" height="18" rx="3" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <polyline points="21 15 16 10 5 21" />
+          </svg>
+          <span className="upload-label">Pilih Gambar</span>
+          <span className="upload-hint">JPG, PNG, WEBP · Maks. 5 MB · Rasio 1:1 disarankan</span>
+        </>
+      )}
+      {uploadError && <div className="alert alert-error" style={{ marginTop: 8 }}>{uploadError}</div>}
+      <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onInputChange} style={{ display: 'none' }} disabled={uploading} />
+    </div>
+  );
+}
+
+/* ─── Main form ──────────────────────────────── */
 export function ProductForm({ product }: { product?: Product }) {
   const router = useRouter();
   const isEdit = !!product?.id;
 
-  const [name, setName] = useState(product?.name ?? '');
-  const [slug, setSlug] = useState(product?.slug ?? '');
-  const [shortDesc, setShortDesc] = useState(product?.short_description ?? '');
-  const [fullDesc, setFullDesc] = useState(product?.full_description ?? '');
-  const [price, setPrice] = useState(String(product?.price_amount ?? ''));
-  const [priceLabel, setPriceLabel] = useState(product?.price_label ?? '');
-  const [duration, setDuration] = useState(String(product?.duration_minutes ?? '45'));
-  const [imageUrl, setImageUrl] = useState(product?.image_url ?? '');
-  const [label, setLabel] = useState(product?.label ?? '');
-  const [isActive, setIsActive] = useState(product?.is_active ?? true);
+  const [name,          setName]          = useState(product?.name ?? '');
+  const [shortDesc,     setShortDesc]     = useState(product?.short_description ?? '');
+  const [fullDesc,      setFullDesc]      = useState(product?.full_description ?? '');
+  const [price,         setPrice]         = useState(String(product?.price_amount ?? ''));
+  const [priceLabel,    setPriceLabel]    = useState(product?.price_label ?? '');
+  const [duration,      setDuration]      = useState(String(product?.duration_minutes ?? '45'));
+  const [imageUrl,      setImageUrl]      = useState(product?.image_url ?? '');
+  const [label,         setLabel]         = useState(product?.label ?? '');
+  const [isActive,      setIsActive]      = useState(product?.is_active ?? true);
   const [showOnHomepage, setShowOnHomepage] = useState(product?.show_on_homepage ?? false);
   const [homepageOrder, setHomepageOrder] = useState(String(product?.homepage_order ?? '0'));
-  const [benefits, setBenefits] = useState<string[]>(product?.benefits?.map((item) => item.benefit_text) ?? ['']);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [benefits,      setBenefits]      = useState<string[]>(product?.benefits?.map((b) => b.benefit_text) ?? ['']);
+  const [saving,        setSaving]        = useState(false);
+  const [error,         setError]         = useState('');
 
-  const [imagePreviewUrl, setImagePreviewUrl] = useState(product?.image_url ?? '');
-  const [imageStatus, setImageStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
-  const previewDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
-    const delay = imageUrl.trim() ? 600 : 0;
-    previewDebounceRef.current = setTimeout(() => {
-      if (!imageUrl.trim()) {
-        setImagePreviewUrl('');
-        setImageStatus('idle');
-      } else {
-        setImageStatus('loading');
-        setImagePreviewUrl(imageUrl.trim());
-      }
-    }, delay);
-    return () => {
-      if (previewDebounceRef.current) clearTimeout(previewDebounceRef.current);
-    };
-  }, [imageUrl]);
-
-  function slugify(value: string) {
-    return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  }
+  /* slug is generated server-side on create; kept on edit */
+  const slugValue = isEdit ? (product?.slug ?? '') : slugify(name);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -77,34 +185,27 @@ export function ProductForm({ product }: { product?: Product }) {
 
     const payload = {
       name,
-      slug,
+      slug: slugValue,
       shortDescription: shortDesc,
-      fullDescription: fullDesc,
-      priceAmount: parseInt(price, 10),
+      fullDescription:  fullDesc,
+      priceAmount:      parseInt(price, 10),
       priceLabel,
-      durationMinutes: parseInt(duration, 10),
-      imageUrl: imageUrl || null,
-      label: label || null,
+      durationMinutes:  parseInt(duration, 10),
+      imageUrl:         imageUrl || null,
+      label:            label || null,
       isActive,
       showOnHomepage,
-      homepageOrder: parseInt(homepageOrder, 10),
-      benefits: benefits.map((item) => item.trim()).filter(Boolean),
+      homepageOrder:    parseInt(homepageOrder, 10),
+      benefits:         benefits.map((b) => b.trim()).filter(Boolean),
     };
 
-    const url = isEdit ? `/api/admin/products/${product!.id}` : '/api/admin/products';
+    const url    = isEdit ? `/api/admin/products/${product!.id}` : '/api/admin/products';
     const method = isEdit ? 'PATCH' : 'POST';
 
     try {
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = (await res.json()) as ApiResponse;
-      if (!res.ok) {
-        setError(data.error ?? data.message ?? 'Gagal menyimpan');
-        return;
-      }
+      if (!res.ok) { setError(data.error ?? data.message ?? 'Gagal menyimpan'); return; }
       router.push('/admin/products');
       router.refresh();
     } catch {
@@ -115,15 +216,11 @@ export function ProductForm({ product }: { product?: Product }) {
   }
 
   async function handleDelete() {
-    if (!product?.id) return;
-    if (!confirm(`Hapus produk "${name}"?`)) return;
+    if (!product?.id || !confirm(`Hapus produk "${name}"?`)) return;
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/products/${product.id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        setError('Gagal menghapus');
-        return;
-      }
+      if (!res.ok) { setError('Gagal menghapus'); return; }
       router.push('/admin/products');
       router.refresh();
     } catch {
@@ -135,46 +232,29 @@ export function ProductForm({ product }: { product?: Product }) {
 
   return (
     <form className="admin-form" onSubmit={handleSubmit}>
-      <div className="admin-form-grid">
-        <label className="admin-field">
-          <span className="admin-field-label">Nama Produk *</span>
-          <input
-            className="control"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              if (!isEdit) setSlug(slugify(e.target.value));
-            }}
-            required
-          />
-        </label>
-        <label className="admin-field">
-          <span className="admin-field-label">Slug *</span>
-          <input
-            className="control"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            required
-            pattern="[a-z0-9-]+"
-          />
-        </label>
-      </div>
-
+      {/* Name */}
       <label className="admin-field">
-        <span className="admin-field-label">Deskripsi Singkat</span>
+        <span className="admin-field-label">Nama Produk *</span>
         <input
           className="control"
-          value={shortDesc}
-          onChange={(e) => setShortDesc(e.target.value)}
-          maxLength={500}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
         />
+      </label>
+
+      {/* Descriptions */}
+      <label className="admin-field">
+        <span className="admin-field-label">Deskripsi Singkat</span>
+        <input className="control" value={shortDesc} onChange={(e) => setShortDesc(e.target.value)} maxLength={500} />
       </label>
 
       <label className="admin-field">
         <span className="admin-field-label">Deskripsi Lengkap</span>
-        <textarea className="control" value={fullDesc} onChange={(e) => setFullDesc(e.target.value)} />
+        <textarea className="control" value={fullDesc} onChange={(e) => setFullDesc(e.target.value)} rows={5} />
       </label>
 
+      {/* Price / Duration */}
       <div className="admin-form-grid three">
         <label className="admin-field">
           <span className="admin-field-label">Harga (IDR) *</span>
@@ -190,59 +270,23 @@ export function ProductForm({ product }: { product?: Product }) {
         </label>
       </div>
 
-      <div className="admin-form-grid">
-        <label className="admin-field">
-          <span className="admin-field-label">URL Gambar Produk</span>
-          <input
-            className="control"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            placeholder="https://images.pexels.com/..."
-          />
-          <span className="admin-help">Rekomendasi rasio 1:1, min. 600x600px. Format JPG, PNG, atau WebP.</span>
-        </label>
-        <label className="admin-field">
-          <span className="admin-field-label">Label Badge</span>
-          <input className="control" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Popular, New..." maxLength={50} />
-        </label>
+      {/* Image upload */}
+      <div className="admin-field">
+        <span className="admin-field-label">Foto Produk</span>
+        <ImageUpload
+          currentUrl={imageUrl}
+          productName={name}
+          onUploaded={(url) => setImageUrl(url)}
+        />
       </div>
 
-      {imageUrl.trim() && (
-        <div className="surface-card" style={{ maxWidth: 280, padding: 0, overflow: 'hidden' }}>
-          <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', background: '#e8e4da', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {imageStatus === 'loading' && <div className="admin-help">Memuat preview...</div>}
-            {imagePreviewUrl && (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={imagePreviewUrl}
-                alt="Preview gambar produk"
-                onLoad={() => setImageStatus('ok')}
-                onError={() => setImageStatus('error')}
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  display: imageStatus === 'error' ? 'none' : 'block',
-                }}
-              />
-            )}
-            {imageStatus === 'error' && (
-              <div style={{ textAlign: 'center', padding: 16 }}>
-                <div style={{ color: '#c0392b', fontWeight: 800 }}>Gambar tidak dapat dimuat</div>
-                <div className="admin-help" style={{ marginTop: 4 }}>Periksa URL atau gunakan URL lain.</div>
-              </div>
-            )}
-          </div>
-          {imageStatus === 'ok' && (
-            <div style={{ padding: '9px 12px', background: '#ecfdf3', color: '#167a3f', fontSize: '.78rem', fontWeight: 800 }}>
-              Gambar berhasil dimuat
-            </div>
-          )}
-        </div>
-      )}
+      {/* Badge label */}
+      <label className="admin-field">
+        <span className="admin-field-label">Label Badge</span>
+        <input className="control" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Popular, New…" maxLength={50} />
+      </label>
 
+      {/* Toggles */}
       <div className="admin-form-grid three">
         <label className="admin-field" style={{ flexDirection: 'row', alignItems: 'center' }}>
           <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} style={{ width: 16, height: 16 }} />
@@ -258,20 +302,21 @@ export function ProductForm({ product }: { product?: Product }) {
         </label>
       </div>
 
+      {/* Benefits */}
       <div className="admin-field">
         <span className="admin-field-label">Benefit / Kandungan</span>
         {benefits.map((benefit, index) => (
-          <div key={index} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', gap: 8 }}>
+          <div key={index} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 8, marginBottom: 8 }}>
             <input
               className="control"
               value={benefit}
-              onChange={(e) => setBenefits((prev) => prev.map((value, itemIndex) => (itemIndex === index ? e.target.value : value)))}
+              onChange={(e) => setBenefits((prev) => prev.map((v, i) => (i === index ? e.target.value : v)))}
               placeholder={`Benefit ${index + 1}`}
             />
             <button
               className="button button-secondary"
               type="button"
-              onClick={() => setBenefits((prev) => prev.filter((_, itemIndex) => itemIndex !== index))}
+              onClick={() => setBenefits((prev) => prev.filter((_, i) => i !== index))}
               aria-label={`Hapus benefit ${index + 1}`}
             >
               Hapus
@@ -287,7 +332,7 @@ export function ProductForm({ product }: { product?: Product }) {
 
       <div className="admin-form-actions">
         <button className={`button button-primary${saving ? ' loading' : ''}`} type="submit" disabled={saving}>
-          {saving ? 'Menyimpan' : isEdit ? 'Simpan Perubahan' : 'Buat Produk'}
+          {saving ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Buat Produk'}
         </button>
         <button className="button button-secondary" type="button" onClick={() => router.back()}>
           Batal

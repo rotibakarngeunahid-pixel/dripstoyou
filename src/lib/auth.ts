@@ -27,10 +27,9 @@ export async function requirePermission(
   return session;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function adminApiHandler(
   permission: string | null,
-  handler: (req: NextRequest, session: SessionData) => Promise<NextResponse<any>>
+  handler: (req: NextRequest, session: SessionData) => Promise<NextResponse<unknown>>
 ) {
   return async (req: NextRequest) => {
     try {

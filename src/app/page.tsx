@@ -2,7 +2,8 @@ import Header from '@/components/public/Header';
 import ScrollRevealInit from '@/components/public/ScrollRevealInit';
 import HomeContent from '@/components/public/HomeContent';
 import SiteFooter from '@/components/public/SiteFooter';
-import type { HomepageProduct } from '@/components/public/HomeContent';
+import type { HomepageProduct, ServiceAreaData } from '@/components/public/HomeContent';
+import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,10 +42,31 @@ async function getHomepageProducts(): Promise<HomepageProduct[]> {
   }
 }
 
+async function getServiceAreas(): Promise<ServiceAreaData[]> {
+  try {
+    const areas = await prisma.serviceArea.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        estimatedArrivalMinutes: true,
+        note: true,
+        sortOrder: true,
+      },
+    });
+    return areas;
+  } catch {
+    return [];
+  }
+}
+
 export default async function HomePage() {
-  const [settings, homepageProducts] = await Promise.all([
+  const [settings, homepageProducts, serviceAreas] = await Promise.all([
     getPublicSettings(),
     getHomepageProducts(),
+    getServiceAreas(),
   ]);
 
   const waNumber =
@@ -56,7 +78,7 @@ export default async function HomePage() {
     <>
       <Header />
       <ScrollRevealInit />
-      <HomeContent waNumber={waNumber} homepageProducts={homepageProducts} />
+      <HomeContent waNumber={waNumber} homepageProducts={homepageProducts} serviceAreas={serviceAreas} />
       <SiteFooter waNumber={waNumber} />
     </>
   );

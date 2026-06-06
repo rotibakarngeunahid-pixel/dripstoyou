@@ -46,6 +46,7 @@ export default function AdminLegalPage() {
     }
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void load(); }, []);
 
   async function openEdit(id: string) {
