@@ -127,23 +127,6 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
 function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLanguage>['t']; waUrl: (s: string) => string; waBookingMsg: string }) {
   return (
     <section className="hero" id="hero" aria-label="Hero">
-      {/* Background colour base */}
-      <div className="hero-bg-solid" aria-hidden="true" />
-
-      {/* Photo — right side, portrait orientation */}
-      <div className="hero-photo-wrap" aria-hidden="true">
-        <Image
-          src={BRAND.photo1}
-          alt="Tim medis Drips To You Bali"
-          fill
-          priority
-          sizes="(max-width: 1024px) 100vw, 60vw"
-          className="hero-photo"
-        />
-        {/* Gradient overlay: left-to-right so text side is solid dark */}
-        <div className="hero-photo-fade" />
-      </div>
-
       {/* Text content — left column */}
       <div className="hero-content">
         <h1 className="hero-title">
@@ -151,6 +134,8 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
           {t.hero.line2},<br />
           <em>{t.hero.lineEm}.</em>
         </h1>
+
+        <div className="hero-accent-line" aria-hidden="true" />
 
         <p className="hero-sub">{t.hero.sub}</p>
 
@@ -170,6 +155,19 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
             {ARROW_SVG}
           </Link>
         </div>
+      </div>
+
+      {/* Photo — right side, no blur/filter */}
+      <div className="hero-photo-wrap" aria-hidden="true">
+        <Image
+          src={BRAND.photo1}
+          alt="Tim medis Drips To You Bali"
+          fill
+          priority
+          sizes="(max-width: 1023px) 100vw, 55vw"
+          className="hero-photo"
+        />
+        <div className="hero-photo-overlay" />
       </div>
     </section>
   );
