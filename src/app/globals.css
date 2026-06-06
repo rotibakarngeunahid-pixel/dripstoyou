@@ -102,7 +102,7 @@ a { text-decoration: none; }
 }
 .hdr.scrolled { box-shadow: 0 2px 24px rgba(0,0,0,0.22); }
 .hdr-logo { display: flex; align-items: center; gap: 10px; }
-.hdr-logo-img { height: 46px; width: 46px; object-fit: cover; flex-shrink: 0; border-radius: 50%; }
+.hdr-logo-img { height: 46px; width: 46px; object-fit: contain; flex-shrink: 0; }
 .hdr-logo-text {
   font-family: var(--font-playfair, 'Playfair Display', Georgia, serif);
   font-size: 15px; font-weight: 700; color: white; line-height: 1.15;
@@ -199,7 +199,7 @@ a { text-decoration: none; }
   .hdr-nav { display: flex; }
   .hdr-hamburger { display: none; }
   .hdr-logo-text { font-size: 17px; }
-  .hdr-logo-img { height: 52px; width: 52px; }
+  .hdr-logo-img { height: 50px; width: 50px; }
 }
 
 /* ─────────────────────────────────────────────
@@ -212,14 +212,14 @@ a { text-decoration: none; }
   display: flex;
   align-items: center;
   overflow: hidden;
-  background: #0a1e1e;
+  background: #052b22;
 }
 
 /* Solid dark base so if photo hasn't loaded there's no flash */
 .hero-bg-solid {
   position: absolute;
   inset: 0;
-  background: #0a1e1e;
+  background: #052b22;
   z-index: 0;
 }
 
@@ -246,20 +246,20 @@ a { text-decoration: none; }
     /* Strong left dark coverage for legible text */
     linear-gradient(
       to right,
-      #0a1e1e 0%,
-      #0a1e1e 25%,
-      rgba(10,30,30,0.93) 38%,
-      rgba(10,30,30,0.70) 52%,
-      rgba(10,30,30,0.22) 68%,
+      #052b22 0%,
+      #052b22 25%,
+      rgba(5,43,34,0.93) 38%,
+      rgba(5,43,34,0.70) 52%,
+      rgba(5,43,34,0.22) 68%,
       transparent 100%
     ),
     /* Top/bottom vignette for polish */
     linear-gradient(
       to bottom,
-      rgba(10,30,30,0.4) 0%,
+      rgba(5,43,34,0.4) 0%,
       transparent 20%,
       transparent 75%,
-      rgba(10,30,30,0.5) 100%
+      rgba(5,43,34,0.5) 100%
     );
 }
 
@@ -272,16 +272,6 @@ a { text-decoration: none; }
   width: 100%;
 }
 
-/* Gold accent bar above heading — matches reference */
-.hero-accent-line {
-  width: 40px;
-  height: 3px;
-  background: var(--gold);
-  border-radius: 2px;
-  margin-bottom: 28px;
-  animation: heroSlide .5s .05s ease both;
-}
-
 /* Big Playfair heading */
 .hero-title {
   font-family: var(--font-playfair, 'Playfair Display', Georgia, serif);
@@ -289,24 +279,26 @@ a { text-decoration: none; }
   font-weight: 700;
   color: white;
   line-height: 1.07;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   text-wrap: balance;
-  animation: heroSlide .6s .12s ease both;
+  animation: heroSlide .6s .05s ease both;
 }
 .hero-title em {
   font-style: italic;
-  color: #d4a953;   /* warm gold — matches reference */
+  color: #d4a953;
   display: block;
 }
 
+
+
 /* Subtitle */
 .hero-sub {
-  font-size: 14px;
-  line-height: 1.8;
-  color: rgba(255,255,255,0.65);
-  max-width: 340px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.9);
+  max-width: 440px;
   margin-bottom: 36px;
-  animation: heroSlide .5s .22s ease both;
+  animation: heroSlide .5s .25s ease both;
 }
 
 /* CTA row */
@@ -314,50 +306,50 @@ a { text-decoration: none; }
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
-  animation: heroSlide .5s .32s ease both;
+  animation: heroSlide .5s .35s ease both;
 }
 
-/* Primary — WhatsApp green pill */
+/* Primary — Gold pill (matches reference design) */
 .btn-wa-hero {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  background: var(--wa);
-  color: white;
-  padding: 14px 24px;
-  border-radius: 10px;
+  background: #e3bc66;
+  color: #062b22;
+  padding: 14px 26px;
+  border-radius: 50px;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: .1px;
   white-space: nowrap;
-  box-shadow: 0 4px 18px rgba(37,211,102,.28);
+  box-shadow: 0 4px 18px rgba(201,148,76,.35);
   transition: background .22s, transform .18s, box-shadow .22s;
 }
 .btn-wa-hero:hover {
-  background: #1db84a;
+  background: #b8833e;
   transform: translateY(-2px);
-  box-shadow: 0 8px 26px rgba(37,211,102,.40);
+  box-shadow: 0 8px 26px rgba(201,148,76,.50);
 }
 .btn-wa-hero:active { transform: scale(.97); }
 
-/* Secondary — dark outline ghost */
+/* Secondary — dark outline ghost with pill shape */
 .btn-ghost-hero {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: rgba(255,255,255,.88);
-  border: 1.5px solid rgba(255,255,255,.35);
+  color: white;
+  border: 1px solid white;
   background: transparent;
-  padding: 13px 22px;
-  border-radius: 10px;
+  padding: 13px 24px;
+  border-radius: 50px;
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
   transition: background .22s, border-color .22s, color .22s;
 }
 .btn-ghost-hero:hover {
-  background: rgba(255,255,255,.10);
-  border-color: rgba(255,255,255,.6);
+  background: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.7);
   color: white;
 }
 

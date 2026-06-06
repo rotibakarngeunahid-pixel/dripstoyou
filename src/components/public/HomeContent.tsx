@@ -146,9 +146,6 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
 
       {/* Text content — left column */}
       <div className="hero-content">
-        {/* Gold divider accent */}
-        <div className="hero-accent-line" aria-hidden="true" />
-
         <h1 className="hero-title">
           {t.hero.line1}<br />
           {t.hero.line2},<br />

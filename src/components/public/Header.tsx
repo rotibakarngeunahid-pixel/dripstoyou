@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/contexts/language';
@@ -44,8 +45,16 @@ export default function Header() {
     <>
       <header className={`hdr${scrolled ? ' scrolled' : ''}`} id="hdr">
         <Link href="/" className="hdr-logo" aria-label="Drips To You - Bali — Home">
+          <Image
+            src="https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp"
+            alt=""
+            width={44}
+            height={44}
+            className="hdr-logo-img"
+            priority
+          />
           <div className="hdr-logo-text">
-            Drips To You - Bali
+            Drips To You – Bali
             <small>Mobile IV Therapy</small>
           </div>
         </Link>

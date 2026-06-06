@@ -65,8 +65,8 @@ export const translations: Record<Lang, Translations> = {
     hero: {
       pill: 'Tersedia di Seluruh Bali',
       line1: 'Hidrasi &', line2: 'Pemulihan', lineEm: 'Diantar ke Kamu',
-      sub: 'Mobile IV therapy oleh tim medis bersertifikat — langsung ke villa, hotel, atau Airbnb kamu di seluruh Bali. Tanpa perlu ke klinik, kami yang datang.',
-      bookWa: 'Konsultasi via WhatsApp', seeAll: 'Lihat Semua Treatment',
+      sub: 'Tim medis bersertifikat datang langsung ke villa, hotel, atau Airbnb Anda di seluruh Bali. Nyaman, aman, dan terpersonalisasi untuk kebutuhan Anda.',
+      bookWa: 'Konsultasi via WhatsApp', seeAll: 'Lihat Treatment',
     },
     benefits: {
       fast: 'Respon Cepat', fastDesc: 'Tim medis tiba dalam 60 menit ke lokasi Anda di Bali',
@@ -148,8 +148,8 @@ export const translations: Record<Lang, Translations> = {
     hero: {
       pill: 'Available Across Bali',
       line1: 'Hydration &', line2: 'Recovery', lineEm: 'Delivered to You',
-      sub: 'Mobile IV therapy by certified medical team — delivered straight to your villa, hotel, or Airbnb anywhere in Bali. No need to go anywhere.',
-      bookWa: 'Consult via WhatsApp', seeAll: 'See All Treatments',
+      sub: 'Certified medical team comes directly to your villa, hotel, or Airbnb across Bali. Comfortable, safe, and personalized for your needs.',
+      bookWa: 'Consult via WhatsApp', seeAll: 'View Treatments',
     },
     benefits: {
       fast: 'Fast Response', fastDesc: 'Medical team arrives within 60 minutes to your location',
