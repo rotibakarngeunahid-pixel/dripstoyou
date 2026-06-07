@@ -475,7 +475,7 @@ a { text-decoration: none; }
 .t-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-hover); border-color: rgba(212,175,55,0.3); }
 .t-card:active { transform: scale(.98); }
 .t-card-img {
-  position: relative; aspect-ratio: 4/3; overflow: hidden;
+  position: relative; aspect-ratio: 1/1; overflow: hidden;
   display: flex; align-items: center; justify-content: center;
 }
 .t-img-hangover { background: linear-gradient(145deg,#e8c99a 0%,#9ABFC1 55%,#164e52 100%); }
@@ -945,7 +945,7 @@ a { text-decoration: none; }
   background: white; border: 1px solid var(--grey); border-radius: var(--r-card);
   overflow: hidden; box-shadow: var(--shadow-card);
 }
-.skeleton-card-img { aspect-ratio: 4/3; }
+.skeleton-card-img { aspect-ratio: 1/1; }
 .skeleton-card-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
 
 /* UI refresh: calmer brand system, responsive shells, and clear loading states */
@@ -1449,7 +1449,7 @@ textarea:focus-visible {
 
 .product-media {
   position: relative;
-  height: 210px;
+  aspect-ratio: 1/1;
   background: #dfe7e5;
 }
 
