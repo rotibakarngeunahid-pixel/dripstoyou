@@ -36,7 +36,7 @@ interface Props {
 const IK = 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image';
 const BRAND = {
   logo:   `${IK}/drips-to-you-bali-icon.webp`,
-  photo1: '/img/hero-landscape.png',
+  photo1: '/img/hero-landscape-user.jpg',
   photo2: `${IK}/photo_6134052561527443396_y.webp`, // medical team / preparation
   photo3: `${IK}/photo_6131724036417982600_y.webp`, // IV drip visual
   photo4: `${IK}/photo_6134052561527443397_y.webp`, // villa/hotel service
