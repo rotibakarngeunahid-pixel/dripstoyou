@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { useLanguage, type Lang } from '@/contexts/language';
 
 export type LegalSlug = 'terms-conditions' | 'privacy-policy';
@@ -12,6 +13,7 @@ type LegalSection = {
 
 type LegalDocument = {
   title: string;
+  description: string;
   updatedLabel: string;
   intro: string;
   sections: LegalSection[];
@@ -22,10 +24,21 @@ const LAST_UPDATED: Record<Lang, string> = {
   id: '7 Juni 2026',
 };
 
+const TOC_LABEL: Record<Lang, string> = {
+  en: 'Contents',
+  id: 'Daftar Isi',
+};
+
+const BACK_TOP_LABEL: Record<Lang, string> = {
+  en: 'Top',
+  id: 'Atas',
+};
+
 const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
   'terms-conditions': {
     en: {
       title: 'Terms and Conditions',
+      description: 'Governs your use of our website, booking channels, and mobile IV therapy services in Bali.',
       updatedLabel: 'Last updated',
       intro: 'These Terms and Conditions govern your use of the Drips To You - Bali website, booking form, WhatsApp channels, and mobile wellness services. By submitting a booking request or receiving a service, you confirm that you have read and accepted these terms.',
       sections: [
@@ -130,6 +143,7 @@ const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
     },
     id: {
       title: 'Syarat dan Ketentuan',
+      description: 'Mengatur penggunaan website, kanal booking, dan layanan mobile IV therapy Drips To You di Bali.',
       updatedLabel: 'Terakhir diperbarui',
       intro: 'Syarat dan Ketentuan ini mengatur penggunaan website, formulir booking, kanal WhatsApp, dan layanan wellness mobile Drips To You - Bali. Dengan mengirim permintaan booking atau menerima layanan, Anda menyatakan telah membaca dan menyetujui ketentuan ini.',
       sections: [
@@ -236,6 +250,7 @@ const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
   'privacy-policy': {
     en: {
       title: 'Privacy Policy',
+      description: 'How we collect, use, store, and protect your personal data when you use our services.',
       updatedLabel: 'Last updated',
       intro: 'This Privacy Policy explains how Drips To You - Bali collects, uses, stores, and shares personal data when you visit our website, submit a booking, communicate through WhatsApp, or receive our services. Health information is sensitive personal data and is handled with additional care.',
       sections: [
@@ -337,6 +352,7 @@ const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
     },
     id: {
       title: 'Kebijakan Privasi',
+      description: 'Cara kami mengumpulkan, menggunakan, menyimpan, dan melindungi data pribadi Anda.',
       updatedLabel: 'Terakhir diperbarui',
       intro: 'Kebijakan Privasi ini menjelaskan cara Drips To You - Bali mengumpulkan, menggunakan, menyimpan, dan membagikan data pribadi ketika Anda mengunjungi website, mengirim booking, berkomunikasi melalui WhatsApp, atau menerima layanan. Informasi kesehatan merupakan data pribadi spesifik dan ditangani dengan kehati-hatian tambahan.',
       sections: [
@@ -441,37 +457,152 @@ const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
 
 export default function LegalContent({ slug }: { slug: LegalSlug }) {
   const { lang } = useLanguage();
-  const document = DOCUMENTS[slug][lang];
+  const doc = DOCUMENTS[slug][lang];
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(-1);
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    const onScroll = () => setShowBackToTop(window.scrollY > 300);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const match = entry.target.id.match(/^ls-(\d+)$/);
+            if (match) setActiveIdx(parseInt(match[1]) - 1);
+          }
+        });
+      },
+      { rootMargin: '-15% 0px -55% 0px', threshold: 0 }
+    );
+
+    doc.sections.forEach((_, i) => {
+      const el = document.getElementById(`ls-${i + 1}`);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [doc.sections, lang]);
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const closeMobileToc = () => {
+    if (detailsRef.current) detailsRef.current.open = false;
+  };
 
   return (
     <main className="page-shell">
-      <section className="page-hero centered">
-        <div className="page-hero-inner">
-          <h1 className="page-title">{document.title}</h1>
-          <p className="page-subtitle">
-            {document.updatedLabel}: {LAST_UPDATED[lang]}
+      {/* Hero */}
+      <section className="legal-hero">
+        <div className="legal-hero-inner">
+          <p className="legal-hero-updated">
+            {doc.updatedLabel}: {LAST_UPDATED[lang]}
           </p>
+          <h1 className="legal-hero-title">{doc.title}</h1>
+          <p className="legal-hero-desc">{doc.description}</p>
         </div>
       </section>
 
-      <section className="page-section narrow">
-        <article className="content-card legal-content">
-          <p className="legal-para">{document.intro}</p>
-          {document.sections.map((section) => (
-            <section key={section.title}>
-              <h2 className="legal-heading">{section.title}</h2>
-              {section.paragraphs.map((paragraph) => (
-                <p className="legal-para" key={paragraph}>{paragraph}</p>
+      {/* Page body */}
+      <div className="legal-body">
+
+        {/* Mobile TOC — accordion */}
+        <details ref={detailsRef} className="legal-toc-mobile">
+          <summary className="legal-toc-summary">
+            <span>{TOC_LABEL[lang]}</span>
+            <svg
+              className="legal-toc-chevron"
+              width="18" height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </summary>
+          <nav className="legal-toc-nav legal-toc-nav--mobile" aria-label="Page contents">
+            {doc.sections.map((s, i) => (
+              <a
+                key={i}
+                href={`#ls-${i + 1}`}
+                className={`legal-toc-link${activeIdx === i ? ' active' : ''}`}
+                onClick={closeMobileToc}
+              >
+                {s.title}
+              </a>
+            ))}
+          </nav>
+        </details>
+
+        {/* Desktop sidebar TOC */}
+        <aside className="legal-toc-sidebar" aria-label="Page contents">
+          <p className="legal-toc-label">{TOC_LABEL[lang]}</p>
+          <nav className="legal-toc-nav">
+            {doc.sections.map((s, i) => (
+              <a
+                key={i}
+                href={`#ls-${i + 1}`}
+                className={`legal-toc-link${activeIdx === i ? ' active' : ''}`}
+              >
+                {s.title}
+              </a>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main article */}
+        <article className="legal-article">
+          <p className="legal-intro">{doc.intro}</p>
+
+          {doc.sections.map((section, i) => (
+            <section key={i} id={`ls-${i + 1}`} className="legal-section">
+              <h2 className="legal-section-heading">{section.title}</h2>
+              {section.paragraphs.map((p, j) => (
+                <p key={j} className="legal-para">{p}</p>
               ))}
               {section.bullets && (
                 <ul className="legal-list">
-                  {section.bullets.map((item) => <li key={item}>{item}</li>)}
+                  {section.bullets.map((item, k) => (
+                    <li key={k}>{item}</li>
+                  ))}
                 </ul>
               )}
             </section>
           ))}
         </article>
-      </section>
+      </div>
+
+      {/* Back to top */}
+      {showBackToTop && (
+        <button
+          className="legal-back-top"
+          onClick={scrollToTop}
+          aria-label="Back to top"
+        >
+          <svg
+            width="15" height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <polyline points="18 15 12 9 6 15" />
+          </svg>
+          <span>{BACK_TOP_LABEL[lang]}</span>
+        </button>
+      )}
     </main>
   );
 }
