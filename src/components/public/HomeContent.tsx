@@ -35,13 +35,14 @@ interface Props {
 /* ── Brand image URLs ── */
 const IK = 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image';
 const BRAND = {
-  logo:   `${IK}/drips-to-you-bali-icon.webp`,
+  logo:         `${IK}/drips-to-you-bali-icon.webp`,
   photo1:       '/img/home-section-dripstoyou.webp',
   photo1Mobile: '/img/hero-section-mobile.webp',
-  photo2: `${IK}/photo_6134052561527443396_y.webp`, // medical team / preparation
-  photo3: `${IK}/photo_6131724036417982600_y.webp`, // IV drip visual
-  photo4: `${IK}/photo_6134052561527443397_y.webp`, // villa/hotel service
-  photo5: `${IK}/photo_6134052561527443395_y.webp`, // team portrait
+  photoWhy:     '/img/widescreen-dripstoyoubali.webp',
+  photo2:       `${IK}/photo_6134052561527443396_y.webp`,
+  photo3:       `${IK}/photo_6131724036417982600_y.webp`,
+  photo4:       `${IK}/photo_6134052561527443397_y.webp`,
+  photo5:       `${IK}/photo_6134052561527443395_y.webp`,
 };
 
 const WA_SVG = (
@@ -304,8 +305,8 @@ function WhyChooseUsSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
           </p>
         </div>
 
-        <div className="why-img-banner reveal" style={{ position: 'relative', width: '100%', aspectRatio: '2/1', maxHeight: '450px', minHeight: '220px', borderRadius: '24px', overflow: 'hidden', marginBottom: '40px', boxShadow: 'var(--shadow-card)' }}>
-          <Image src={BRAND.photo4} alt="Drips To You - Why Choose Us" fill style={{ objectFit: 'cover', objectPosition: 'center' }} sizes="(max-width: 1200px) 100vw, 1200px" />
+        <div className="why-img-banner reveal" style={{ position: 'relative', width: '100%', aspectRatio: '16/9', maxHeight: '560px', minHeight: '220px', borderRadius: '20px', overflow: 'hidden', marginBottom: '48px', boxShadow: 'var(--shadow-card)' }}>
+          <Image src={BRAND.photoWhy} alt="Drips To You Bali - Mobile IV Therapy Service" fill style={{ objectFit: 'cover', objectPosition: 'center center' }} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1200px" />
         </div>
 
         <div className="why-grid">
