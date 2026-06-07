@@ -241,7 +241,7 @@ a { text-decoration: none; }
 /* Photo itself — no blur/filter, top-anchored so head is visible */
 .hero-photo {
   object-fit: cover;
-  object-position: center top;
+  object-position: 75% top;
 }
 
 /* Mobile overlay: strong left+top fade for legibility */
@@ -405,7 +405,7 @@ a { text-decoration: none; }
 
   /* Show nurse from top on desktop */
   .hero-photo {
-    object-position: center top;
+    object-position: 80% top;
   }
 
   .hero-title {
