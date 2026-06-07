@@ -11,18 +11,6 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  async redirects() {
-    // Old image URLs in the DB use /uploads/products/ (root path).
-    // New uploads go to /php-api/uploads/products/ on the PHP host.
-    // Redirect old URLs so they resolve to the correct PHP host path.
-    return [
-      {
-        source: '/uploads/products/:filename',
-        destination: 'https://dripstoyou.com/php-api/uploads/products/:filename',
-        permanent: false,
-      },
-    ];
-  },
 
   async headers() {
     return [

@@ -17,12 +17,15 @@ export async function GET(
   }
 
   const relPath = path.join('/');
-  // Only allow fetching from the uploads directory (security guard)
   if (!relPath.startsWith('products/') && !relPath.startsWith('uploads/')) {
     return new NextResponse('Forbidden', { status: 403 });
   }
 
-  const imageUrl = `${phpBase.replace(/\/$/, '')}/uploads/${relPath}`;
+  // Files live at the root of the PHP hosting domain (public_html/uploads/products/).
+  // Extract just the origin from NEXT_PUBLIC_API_BASE_URL (e.g. https://dripstoyou.com/php-api → https://dripstoyou.com)
+  // so that /api/img/products/:file proxies to https://dripstoyou.com/uploads/products/:file
+  const phpOrigin = new URL(phpBase).origin;
+  const imageUrl = `${phpOrigin}/uploads/${relPath}`;
 
   try {
     const res = await fetch(imageUrl, {
