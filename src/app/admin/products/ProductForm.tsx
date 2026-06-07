@@ -111,10 +111,16 @@ function ImageUpload({
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading]   = useState(false);
   const [uploadError, setUploadError] = useState('');
-  const [previewUrl, setPreviewUrl] = useState(currentUrl);
+  const [imgError, setImgError]     = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(() => toHttps(currentUrl));
+
+  function toHttps(url: string) {
+    return url ? url.replace(/^http:\/\//, 'https://') : url;
+  }
 
   async function handleFile(file: File) {
     setUploadError('');
+    setImgError(false);
     setUploading(true);
 
     const form = new FormData();
@@ -127,8 +133,9 @@ function ImageUpload({
         setUploadError(data.error ?? 'Upload gagal. Coba lagi.');
         return;
       }
-      setPreviewUrl(data.data.publicUrl);
-      onUploaded(data.data.publicUrl);
+      const safeUrl = toHttps(data.data.publicUrl);
+      setPreviewUrl(safeUrl);
+      onUploaded(safeUrl);
     } catch {
       setUploadError('Koneksi gagal. Periksa jaringan.');
     } finally {
@@ -159,9 +166,30 @@ function ImageUpload({
   if (previewUrl) {
     return (
       <div className="upload-preview-wrap">
-        <div className="upload-preview-img">
+        <div className="upload-preview-img" style={{ position: 'relative' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={previewUrl} alt={altText} />
+          <img
+            src={previewUrl}
+            alt={altText}
+            onError={() => setImgError(true)}
+            onLoad={() => setImgError(false)}
+            style={{ display: imgError ? 'none' : undefined }}
+          />
+          {imgError && (
+            <div style={{
+              width: '100%', height: '100%', display: 'flex',
+              flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              gap: 6, padding: 12, textAlign: 'center',
+            }}>
+              <span style={{ fontSize: 28 }}>🖼️</span>
+              <span style={{ fontSize: 11, color: '#dc2626', fontWeight: 600 }}>
+                Gambar tidak bisa dimuat
+              </span>
+              <span style={{ fontSize: 10, color: '#888', wordBreak: 'break-all' }}>
+                {previewUrl}
+              </span>
+            </div>
+          )}
         </div>
         <div className="upload-preview-actions">
           <button
@@ -182,6 +210,11 @@ function ImageUpload({
             Hapus Foto
           </button>
         </div>
+        {!imgError && (
+          <p style={{ fontSize: 11, color: '#9a9a9a', wordBreak: 'break-all', margin: 0 }}>
+            {previewUrl}
+          </p>
+        )}
         {uploadError && <div className="alert alert-error" style={{ marginTop: 8 }}>{uploadError}</div>}
         <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={onInputChange} style={{ display: 'none' }} />
       </div>
@@ -232,7 +265,7 @@ export function ProductForm({ product }: { product?: Product }) {
   const [price,         setPrice]         = useState(String(product?.price_amount ?? ''));
   const [priceLabel,    setPriceLabel]    = useState(product?.price_label ?? '');
   const [duration,      setDuration]      = useState(String(product?.duration_minutes ?? '45'));
-  const [imageUrl,      setImageUrl]      = useState(product?.image_url ?? '');
+  const [imageUrl,      setImageUrl]      = useState((product?.image_url ?? '').replace(/^http:\/\//, 'https://'));
   const [label,         setLabel]         = useState(product?.label ?? '');
   const [isActive,      setIsActive]      = useState(product?.is_active ?? true);
   const [showOnHomepage, setShowOnHomepage] = useState(product?.show_on_homepage ?? false);
