@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type LoginResponse = {
+  success?: boolean;
   error?: string;
   message?: string;
 };
@@ -13,11 +14,29 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const reason = new URLSearchParams(window.location.search).get('reason');
+    if (reason === 'session-expired') {
+      const timer = window.setTimeout(() => {
+        setError('Sesi admin telah berakhir. Silakan login kembali.');
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+    if (reason === 'auth-unavailable') {
+      const timer = window.setTimeout(() => {
+        setError('Layanan autentikasi admin sedang tidak tersedia. Periksa konfigurasi server.');
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     try {
@@ -31,9 +50,12 @@ export default function AdminLoginPage() {
         setError(data.error ?? data.message ?? 'Login failed');
         return;
       }
-      router.push('/admin/dashboard');
+      setSuccess(data.message ?? 'Login berhasil. Mengalihkan ke dashboard...');
+      window.setTimeout(() => {
+        router.replace('/admin/dashboard?login=success');
+      }, 500);
     } catch {
-      setError('Network error. Please try again.');
+      setError('Koneksi ke server gagal. Silakan coba lagi.');
     } finally {
       setLoading(false);
     }
@@ -59,6 +81,7 @@ export default function AdminLoginPage() {
               required
               autoComplete="email"
               placeholder="admin@dripstoyou.com"
+              disabled={loading || Boolean(success)}
             />
           </div>
 
@@ -73,17 +96,24 @@ export default function AdminLoginPage() {
               required
               autoComplete="current-password"
               placeholder="Password"
+              disabled={loading || Boolean(success)}
             />
           </div>
 
           {error && (
-            <div className="alert" style={{ marginBottom: 18, background: 'rgba(220,38,38,.16)', border: '1px solid rgba(220,38,38,.32)', color: '#fecaca' }}>
+            <div className="alert" role="alert" style={{ marginBottom: 18, background: 'rgba(220,38,38,.16)', border: '1px solid rgba(220,38,38,.32)', color: '#fecaca' }}>
               {error}
             </div>
           )}
 
-          <button className={`button button-gold full${loading ? ' loading' : ''}`} type="submit" disabled={loading}>
-            {loading ? 'Masuk' : 'Masuk'}
+          {success && (
+            <div className="alert alert-success" role="status" style={{ marginBottom: 18 }}>
+              {success}
+            </div>
+          )}
+
+          <button className={`button button-gold full${loading ? ' loading' : ''}`} type="submit" disabled={loading || Boolean(success)}>
+            {loading ? 'Memverifikasi...' : success ? 'Login Berhasil' : 'Masuk'}
           </button>
         </form>
       </section>

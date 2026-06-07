@@ -4,17 +4,27 @@ import Link from 'next/link';
 import { useLanguage } from '@/contexts/language';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
-const AREAS = [
-  'Seminyak', 'Canggu', 'Kuta', 'Ubud', 'Nusa Dua', 'Jimbaran',
-  'Legian', 'Sanur', 'Denpasar', 'Uluwatu', 'Petitenget', 'Bukit Peninsula',
-];
+type AboutFields = {
+  heroTagline?: string;
+  heroParagraph?: string;
+  missionStatement?: string;
+  teamIntro?: string;
+};
+
+export type LocalizedAboutContent = {
+  en?: AboutFields;
+  id?: AboutFields;
+};
 
 interface Props {
   waNumber: string;
+  content: LocalizedAboutContent | null;
+  areas: { id: string; name: string }[];
 }
 
-export default function AboutContent({ waNumber }: Props) {
-  const { t } = useLanguage();
+export default function AboutContent({ waNumber, content, areas }: Props) {
+  const { lang, t } = useLanguage();
+  const custom = content?.[lang];
 
   const waAboutUrl = buildWhatsAppUrl(waNumber, t.aboutPage.waMessage);
   const waGeneralUrl = buildWhatsAppUrl(waNumber, t.footer.waFloatMessage);
@@ -25,9 +35,9 @@ export default function AboutContent({ waNumber }: Props) {
         <div className="page-hero-inner">
           <div className="page-eyebrow">{t.aboutPage.eyebrow}</div>
           <h1 className="page-title">
-            {t.aboutPage.title} <em>{t.aboutPage.titleEm}</em>
+            {custom?.heroTagline || <>{t.aboutPage.title} <em>{t.aboutPage.titleEm}</em></>}
           </h1>
-          <p className="page-subtitle">{t.aboutPage.subtitle}</p>
+          <p className="page-subtitle">{custom?.heroParagraph || t.aboutPage.subtitle}</p>
           <div className="page-actions" style={{ justifyContent: 'center', marginTop: 28 }}>
             <Link href="/booking" className="button button-gold">
               {t.aboutPage.bookNow}
@@ -47,8 +57,8 @@ export default function AboutContent({ waNumber }: Props) {
       <section className="page-section narrow">
         <div className="content-card">
           <h2>{t.aboutPage.missionTitle}</h2>
-          <p>{t.aboutPage.missionP1}</p>
-          <p style={{ marginTop: 14 }}>{t.aboutPage.missionP2}</p>
+          <p>{custom?.missionStatement || t.aboutPage.missionP1}</p>
+          <p style={{ marginTop: 14 }}>{custom?.teamIntro || t.aboutPage.missionP2}</p>
         </div>
 
         <div className="responsive-grid" style={{ marginTop: 22 }}>
@@ -93,16 +103,22 @@ export default function AboutContent({ waNumber }: Props) {
         <div className="content-card" style={{ marginTop: 22 }}>
           <h2>{t.aboutPage.areasTitle}</h2>
           <p>{t.aboutPage.areasSub}</p>
-          <div className="tag-row" style={{ marginTop: 18 }}>
-            {AREAS.map((area) => (
-              <span className="soft-tag" key={area}>{area}</span>
-            ))}
-          </div>
-          <div style={{ marginTop: 16 }}>
-            <Link href="/booking" className="button button-secondary">
-              {t.aboutPage.checkAreaBtn}
-            </Link>
-          </div>
+          {areas.length > 0 ? (
+            <>
+              <div className="tag-row" style={{ marginTop: 18 }}>
+                {areas.map((area) => (
+                  <span className="soft-tag" key={area.id}>{area.name}</span>
+                ))}
+              </div>
+              <div style={{ marginTop: 16 }}>
+                <Link href="/booking" className="button button-secondary">
+                  {t.aboutPage.checkAreaBtn}
+                </Link>
+              </div>
+            </>
+          ) : (
+            <div className="empty-state" style={{ marginTop: 18 }}>{t.aboutPage.areasEmpty}</div>
+          )}
         </div>
 
         <div className="page-hero centered" style={{ borderRadius: 'var(--r-card)', marginTop: 24, padding: '42px 24px' }}>

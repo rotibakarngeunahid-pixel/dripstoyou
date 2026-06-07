@@ -53,7 +53,12 @@ export default function TreatmentsContent({ products }: Props) {
       </section>
 
       <section className="page-section">
-        <div className="product-grid">
+        {products.length === 0 ? (
+          <div className="empty-state surface-card">
+            {t.treatmentsPage.emptyState}
+          </div>
+        ) : (
+          <div className="product-grid">
           {products.map((product) => (
             <article className="product-card" key={product.id}>
               <div className="product-media">
@@ -109,7 +114,8 @@ export default function TreatmentsContent({ products }: Props) {
               </div>
             </article>
           ))}
-        </div>
+          </div>
+        )}
 
         <div style={{ textAlign: 'center', marginTop: 42 }}>
           <Link href="/" className="icon-link">

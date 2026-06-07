@@ -51,7 +51,20 @@ async function getServiceAreas(): Promise<ServiceAreaData[]> {
     });
     if (!res.ok) return [];
     const json = await res.json();
-    return Array.isArray(json.data) ? json.data : [];
+    if (!Array.isArray(json.data)) return [];
+    return json.data.map((area: {
+      id: string;
+      name: string;
+      estimated_arrival_minutes: number | null;
+      note: string | null;
+    }, index: number) => ({
+      id: area.id,
+      name: area.name,
+      isActive: true,
+      estimatedArrivalMinutes: area.estimated_arrival_minutes,
+      note: area.note,
+      sortOrder: index,
+    }));
   } catch {
     return [];
   }
@@ -66,7 +79,7 @@ export default async function HomePage() {
 
   const waNumber =
     (settings?.whatsappNumber as string | undefined) ??
-    process.env.WHATSAPP_NUMBER ??
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ??
     '6281200000000';
 
   return (

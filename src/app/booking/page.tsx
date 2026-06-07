@@ -46,12 +46,13 @@ interface BK {
   dateLabel: string; timeLabel: string; loadingSlots: string;
   noSlots: string; slotHint: string;
   peopleLabel: string; locTypeLabel: string;
-  areaLabel: string; areaDefault: string;
+  areaLabel: string; areaDefault: string; areaEmpty: string;
   addressLabel: string; addressPlaceholder: string;
   step3Title: string; step3Sub: string;
   nameLabel: string; namePlaceholder: string;
   phoneLabel: string; phonePlaceholder: string;
   notesLabel: string; notesPlaceholder: string;
+  termsLabel: string; privacyLabel: string;
   agree: (terms: React.ReactNode, privacy: React.ReactNode) => React.ReactNode;
   btnBack: string; btnNext2: string; btnSubmit: string; btnSubmitting: string;
   sidebarTitle: string; sidebarEmpty: string;
@@ -84,9 +85,9 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     step1Next: 'Continue to Schedule',
     step1Empty: 'No treatments available. Please contact us via WhatsApp to book manually.',
     schedTitle: 'Choose Schedule',
-    schedSub: 'Available daily, 08:00–18:00 WITA',
+    schedSub: 'Available times follow the active schedule configured by our team.',
     locTitle: 'Location',
-    locSub: 'We come to you anywhere in Bali',
+    locSub: 'We come to locations within our active service areas',
     dateLabel: 'Date *',
     timeLabel: 'Time *',
     loadingSlots: ' Loading…',
@@ -96,6 +97,7 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     locTypeLabel: 'Location Type *',
     areaLabel: 'Service Area *',
     areaDefault: 'Select service area…',
+    areaEmpty: 'No service areas are currently available. Please contact us via WhatsApp.',
     addressLabel: 'Full Address *',
     addressPlaceholder: 'Villa/hotel name, room number, street name…',
     step3Title: 'Your Details',
@@ -106,6 +108,8 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     phonePlaceholder: '+62 812 3456 7890',
     notesLabel: 'Additional Notes',
     notesPlaceholder: 'Special conditions, allergies, or other info…',
+    termsLabel: 'Terms & Conditions',
+    privacyLabel: 'Privacy Policy',
     agree: (terms: React.ReactNode, privacy: React.ReactNode) => (
       <>I agree to the {terms} and {privacy} of Drips To You Bali.</>
     ),
@@ -124,9 +128,9 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     sidebarNote: 'Final price confirmed via WhatsApp',
     waQuestion: 'Have a question?',
     waLink: 'Chat us on WhatsApp',
-    waCaption: '— available 24/7.',
+    waCaption: '— during service hours.',
     successTitle: 'Booking Received!',
-    successSub: 'Our team will contact you via WhatsApp within 30 minutes to confirm your appointment.',
+    successSub: 'Our team will contact you via WhatsApp as soon as possible to confirm your appointment.',
     codeLabel: 'Your Booking Code',
     btnWa: 'Confirm via WhatsApp',
     btnNew: 'Make Another Booking',
@@ -138,7 +142,7 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     heroh1: 'Book Your',
     heroh1em: 'Drip',
     heroP: 'Three easy steps — choose your treatment, pick a schedule, and our team comes to you.',
-    heroPills: ['✓ Door-to-door', '✓ 45–75 minutes', '✓ Experienced doctors', '✓ Fast confirmation'],
+    heroPills: ['✓ Mobile service', '✓ Active service areas', '✓ Certified medical team', '✓ Schedule confirmation'],
     summaryEyebrow: 'Summary',
     people1: (n: number) => `${n} ${n === 1 ? 'person' : 'people'}`,
     errNoTreatment: 'Please select a treatment first.',
@@ -161,9 +165,9 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     step1Next: 'Lanjut ke Jadwal',
     step1Empty: 'Treatment belum tersedia. Silakan hubungi WhatsApp untuk booking manual.',
     schedTitle: 'Pilih Jadwal',
-    schedSub: 'Tersedia setiap hari, 08:00–18:00 WITA',
+    schedSub: 'Waktu tersedia mengikuti jadwal aktif yang dikonfigurasi tim kami.',
     locTitle: 'Lokasi',
-    locSub: 'Kami datang ke tempat Anda di seluruh Bali',
+    locSub: 'Kami datang ke lokasi dalam area layanan aktif',
     dateLabel: 'Tanggal *',
     timeLabel: 'Waktu *',
     loadingSlots: ' Memuat…',
@@ -173,6 +177,7 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     locTypeLabel: 'Tipe Lokasi *',
     areaLabel: 'Area Layanan *',
     areaDefault: 'Pilih area layanan…',
+    areaEmpty: 'Belum ada area layanan aktif. Silakan hubungi kami melalui WhatsApp.',
     addressLabel: 'Alamat Lengkap *',
     addressPlaceholder: 'Nama villa/hotel, nomor kamar, nama jalan…',
     step3Title: 'Data Diri',
@@ -183,6 +188,8 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     phonePlaceholder: '+62 812 3456 7890',
     notesLabel: 'Catatan Tambahan',
     notesPlaceholder: 'Kondisi khusus, alergi, atau info lainnya…',
+    termsLabel: 'Syarat & Ketentuan',
+    privacyLabel: 'Kebijakan Privasi',
     agree: (terms: React.ReactNode, privacy: React.ReactNode) => (
       <>Saya menyetujui {terms} serta {privacy} Drips To You Bali.</>
     ),
@@ -201,9 +208,9 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     sidebarNote: 'Harga final dikonfirmasi via WhatsApp',
     waQuestion: 'Ada pertanyaan?',
     waLink: 'Chat kami di WhatsApp',
-    waCaption: '— siap membantu 24/7.',
+    waCaption: '— selama jam layanan.',
     successTitle: 'Booking Diterima!',
-    successSub: 'Tim kami akan menghubungi Anda via WhatsApp dalam 30 menit untuk konfirmasi jadwal.',
+    successSub: 'Tim kami akan segera menghubungi Anda melalui WhatsApp untuk konfirmasi jadwal.',
     codeLabel: 'Kode Booking Anda',
     btnWa: 'Konfirmasi via WhatsApp',
     btnNew: 'Buat Booking Baru',
@@ -212,10 +219,10 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     waNameLabel: 'Nama',
     waAreaLabel: 'Area',
     heroEyebrow: 'Mobile IV Therapy · Bali',
-    heroh1: 'Book Your',
-    heroh1em: 'Drip',
+    heroh1: 'Pesan',
+    heroh1em: 'IV Drip Anda',
     heroP: 'Tiga langkah mudah — pilih treatment, tentukan jadwal, dan tim kami datang ke lokasi Anda.',
-    heroPills: ['✓ Door-to-door', '✓ 45–75 menit', '✓ Dokter berpengalaman', '✓ Konfirmasi cepat'],
+    heroPills: ['✓ Layanan mobile', '✓ Area layanan aktif', '✓ Tim medis bersertifikat', '✓ Konfirmasi jadwal'],
     summaryEyebrow: 'Ringkasan',
     people1: (n: number) => `${n} orang`,
     errNoTreatment: 'Pilih treatment terlebih dahulu.',
@@ -227,8 +234,6 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
 };
 
 /* ─── Constants ─── */
-const ALL_TIMES = ['08:00','09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
-
 const GRADIENTS = [
   'linear-gradient(140deg,#c8773a,#9e4c1a)',
   'linear-gradient(140deg,#2d9b8e,#185e57)',
@@ -240,9 +245,9 @@ const GRADIENTS = [
 
 /* ─── Utils ─── */
 const fmtIDR = (n: number) => 'IDR ' + n.toLocaleString('id-ID');
-const fmtDate = (s: string) => {
+const fmtDate = (s: string, lang: 'en' | 'id' = 'en') => {
   if (!s) return '';
-  return new Date(s + 'T00:00:00').toLocaleDateString('en-GB', {
+  return new Date(s + 'T00:00:00').toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-GB', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
 };
@@ -371,9 +376,10 @@ function StepBar({ step, bk }: { step: number; bk: BK }) {
 
 /* ─── Sidebar ─── */
 function Sidebar({
-  bk, product, productGrad, date, time, areaName, people, locType,
+  bk, lang, product, productGrad, date, time, areaName, people, locType,
 }: {
   bk: BK;
+  lang: 'en' | 'id';
   product: Product | undefined;
   productGrad: string | undefined;
   date: string;
@@ -385,7 +391,7 @@ function Sidebar({
   const loc = bk.locTypes.find(l => l.v === locType);
   const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000';
   const rows = [
-    { ic: <IcCal />,    k: bk.sidebarDate,   v: date ? fmtDate(date) : null },
+    { ic: <IcCal />,    k: bk.sidebarDate,   v: date ? fmtDate(date, lang) : null },
     { ic: <IcClock />,  k: bk.sidebarTime,   v: time || null },
     { ic: <IcPin />,    k: bk.sidebarArea,   v: areaName || null },
     { ic: <IcHome />,   k: bk.sidebarLoc,    v: loc?.l || null },
@@ -568,12 +574,11 @@ function Step2({
               <div className="bk-slot-loading"><span /><span /><span /></div>
             ) : slots.length > 0 ? (
               <div className="bk-slot-grid">
-                {ALL_TIMES.map(s => (
+                {slots.map(s => (
                   <button
                     key={s}
                     type="button"
-                    className={`bk-slot-btn${form.time === s ? ' act' : ''}${!slots.includes(s) ? ' dis' : ''}`}
-                    disabled={!slots.includes(s)}
+                    className={`bk-slot-btn${form.time === s ? ' act' : ''}`}
                     onClick={() => setForm(f => ({ ...f, time: s }))}
                   >
                     {s}
@@ -642,8 +647,9 @@ function Step2({
               className="control bk-select"
               value={form.areaId}
               onChange={e => setForm(f => ({ ...f, areaId: e.target.value }))}
+              disabled={areas.length === 0}
             >
-              <option value="">{bk.areaDefault}</option>
+              <option value="">{areas.length === 0 ? bk.areaEmpty : bk.areaDefault}</option>
               {areas.map(a => (
                 <option key={a.id} value={a.id}>{a.name}</option>
               ))}
@@ -677,9 +683,10 @@ function Step2({
 
 /* ─── Step 3: Details + Submit ─── */
 function Step3({
-  bk, form, setForm, product, productGrad, areaName, submitting, error, onBack, onSubmit,
+  bk, lang, form, setForm, product, productGrad, areaName, submitting, error, onBack, onSubmit,
 }: {
   bk: BK;
+  lang: 'en' | 'id';
   form: FormState;
   setForm: React.Dispatch<React.SetStateAction<FormState>>;
   product: Product | undefined;
@@ -741,7 +748,7 @@ function Step3({
           <div className="bk-mob-sum-name">{product.name}</div>
           <div className="bk-mob-sum-price">{fmtIDR(product.price_amount * form.people)}</div>
           <div className="bk-mob-sum-divider" />
-          {form.date && <div className="bk-mob-sum-row">📅 {fmtDate(form.date)} · {form.time} WITA</div>}
+          {form.date && <div className="bk-mob-sum-row">📅 {fmtDate(form.date, lang)} · {form.time} WITA</div>}
           {areaName && <div className="bk-mob-sum-row">📍 {areaName}{loc ? ` · ${loc.l}` : ''}</div>}
           <div className="bk-mob-sum-row">👥 {bk.people1(form.people)}</div>
         </div>
@@ -756,8 +763,8 @@ function Step3({
           />
           <span className="bk-agree-txt">
             {bk.agree(
-              <Link href="/legal/terms-conditions">Terms &amp; Conditions</Link>,
-              <Link href="/legal/privacy-policy">Privacy Policy</Link>,
+              <Link href="/legal/terms-conditions">{bk.termsLabel}</Link>,
+              <Link href="/legal/privacy-policy">{bk.privacyLabel}</Link>,
             )}
           </span>
         </label>
@@ -781,9 +788,10 @@ function Step3({
 
 /* ─── Success Screen ─── */
 function SuccessScreen({
-  bk, bookingCode, product, form, areaName, onReset,
+  bk, lang, bookingCode, product, form, areaName, onReset,
 }: {
   bk: BK;
+  lang: 'en' | 'id';
   bookingCode: string;
   product: Product | undefined;
   form: FormState;
@@ -803,7 +811,7 @@ function SuccessScreen({
 
   const details: [string, string][] = [
     [bk.detailLabels[0], product?.name ?? '—'],
-    [bk.detailLabels[1], fmtDate(form.date) || '—'],
+    [bk.detailLabels[1], fmtDate(form.date, lang) || '—'],
     [bk.detailLabels[2], form.time ? form.time + ' WITA' : '—'],
     [bk.detailLabels[3], areaName || '—'],
     [bk.detailLabels[4], form.name],
@@ -952,7 +960,7 @@ export default function BookingPage() {
           bookingTime:   form.time,
           peopleCount:   form.people,
           locationType:  form.locType,
-          serviceAreaId: form.areaId || undefined,
+          serviceAreaId: form.areaId,
           address:       form.address,
           notes:         form.notes || undefined,
         }),
@@ -993,6 +1001,7 @@ export default function BookingPage() {
         <div style={{ paddingTop: 64 }}>
           <SuccessScreen
             bk={bk}
+            lang={lang}
             bookingCode={success.bookingCode}
             product={product}
             form={form}
@@ -1062,6 +1071,7 @@ export default function BookingPage() {
             {step === 3 && (
               <Step3
                 bk={bk}
+                lang={lang}
                 form={form}
                 setForm={setForm}
                 product={product}
@@ -1077,6 +1087,7 @@ export default function BookingPage() {
 
           <Sidebar
             bk={bk}
+            lang={lang}
             product={product}
             productGrad={productGrad}
             date={form.date}

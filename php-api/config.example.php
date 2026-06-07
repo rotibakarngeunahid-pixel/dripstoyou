@@ -35,3 +35,7 @@ define('SESSION_DURATION_HOURS', 8);
 
 // ── Seed Secret (untuk endpoint seed.php) ────────────────────────────────────
 define('SEED_SECRET', 'change-this-to-a-random-secret');
+
+// Initial admin used only when the admins table is empty during seeding.
+define('INITIAL_ADMIN_EMAIL', 'owner@example.com');
+define('INITIAL_ADMIN_PASSWORD', 'replace-with-a-strong-password');

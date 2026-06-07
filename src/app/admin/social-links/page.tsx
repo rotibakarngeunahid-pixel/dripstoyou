@@ -12,7 +12,7 @@ type SocialLink = {
   sortOrder: number;
 };
 
-type ApiResponse<T> = { data?: T; error?: string; success?: boolean };
+type ApiResponse<T> = { data?: T; error?: string; message?: string; success?: boolean };
 
 const PLATFORMS = [
   { value: 'WHATSAPP', label: 'WhatsApp', hint: 'Nomor HP (misal: 081234567890)' },
@@ -52,10 +52,19 @@ export default function AdminSocialLinksPage() {
 
   async function load() {
     setLoading(true);
+    setError('');
     try {
-      const res = await fetch('/api/admin/social-links');
+      const res = await fetch('/api/admin/social-links', { cache: 'no-store' });
       const json = (await res.json()) as ApiResponse<SocialLink[]>;
+      if (!res.ok) {
+        setLinks([]);
+        setError(json.message ?? json.error ?? 'Gagal memuat social links.');
+        return;
+      }
       setLinks(json.data ?? []);
+    } catch {
+      setLinks([]);
+      setError('Koneksi ke backend social links gagal.');
     } finally {
       setLoading(false);
     }
@@ -101,7 +110,7 @@ export default function AdminSocialLinksPage() {
         body: JSON.stringify({ ...form, sortOrder: Number(form.sortOrder) }),
       });
       const json = (await res.json()) as ApiResponse<SocialLink>;
-      if (!res.ok) { setError(json.error ?? 'Gagal menyimpan.'); return; }
+      if (!res.ok) { setError(json.message ?? json.error ?? 'Gagal menyimpan.'); return; }
       showToast(editId ? 'Link berhasil diperbarui.' : 'Link berhasil ditambahkan.');
       setShowForm(false);
       setEditId(null);
@@ -140,6 +149,7 @@ export default function AdminSocialLinksPage() {
           {toast}
         </div>
       )}
+      {error && !showForm && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
       <div className="admin-page-head">
         <div>

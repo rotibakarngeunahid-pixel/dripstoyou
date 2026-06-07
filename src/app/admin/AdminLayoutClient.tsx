@@ -29,7 +29,6 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/admin/about',        label: 'About' },
       { href: '/admin/faqs',         label: 'FAQ' },
       { href: '/admin/social-links', label: 'Social Links' },
-      { href: '/admin/legal',        label: 'Legal' },
     ],
   },
   {
@@ -52,7 +51,28 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   const router    = useRouter();
   const [open,       setOpen]       = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [validatedPath, setValidatedPath] = useState<string | null>(null);
   const drawerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (pathname === '/admin/login') return;
+
+    let active = true;
+    fetch('/api/admin/auth/me', { cache: 'no-store' })
+      .then((res) => {
+        if (!res.ok) throw new Error(res.status === 401 ? 'expired' : 'unavailable');
+        if (active) setValidatedPath(pathname);
+      })
+      .catch((error: Error) => {
+        if (!active) return;
+        const reason = error.message === 'expired'
+          ? '?reason=session-expired'
+          : '?reason=auth-unavailable';
+        router.replace(`/admin/login${reason}`);
+      });
+
+    return () => { active = false; };
+  }, [pathname, router]);
 
   /* trap focus / close on Escape */
   useEffect(() => {
@@ -67,6 +87,15 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   }, [open]);
 
   if (pathname === '/admin/login') return <>{children}</>;
+  if (validatedPath !== pathname) {
+    return (
+      <main className="admin-login-shell">
+        <section className="admin-login-card" style={{ textAlign: 'center' }}>
+          <p>Memverifikasi sesi admin...</p>
+        </section>
+      </main>
+    );
+  }
 
   async function handleLogout() {
     if (loggingOut) return;

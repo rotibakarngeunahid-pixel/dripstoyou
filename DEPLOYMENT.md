@@ -56,6 +56,8 @@ define('ALLOWED_ORIGINS', [
 define('WHATSAPP_NUMBER', '6281234567890');
 define('SESSION_DURATION_HOURS', 8);
 define('SEED_SECRET', 'ganti-dengan-string-acak');
+define('INITIAL_ADMIN_EMAIL', 'owner@dripstoyou.com');
+define('INITIAL_ADMIN_PASSWORD', 'gunakan-password-kuat-minimal-12-karakter');
 ```
 
 > ⚠️ **Jangan commit config.php** ke Git. Sudah ada di `.gitignore`.
@@ -127,19 +129,12 @@ Setelah PHP API online dan database sudah diimport, jalankan seeding:
 GET https://dripstoyou.com/api/admin/seed.php?secret=SEED_SECRET_DARI_CONFIG
 ```
 
-Atau via Next.js:
-```
-GET https://your-app.vercel.app/api/admin/seed?secret=SEED_SECRET
-```
-
 Seed membuat:
-- 12 service areas Bali
-- 4 produk IV Therapy
 - Jadwal 7 hari (08:00–22:00)
-- 5 FAQ, 3 Testimonial, 5 Site Settings
-- **Super Admin:** `admin@dripstoyou.com` / `AdminDrip2025!`
+- Pengaturan dasar situs
+- Super Admin dari `INITIAL_ADMIN_EMAIL` dan `INITIAL_ADMIN_PASSWORD`
 
-> ⚠️ Segera ganti password admin setelah login pertama!
+Produk, area layanan, FAQ, dan konten publik lain sengaja tidak diisi otomatis. Kelola semuanya dari admin panel agar website hanya menampilkan data yang benar-benar Anda atur.
 
 ---
 
@@ -156,7 +151,7 @@ https://dripstoyou.com/api/availability.php?date=2025-08-01
 ### Admin (gunakan Postman/Insomnia):
 ```
 POST https://dripstoyou.com/api/admin/login.php
-Body: { "email": "admin@dripstoyou.com", "password": "AdminDrip2025!" }
+Body: { "email": "EMAIL_DARI_INITIAL_ADMIN_EMAIL", "password": "PASSWORD_DARI_INITIAL_ADMIN_PASSWORD" }
 → Response: { "success": true, "data": { "token": "...", "admin": {...} } }
 
 GET https://dripstoyou.com/api/admin/dashboard.php

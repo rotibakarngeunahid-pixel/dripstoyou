@@ -11,21 +11,28 @@ export interface SessionData {
   adminToken: string;  // Bearer token for PHP API auth
 }
 
-const SESSION_OPTIONS: SessionOptions = {
-  cookieName: 'drip_admin_session',
-  password: process.env.SESSION_SECRET as string,
-  cookieOptions: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 8,
-    path: '/',
-  },
-};
+function getSessionOptions(): SessionOptions {
+  const password = process.env.SESSION_SECRET;
+  if (!password || password.length < 32) {
+    throw new Error('SESSION_SECRET must be configured with at least 32 characters');
+  }
+
+  return {
+    cookieName: 'drip_admin_session',
+    password,
+    cookieOptions: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 8,
+      path: '/',
+    },
+  };
+}
 
 export async function getSession() {
   const cookieStore = await cookies();
-  return getIronSession<SessionData>(cookieStore, SESSION_OPTIONS);
+  return getIronSession<SessionData>(cookieStore, getSessionOptions());
 }
 
 export async function requireSession(): Promise<SessionData> {

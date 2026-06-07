@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/language';
 
 const WA_SVG = (
@@ -14,8 +15,56 @@ interface Props {
   displayNumber: string;
 }
 
+type ProductLink = { id: string; name: string; slug: string };
+type SocialLink = {
+  id: string;
+  platform: string;
+  label: string;
+  value: string;
+  normalizedUrl: string;
+};
+
+function formatPhone(value: string) {
+  if (value.startsWith('62')) return `+62 ${value.slice(2, 5)} ${value.slice(5, 9)} ${value.slice(9)}`.trim();
+  return value;
+}
+
 export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
   const { t } = useLanguage();
+  const [activeWa, setActiveWa] = useState(waNumber);
+  const [activeDisplay, setActiveDisplay] = useState(displayNumber);
+  const [siteEmail, setSiteEmail] = useState('');
+  const [businessHours, setBusinessHours] = useState('');
+  const [products, setProducts] = useState<ProductLink[]>([]);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      fetch('/api/public/settings', { cache: 'no-store' }).then((res) => res.json()),
+      fetch('/api/public/products', { cache: 'no-store' }).then((res) => res.json()),
+      fetch('/api/public/social-links', { cache: 'no-store' }).then((res) => res.json()),
+    ]).then(([settingsJson, productsJson, socialJson]) => {
+      if (!active) return;
+      const nextWa = typeof settingsJson.data?.whatsappNumber === 'string'
+        ? settingsJson.data.whatsappNumber
+        : waNumber;
+      setActiveWa(nextWa);
+      setActiveDisplay(formatPhone(nextWa));
+      setSiteEmail(typeof settingsJson.data?.siteEmail === 'string' ? settingsJson.data.siteEmail : '');
+      setBusinessHours(typeof settingsJson.data?.businessHours === 'string' ? settingsJson.data.businessHours : '');
+      setProducts(Array.isArray(productsJson.data) ? productsJson.data.slice(0, 4) : []);
+      setSocialLinks(Array.isArray(socialJson.data) ? socialJson.data : []);
+    }).catch(() => {
+      // Keep server-provided contact values when the API is unavailable.
+    });
+    return () => { active = false; };
+  }, [displayNumber, waNumber]);
+
+  const instagram = socialLinks.find((link) => link.platform === 'INSTAGRAM');
+  const tiktok = socialLinks.find((link) => link.platform === 'TIKTOK');
+  const configuredEmail = socialLinks.find((link) => link.platform === 'EMAIL');
+  const email = configuredEmail?.value || siteEmail;
 
   return (
     <>
@@ -32,23 +81,22 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
                 {t.footer.brandDesc}
               </p>
               <a
-                href={`https://wa.me/${waNumber}`}
+                href={`https://wa.me/${activeWa}`}
                 className="footer-brand-wa"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 {WA_SVG}
-                {displayNumber}
+                {activeDisplay}
               </a>
             </div>
 
             <div>
               <div className="footer-col-title">{t.footer.colTreatments}</div>
               <div className="footer-links">
-                <Link href="/treatments/hangover-recovery">Hangover Recovery</Link>
-                <Link href="/treatments/immune-booster">Immune Booster</Link>
-                <Link href="/treatments/energy-boost">Energy Boost</Link>
-                <Link href="/treatments/beauty-glow">Beauty Glow</Link>
+                {products.map((product) => (
+                  <Link href={`/treatments/${product.slug}`} key={product.id}>{product.name}</Link>
+                ))}
                 <Link href="/treatments">{t.footer.seeAll}</Link>
               </div>
             </div>
@@ -71,28 +119,32 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
                   </svg>
-                  {displayNumber}
+                  {activeDisplay}
                 </div>
-                <div className="fcon">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                    <polyline points="22,6 12,13 2,6" />
-                  </svg>
-                  hello@dripstoyou.com
-                </div>
-                <div className="fcon">
-                  <svg viewBox="0 0 24 24" aria-hidden="true">
-                    <rect x="2" y="3" width="20" height="14" rx="2" />
-                    <path d="M8 21h8M12 17v4" />
-                  </svg>
-                  @dripstoyoubali
-                </div>
+                {email && (
+                  <a className="fcon" href={`mailto:${email}`}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                      <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    {email}
+                  </a>
+                )}
+                {instagram && (
+                  <a className="fcon" href={instagram.normalizedUrl} target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="2" y="3" width="20" height="14" rx="2" />
+                      <path d="M8 21h8M12 17v4" />
+                    </svg>
+                    {instagram.value}
+                  </a>
+                )}
                 <div className="fcon">
                   <svg viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
-                  {t.footer.hours}
+                  {businessHours ? `${businessHours.replace('-', ' - ')} WITA` : t.footer.hours}
                 </div>
               </div>
             </div>
@@ -105,20 +157,20 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
               © {new Date().getFullYear()} Drips To You - Bali. {t.footer.copyright}
             </p>
             <div className="footer-social">
-              <a href="#" aria-label="Instagram">
+              {instagram && <a href={instagram.normalizedUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                 <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
                   <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
                   <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
                 </svg>
-              </a>
-              <a href="#" aria-label="TikTok">
+              </a>}
+              {tiktok && <a href={tiktok.normalizedUrl} target="_blank" rel="noopener noreferrer" aria-label="TikTok">
                 <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M9 12a4 4 0 104 4V4a5 5 0 005 5" />
                 </svg>
-              </a>
+              </a>}
               <a
-                href={`https://wa.me/${waNumber}`}
+                href={`https://wa.me/${activeWa}`}
                 aria-label="WhatsApp"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -133,7 +185,7 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
       </footer>
 
       <a
-        href={`https://wa.me/${waNumber}?text=${encodeURIComponent(t.footer.waFloatMessage)}`}
+        href={`https://wa.me/${activeWa}?text=${encodeURIComponent(t.footer.waFloatMessage)}`}
         className="wa-float"
         target="_blank"
         rel="noopener noreferrer"

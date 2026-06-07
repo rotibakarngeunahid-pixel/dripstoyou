@@ -50,9 +50,14 @@ function formatDate(value: string) {
   });
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ login?: string }>;
+}) {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
+  const query = await searchParams;
 
   const data = await getDashboardData(session.adminToken);
   if (!data) redirect('/admin/login');
@@ -65,6 +70,11 @@ export default async function DashboardPage() {
 
   return (
     <div className="admin-page">
+      {query.login === 'success' && (
+        <div className="alert alert-success" style={{ marginBottom: 16 }}>
+          Login berhasil. Selamat datang, {session.name}.
+        </div>
+      )}
       <div className="admin-page-head">
         <div>
           <h1 className="admin-title">Dashboard</h1>

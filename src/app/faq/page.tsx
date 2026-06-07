@@ -13,8 +13,10 @@ export const metadata: Metadata = {
 
 interface Faq {
   id: string;
-  question: string;
-  answer: string;
+  questionEn: string;
+  answerEn: string;
+  questionId: string;
+  answerId: string;
 }
 
 async function getFaqs(): Promise<Faq[]> {

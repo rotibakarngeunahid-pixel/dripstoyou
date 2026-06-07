@@ -56,42 +56,14 @@ const ARROW_SVG = (
   </svg>
 );
 
-const TESTI_PHOTOS = [
-  'https://i.pravatar.cc/150?img=47',
-  'https://i.pravatar.cc/150?img=53',
-  'https://i.pravatar.cc/150?img=35',
-];
-
 const BOLT_SVG = (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
   </svg>
 );
 
-const FALLBACK_PRODUCTS: HomepageProduct[] = [
-  { id: '1', name: 'Hangover Recovery', slug: 'hangover-recovery', short_description: 'Rehidrasi cepat dengan elektrolit, vitamin B & C, dan anti-mual untuk pemulihan optimal setelah malam panjang.', price_amount: 750000, price_label: 'IDR 750.000', image_url: BRAND.photo3, label: 'Populer', show_on_homepage: true, homepage_order: 1 },
-  { id: '2', name: 'Immune Booster',    slug: 'immune-booster',    short_description: 'Tingkatkan sistem imun dengan vitamin C dosis tinggi, zinc, dan glutathione untuk perlindungan optimal.', price_amount: 650000, price_label: 'IDR 650.000', image_url: BRAND.photo2, label: 'Terlaris', show_on_homepage: true, homepage_order: 2 },
-  { id: '3', name: 'Energy Boost',      slug: 'energy-boost',      short_description: 'Kembalikan stamina dan energimu dengan B-complex, magnesium, dan elektrolit lengkap yang bekerja cepat.', price_amount: 550000, price_label: 'IDR 550.000', image_url: BRAND.photo4, label: null, show_on_homepage: true, homepage_order: 3 },
-  { id: '4', name: 'Beauty Glow',       slug: 'beauty-glow',       short_description: 'Tampil lebih cerah dan glowing dengan glutathione, kolagen booster, dan antioksidan premium.', price_amount: 700000, price_label: 'IDR 700.000', image_url: BRAND.photo5, label: 'Baru', show_on_homepage: true, homepage_order: 4 },
-];
-
-const FALLBACK_AREAS: ServiceAreaData[] = [
-  { id: '1',  name: 'Seminyak',        isActive: true, estimatedArrivalMinutes: 20,  note: 'Villa · Beach · Nightlife', sortOrder: 1  },
-  { id: '2',  name: 'Canggu',          isActive: true, estimatedArrivalMinutes: 27,  note: 'Surf · Lifestyle',          sortOrder: 2  },
-  { id: '3',  name: 'Kuta',            isActive: true, estimatedArrivalMinutes: 20,  note: 'Tourist · Beach',           sortOrder: 3  },
-  { id: '4',  name: 'Ubud',            isActive: true, estimatedArrivalMinutes: 52,  note: 'Culture · Nature',          sortOrder: 4  },
-  { id: '5',  name: 'Nusa Dua',        isActive: true, estimatedArrivalMinutes: 32,  note: 'Resort · Luxury',           sortOrder: 5  },
-  { id: '6',  name: 'Jimbaran',        isActive: true, estimatedArrivalMinutes: 37,  note: 'Beach · Sunset',            sortOrder: 6  },
-  { id: '7',  name: 'Legian',          isActive: true, estimatedArrivalMinutes: 20,  note: 'Beach · Shopping',          sortOrder: 7  },
-  { id: '8',  name: 'Sanur',           isActive: true, estimatedArrivalMinutes: 32,  note: 'Calm · Beach',              sortOrder: 8  },
-  { id: '9',  name: 'Denpasar',        isActive: true, estimatedArrivalMinutes: 27,  note: 'City · Local',              sortOrder: 9  },
-  { id: '10', name: 'Uluwatu',         isActive: true, estimatedArrivalMinutes: 47,  note: 'Cliff · Surf',              sortOrder: 10 },
-  { id: '11', name: 'Petitenget',      isActive: true, estimatedArrivalMinutes: 22,  note: 'Trendy · Villa',            sortOrder: 11 },
-  { id: '12', name: 'Bukit Peninsula', isActive: true, estimatedArrivalMinutes: 42,  note: 'Scenic · Luxury',           sortOrder: 12 },
-];
-
-function arrivalLabel(minutes: number | null): string {
-  if (!minutes) return '30–60 min';
+function arrivalLabel(minutes: number | null, lang: 'en' | 'id'): string {
+  if (!minutes) return lang === 'en' ? 'Confirm with our team' : 'Konfirmasi dengan tim';
   const lo = Math.max(10, minutes - 10);
   const hi = minutes + 10;
   return `${lo}–${hi} min`;
@@ -108,7 +80,7 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
     ? 'Hello Drips To You - Bali, I would like to book an IV therapy treatment'
     : 'Halo Drips To You - Bali, saya ingin booking treatment IV therapy';
 
-  const displayProducts = homepageProducts && homepageProducts.length > 0 ? homepageProducts : FALLBACK_PRODUCTS;
+  const displayProducts = homepageProducts ?? [];
   const displayAreas    = serviceAreas && serviceAreas.length > 0
     ? serviceAreas.filter((a) => a.isActive)
     : [];
@@ -121,7 +93,6 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
       <WhyChooseUsSection t={t} />
       <HowToBookSection t={t} />
       <ServiceAreasSection t={t} areas={displayAreas} />
-      <TestimonialsSection t={t} />
       <CtaSection t={t} waUrl={waUrl} waBookingMsg={waBookingMsg} />
     </main>
   );
@@ -185,6 +156,8 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
    TREATMENTS
 ───────────────────────────────────────────── */
 function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>['t']; products: HomepageProduct[] }) {
+  if (products.length === 0) return null;
+
   function formatPrice(p: HomepageProduct) {
     return p.price_label ?? `IDR ${p.price_amount.toLocaleString('id-ID')}`;
   }
@@ -376,6 +349,7 @@ function HowToBookSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
    SERVICE AREAS
 ───────────────────────────────────────────── */
 function ServiceAreasSection({ t, areas }: { t: ReturnType<typeof useLanguage>['t']; areas: ServiceAreaData[] }) {
+  const { lang } = useLanguage();
   const POPULAR_NAMES = new Set(['Seminyak', 'Canggu', 'Ubud', 'Nusa Dua']);
 
   if (!areas || areas.length === 0) return null;
@@ -438,7 +412,7 @@ function ServiceAreasSection({ t, areas }: { t: ReturnType<typeof useLanguage>['
                     </svg>
                     <span>
                       {t.areas.arrivalTime ?? 'Estimasi tiba'}:{' '}
-                      <strong>{arrivalLabel(a.estimatedArrivalMinutes)}</strong>
+                      <strong>{arrivalLabel(a.estimatedArrivalMinutes, lang)}</strong>
                     </span>
                   </div>
                 </div>
@@ -469,41 +443,6 @@ function ServiceAreasSection({ t, areas }: { t: ReturnType<typeof useLanguage>['
 /* ─────────────────────────────────────────────
    TESTIMONIALS
 ───────────────────────────────────────────── */
-function TestimonialsSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
-  return (
-    <section className="sec testi-sec">
-      <div className="sec-inner">
-        <div className="sec-hdr centered reveal">
-          <div className="sec-eyebrow">{t.testimonials.eyebrow}</div>
-          <h2 className="sec-title">{t.testimonials.title} <em>{t.testimonials.titleEm}</em></h2>
-          <p className="sec-desc">{t.testimonials.sub}</p>
-        </div>
-        <div className="testi-grid">
-          {t.testimonials.cards.map((c, i) => (
-            <div key={i} className="testi-card reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
-              <div className="testi-open">&ldquo;</div>
-              <div className="testi-stars">{Array.from({ length: 5 }).map((_, j) => <span key={j}>★</span>)}</div>
-              <p className="testi-text">{c.text}</p>
-              <div className="testi-author">
-                <div className="testi-av">
-                  {TESTI_PHOTOS[i]
-                    ? <Image src={TESTI_PHOTOS[i]} alt={c.name} width={48} height={48} className="testi-av-photo" />
-                    : c.name.charAt(0)}
-                </div>
-                <div>
-                  <div className="testi-name">{c.name}</div>
-                  <div className="testi-loc">{c.loc}</div>
-                </div>
-                <span className="testi-tag">{c.tag}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* ─────────────────────────────────────────────
    CTA
 ───────────────────────────────────────────── */

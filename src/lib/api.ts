@@ -30,7 +30,7 @@ export async function apiFetch<T = unknown>(
     const res  = await fetch(url, { ...options, cache: options.cache ?? 'no-store' });
     const data = await res.json() as ApiResponse<T>;
     return { ok: res.ok, status: res.status, data };
-  } catch (err) {
+  } catch {
     return {
       ok:     false,
       status: 503,

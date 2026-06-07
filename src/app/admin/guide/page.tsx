@@ -62,17 +62,6 @@ const GUIDE_SECTIONS: Section[] = [
     ],
   },
   {
-    id: 'legal',
-    title: 'Mengedit Halaman Legal',
-    icon: '📄',
-    steps: [
-      { num: '1', title: 'Buka menu Legal', desc: 'Klik "Legal" untuk mengelola Kebijakan Privasi, Syarat & Ketentuan, dan Disclaimer Medis.' },
-      { num: '2', title: 'Klik "Edit Konten"', desc: 'Pilih halaman yang ingin diedit dan klik tombol "Edit Konten".' },
-      { num: '3', title: 'Edit teks', desc: 'Tulis ulang atau update isi halaman. Gunakan baris kosong untuk memisahkan paragraf.' },
-      { num: '4', title: 'Simpan', desc: 'Klik "Simpan". Perubahan langsung tampil di halaman publik.' },
-    ],
-  },
-  {
     id: 'about',
     title: 'Mengedit Halaman About',
     icon: '🏢',

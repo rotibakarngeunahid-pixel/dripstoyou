@@ -5,8 +5,10 @@ import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 interface Faq {
   id: string;
-  question: string;
-  answer: string;
+  questionEn: string;
+  answerEn: string;
+  questionId: string;
+  answerId: string;
 }
 
 interface Props {
@@ -15,9 +17,16 @@ interface Props {
 }
 
 export default function FaqContent({ faqs, waNumber }: Props) {
-  const { t } = useLanguage();
+  const { lang, t } = useLanguage();
 
   const waUrl = buildWhatsAppUrl(waNumber, t.faqPage.waMessage);
+  const localizedFaqs = faqs
+    .map((faq) => ({
+      id: faq.id,
+      question: lang === 'en' ? faq.questionEn : faq.questionId,
+      answer: lang === 'en' ? faq.answerEn : faq.answerId,
+    }))
+    .filter((faq) => faq.question && faq.answer);
 
   return (
     <main className="page-shell">
@@ -30,9 +39,9 @@ export default function FaqContent({ faqs, waNumber }: Props) {
       </section>
 
       <section className="page-section narrow">
-        {faqs.length > 0 ? (
+        {localizedFaqs.length > 0 ? (
           <div className="faq-list">
-            {faqs.map((faq) => (
+            {localizedFaqs.map((faq) => (
               <details className="surface-card faq-item" key={faq.id}>
                 <summary className="faq-summary">
                   {faq.question}

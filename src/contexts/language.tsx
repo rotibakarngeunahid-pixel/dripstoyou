@@ -41,10 +41,6 @@ export interface Translations {
     eyebrow: string; title: string; titleEm: string; desc: string;
     items: { title: string; desc: string }[];
   };
-  testimonials: {
-    eyebrow: string; title: string; titleEm: string; sub: string;
-    cards: { text: string; name: string; loc: string; tag: string }[];
-  };
   cta: {
     badge: string; title: string; titleEm: string; sub: string;
     bookNow: string; bookWa: string; seeAll: string;
@@ -58,6 +54,7 @@ export interface Translations {
   treatmentsPage: {
     eyebrow: string; title: string; titleEm: string; subtitle: string;
     bookNow: string; detail: string; durationText: string; backHome: string;
+    emptyState: string;
   };
   treatmentDetail: {
     backAll: string; durationText: string; orderBtn: string; askWa: string;
@@ -71,7 +68,7 @@ export interface Translations {
     missionTitle: string; missionP1: string; missionP2: string;
     howItWorksTitle: string; howItWorksSub: string;
     safetyTitle: string; safetyP1: string; safetyP2: string;
-    areasTitle: string; areasSub: string; checkAreaBtn: string;
+    areasTitle: string; areasSub: string; areasEmpty: string; checkAreaBtn: string;
     ctaTitle: string; ctaSub: string; ctaBookBtn: string; ctaWaBtn: string;
     waMessage: string;
     values: { label: string; title: string; desc: string }[];
@@ -97,13 +94,13 @@ export const translations: Record<Lang, Translations> = {
       about: 'Tentang', contact: 'Kontak', bookNow: 'Book Sekarang',
     },
     hero: {
-      pill: 'Tersedia di Seluruh Bali',
+      pill: 'Tersedia di Area Layanan Aktif',
       line1: 'Hidrasi &', line2: 'Pemulihan', lineEm: 'Diantar ke Kamu',
-      sub: 'Tim medis bersertifikat datang langsung ke villa, hotel, atau Airbnb Anda di seluruh Bali. Nyaman, aman, dan terpersonalisasi untuk kebutuhan Anda.',
+      sub: 'Tim medis bersertifikat datang langsung ke villa, hotel, atau Airbnb Anda di area layanan aktif. Nyaman, aman, dan disesuaikan dengan kebutuhan Anda.',
       bookWa: 'Konsultasi via WhatsApp', seeAll: 'Lihat Treatment',
     },
     benefits: {
-      fast: 'Respon Cepat', fastDesc: 'Tim medis tiba dalam 60 menit ke lokasi Anda di Bali',
+      fast: 'Respon Cepat', fastDesc: 'Estimasi kedatangan mengikuti area layanan dan ketersediaan tim',
       licensed: 'Tim Bersertifikat', licensedDesc: 'Tenaga medis & perawat berlisensi resmi',
       mobile: 'Layanan Mobile', mobileDesc: 'Kami datang ke villa, hotel, Airbnb, atau mana saja',
       premium: 'Perawatan Premium', premiumDesc: 'Produk & peralatan medis steril berkualitas tinggi',
@@ -122,18 +119,18 @@ export const translations: Record<Lang, Translations> = {
     },
     howToBook: {
       eyebrow: 'Cara Kerja', title: 'Booking', titleEm: 'dalam 3 Langkah Mudah',
-      sub: 'Prosesnya sangat mudah — cukup pilih treatment, isi form, dan tim medis profesional kami akan hadir ke lokasi kamu dalam waktu singkat.',
+      sub: 'Prosesnya sangat mudah — cukup pilih treatment, isi form, lalu tim kami mengonfirmasi area, jadwal, dan detail layanan.',
       steps: [
         { title: 'Pilih Treatment', desc: 'Jelajahi pilihan IV therapy kami dan tentukan treatment yang paling sesuai dengan kondisi serta kebutuhan kamu saat ini.' },
         { title: 'Isi Form Booking', desc: 'Isi form booking online dengan nama, nomor WhatsApp, tanggal, waktu, dan alamat lengkap lokasi kamu di Bali.' },
-        { title: 'Tim Datang ke Kamu', desc: 'Tim medis profesional kami tiba dalam 60 menit, membawa semua perlengkapan yang dibutuhkan untuk memberikan treatment terbaik.' },
+        { title: 'Tim Datang ke Kamu', desc: 'Tim medis profesional kami tiba sesuai jadwal yang dikonfirmasi dengan seluruh perlengkapan yang dibutuhkan.' },
       ],
     },
     areas: {
-      eyebrow: 'Area Layanan', title: 'Kami Menjangkau', titleEm: 'Seluruh Bali',
-      desc: 'Dari pantai Canggu hingga resort Nusa Dua, dari kawasan budaya Ubud hingga tebing Uluwatu — tim kami siap hadir ke mana pun kamu berada di Bali.',
+      eyebrow: 'Area Layanan', title: 'Cakupan', titleEm: 'Aktif Kami',
+      desc: 'Tim kami hadir ke area layanan aktif yang telah dikonfigurasi di Bali. Pilih lokasi saat booking untuk melihat ketersediaan.',
       areaCount: 'Area Dilayani', responseTime: 'Waktu Respons', coverage: 'Cakupan Bali Selatan',
-      liveService: 'Layanan Aktif · 08:00 – 22:00 WITA',
+      liveService: 'Layanan mengikuti jadwal aktif',
       popular: '★ Populer', active: 'Aktif', ocean: 'Samudra Hindia', north: 'BALI UTARA',
       arrivalTime: 'Estimasi tiba', notInList: 'Area kamu tidak ada di list?', contactUs: 'Tanyakan via booking',
     },
@@ -143,31 +140,22 @@ export const translations: Record<Lang, Translations> = {
     },
     whyChooseUs: {
       eyebrow: 'Kenapa Memilih Kami', title: 'Perbedaan', titleEm: 'Drips To You',
-      desc: 'Kami percaya layanan kesehatan dan kebugaran yang luar biasa harus datang kepada Anda — di mana pun Anda berada di Bali.',
+      desc: 'Kami percaya layanan kesehatan dan kebugaran yang baik seharusnya mudah diakses di area yang dapat kami layani.',
       items: [
-        { title: 'Layanan Di Tempat yang Praktis', desc: 'Tanpa repot, tanpa perjalanan. Kami membawa layanan medis profesional langsung ke villa, hotel, rumah, atau kantor Anda di mana saja di Bali.' },
+        { title: 'Layanan Di Tempat yang Praktis', desc: 'Tanpa repot dan tanpa perjalanan. Kami membawa layanan medis profesional langsung ke villa, hotel, rumah, atau kantor dalam area layanan aktif.' },
         { title: 'Tim Medis Ahli', desc: 'Kesehatan Anda berada di tangan yang tepat. Semua perawatan diberikan oleh tenaga kesehatan bersertifikat dan sangat berpengalaman.' },
         { title: 'Layanan Cepat & Responsif', desc: 'Tanpa antrean atau waktu tunggu yang lama. Tim kami siap merespons dengan cepat kapan pun Anda membutuhkan kami.' },
         { title: 'Dapat Diakses Siapa Saja', desc: 'Baik Anda seorang turis yang sedang menikmati liburan, ekspatriat, atau penduduk lokal, kami ada untuk Anda.' },
         { title: 'Aman, Nyaman & Terpercaya', desc: 'Nikmati perawatan kebugaran premium bebas stres dalam kenyamanan ruang Anda sendiri.' },
       ],
     },
-    testimonials: {
-      eyebrow: 'Testimoni', title: 'Apa Kata', titleEm: 'Tamu Kami',
-      sub: 'Lebih dari 500 tamu di seluruh Bali telah mempercayakan pemulihan mereka kepada Drips To You - Bali.',
-      cards: [
-        { text: 'Pelayanannya luar biasa cepat dan profesional. Tim tiba ke villa kami hanya dalam 45 menit. Setelah treatment Hangover Recovery, saya langsung segar dan bisa lanjut liburan!', name: 'Sarah Johnson', loc: 'Villa di Seminyak', tag: 'Hangover Recovery' },
-        { text: 'Tried the Hangover Recovery after a big night in Canggu. Felt genuinely better within 2 hours. Equipment was clearly sterile and the medical team was super professional. Absolutely worth it!', name: 'James Miller', loc: 'Hotel di Canggu', tag: 'Hangover Recovery' },
-        { text: 'Tim medisnya sangat ramah, peralatan steril, dan kualitasnya jauh melebihi ekspektasi saya. Harga sangat worth it. Sudah jadi andalan setiap kali ke Bali — pasti repeat!', name: 'Maria Santos', loc: 'Airbnb di Ubud', tag: 'Immune Booster' },
-      ],
-    },
     cta: {
-      badge: 'Tersedia 08:00 – 22:00 WITA', title: 'Siap Merasa', titleEm: 'Lebih Baik Sekarang?',
-      sub: 'Jangan biarkan dehidrasi, kelelahan, atau rasa tidak enak badan merusak pengalaman Bali-mu. Tim medis kami siap hadir ke lokasi kamu dalam 60 menit.',
+      badge: 'Layanan mobile di area aktif', title: 'Siap Merasa', titleEm: 'Lebih Baik Sekarang?',
+      sub: 'Jangan biarkan dehidrasi, kelelahan, atau rasa tidak enak badan mengganggu pengalaman Bali Anda. Tim medis kami siap hadir sesuai area dan jadwal yang dikonfirmasi.',
       bookNow: 'Book Sekarang', bookWa: 'Konsultasi via WhatsApp', seeAll: 'Lihat Semua Treatment',
     },
     footer: {
-      brandDesc: 'Layanan mobile IV therapy premium yang hadir langsung ke villa, hotel, atau Airbnb kamu di seluruh Bali. Dipercaya lebih dari 500 tamu.',
+      brandDesc: 'Layanan mobile IV therapy premium yang hadir langsung ke villa, hotel, atau Airbnb Anda di area layanan aktif kami.',
       colTreatments: 'Treatment', colInfo: 'Informasi', colContact: 'Kontak',
       seeAll: 'Lihat Semua →', about: 'Tentang Kami', howToBook: 'Cara Booking',
       faq: 'FAQ', hours: '08:00 – 22:00 WITA',
@@ -185,6 +173,7 @@ export const translations: Record<Lang, Translations> = {
       detail: 'Detail',
       durationText: 'sekitar {n} menit',
       backHome: 'Kembali ke Beranda',
+      emptyState: 'Treatment belum tersedia. Silakan hubungi kami melalui WhatsApp.',
     },
     treatmentDetail: {
       backAll: '← Semua Treatment',
@@ -195,7 +184,7 @@ export const translations: Record<Lang, Translations> = {
       aboutTitle: 'Tentang Treatment Ini',
       faqTitle: 'FAQ',
       ctaTitle: 'Siap mencoba {name}?',
-      ctaSubtitle: 'Tim medis kami siap hadir ke lokasi Anda dalam 30–60 menit setelah jadwal dikonfirmasi.',
+      ctaSubtitle: 'Tim medis kami siap hadir ke lokasi Anda sesuai area dan jadwal yang dikonfirmasi.',
       bookBtn: 'Booking {name} Sekarang',
       askWaFirst: 'Tanya dulu via WhatsApp',
       waMessage: 'Halo, saya ingin tanya tentang treatment {name}',
@@ -217,6 +206,7 @@ export const translations: Record<Lang, Translations> = {
       safetyP2: 'Setiap team member kami memiliki lisensi medis aktif. Peralatan sekali pakai dan steril digunakan pada setiap sesi.',
       areasTitle: 'Area Layanan',
       areasSub: 'Kami melayani area wisata dan hunian utama di Bali.',
+      areasEmpty: 'Area layanan belum dikonfigurasi. Silakan hubungi kami untuk konfirmasi lokasi.',
       checkAreaBtn: 'Cek Ketersediaan Area',
       ctaTitle: 'Siap Mencoba?',
       ctaSub: 'Tim medis kami siap hadir ke lokasi Anda di Bali. Booking sekarang atau konsultasikan kebutuhan Anda.',
@@ -227,7 +217,7 @@ export const translations: Record<Lang, Translations> = {
         { label: 'Medis', title: 'Tenaga Medis Profesional', desc: 'Treatment dilakukan oleh perawat dan dokter berlisensi dengan pengalaman klinis.' },
         { label: 'On-call', title: 'Datang ke Lokasi', desc: 'Tim datang ke villa, hotel, Airbnb, atau rumah di area utama Bali.' },
         { label: 'Steril', title: 'Peralatan Sekali Pakai', desc: 'Semua alat treatment disiapkan steril dan mengikuti standar medis.' },
-        { label: 'Cepat', title: 'Respons 30–60 Menit', desc: 'Jadwal dikonfirmasi via WhatsApp dan tim bergerak sesuai area layanan.' },
+        { label: 'Cepat', title: 'Respons Terkoordinasi', desc: 'Jadwal dikonfirmasi via WhatsApp dan tim bergerak sesuai area layanan.' },
       ],
       steps: [
         { num: '01', title: 'Pilih Treatment', desc: 'Pilih treatment sesuai kebutuhan dari website atau tanyakan via WhatsApp.' },
@@ -250,7 +240,7 @@ export const translations: Record<Lang, Translations> = {
       bookingDesc: 'Pilih treatment, tanggal, waktu, dan lokasi layanan untuk booking langsung.',
       bookingBtn: 'Buka Form Booking',
       hoursTitle: 'Jam Layanan',
-      hoursDesc: 'Setiap hari pukul 08:00 – 22:00 WITA. Estimasi kedatangan bergantung pada area layanan dan ketersediaan tim.',
+      hoursDesc: 'Jam layanan mengikuti jadwal aktif. Estimasi kedatangan bergantung pada area layanan dan ketersediaan tim.',
     },
     faqPage: {
       eyebrow: 'FAQ',
@@ -270,13 +260,13 @@ export const translations: Record<Lang, Translations> = {
       about: 'About', contact: 'Contact', bookNow: 'Book Now',
     },
     hero: {
-      pill: 'Available Across Bali',
+      pill: 'Available in Active Service Areas',
       line1: 'Hydration &', line2: 'Recovery', lineEm: 'Delivered to You',
-      sub: 'Certified medical team comes directly to your villa, hotel, or Airbnb across Bali. Comfortable, safe, and personalized for your needs.',
+      sub: 'A certified medical team comes directly to your villa, hotel, or Airbnb within active service areas. Comfortable, safe, and tailored to your needs.',
       bookWa: 'Consult via WhatsApp', seeAll: 'View Treatments',
     },
     benefits: {
-      fast: 'Fast Response', fastDesc: 'Medical team arrives within 60 minutes to your location',
+      fast: 'Fast Response', fastDesc: 'Arrival estimates follow the service area and team availability',
       licensed: 'Licensed Team', licensedDesc: 'Certified medical professionals & registered nurses',
       mobile: 'Mobile Service', mobileDesc: 'We come to your villa, hotel, Airbnb, or anywhere',
       premium: 'Premium Care', premiumDesc: 'High-quality sterile medical products & equipment',
@@ -295,18 +285,18 @@ export const translations: Record<Lang, Translations> = {
     },
     howToBook: {
       eyebrow: 'How It Works', title: 'Book in', titleEm: '3 Simple Steps',
-      sub: 'The process is effortless — choose your treatment, fill in the form, and our professional medical team will be at your location in no time.',
+      sub: 'The process is straightforward — choose your treatment, complete the form, and our team will confirm the area, schedule, and service details.',
       steps: [
         { title: 'Choose Treatment', desc: 'Browse our IV therapy options and select the treatment best suited for your current condition and what you need right now.' },
         { title: 'Fill Booking Form', desc: 'Complete the online booking form with your name, WhatsApp number, preferred date, time, and your Bali address.' },
-        { title: 'Team Comes to You', desc: 'Our certified medical team arrives within 60 minutes, fully equipped to deliver the best treatment right at your location.' },
+        { title: 'Team Comes to You', desc: 'Our certified medical team arrives at the confirmed time with the equipment needed for your service.' },
       ],
     },
     areas: {
-      eyebrow: 'Coverage Area', title: 'We Cover', titleEm: 'All of Bali',
-      desc: 'From Canggu beach clubs to Nusa Dua resorts, from Ubud rice terraces to Uluwatu cliffs — our team comes wherever you are in Bali.',
+      eyebrow: 'Coverage Area', title: 'Our Active', titleEm: 'Service Areas',
+      desc: 'Our team serves the active Bali coverage areas configured by our team. Select your location during booking to check availability.',
       areaCount: 'Areas Covered', responseTime: 'Response Time', coverage: 'South Bali Coverage',
-      liveService: 'Active Service · 08:00 – 22:00 WITA',
+      liveService: 'Service follows the active schedule',
       popular: '★ Popular', active: 'Active', ocean: 'Indian Ocean', north: 'NORTH BALI',
       arrivalTime: 'Est. arrival', notInList: 'Your area not on the list?', contactUs: 'Ask via booking',
     },
@@ -316,31 +306,22 @@ export const translations: Record<Lang, Translations> = {
     },
     whyChooseUs: {
       eyebrow: 'Why Choose Us', title: 'The Drips To You', titleEm: 'Difference',
-      desc: 'We believe exceptional wellness care should come to you — wherever you are in Bali.',
+      desc: 'We believe quality wellness care should be easy to access wherever our mobile team can safely provide service.',
       items: [
-        { title: 'Convenient On-Site Service', desc: 'No hassle, no travel. We bring professional medical care directly to your villa, hotel, home, or office anywhere in Bali.' },
+        { title: 'Convenient On-Site Service', desc: 'No hassle and no travel. We bring professional medical care directly to your villa, hotel, home, or office within active service areas.' },
         { title: 'Expert Medical Team', desc: 'Your health is in good hands. All treatments are delivered by certified, highly experienced healthcare professionals.' },
         { title: 'Fast & Responsive Care', desc: 'No long queues or waiting times. Our team is ready to respond swiftly whenever you need us.' },
         { title: 'Accessible for Everyone', desc: 'Whether you are a tourist enjoying a vacation, an expat, or a local resident, we are here for you.' },
         { title: 'Safe, Comfortable & Trusted', desc: 'Experience premium, stress-free wellness care in the comfort of your own space.' },
       ],
     },
-    testimonials: {
-      eyebrow: 'Testimonials', title: 'What Our', titleEm: 'Guests Say',
-      sub: 'Over 500 guests across Bali have trusted Drips To You - Bali for their recovery and wellness needs.',
-      cards: [
-        { text: 'The service was incredibly fast and professional. The team arrived at our villa in just 45 minutes. After the Hangover Recovery treatment, I felt completely refreshed — ready to keep exploring!', name: 'Sarah Johnson', loc: 'Villa in Seminyak', tag: 'Hangover Recovery' },
-        { text: 'Tried the Hangover Recovery after a big night in Canggu. Genuinely felt better within 2 hours. Equipment was clearly sterile and the medical team was super professional. Absolutely worth it!', name: 'James Miller', loc: 'Hotel in Canggu', tag: 'Hangover Recovery' },
-        { text: 'The medical team was incredibly friendly and the equipment looked sterile and top quality. Far exceeded my expectations. Absolutely worth every rupiah — this is now my go-to every time I visit Bali!', name: 'Maria Santos', loc: 'Airbnb in Ubud', tag: 'Immune Booster' },
-      ],
-    },
     cta: {
-      badge: 'Available 08:00 – 22:00 WITA', title: 'Ready to Feel', titleEm: 'Better Right Now?',
-      sub: "Don't let dehydration, fatigue, or illness ruin your Bali experience. Our medical team is ready to come to your location within 60 minutes.",
+      badge: 'Mobile service in active areas', title: 'Ready to Feel', titleEm: 'Better Right Now?',
+      sub: "Don't let dehydration, fatigue, or feeling unwell disrupt your Bali experience. Our medical team is ready to come based on the confirmed area and schedule.",
       bookNow: 'Book Now', bookWa: 'Consult via WhatsApp', seeAll: 'See All Treatments',
     },
     footer: {
-      brandDesc: 'Premium mobile IV therapy delivered to your villa, hotel, or Airbnb across Bali. Trusted by 500+ guests.',
+      brandDesc: 'Premium mobile IV therapy delivered to your villa, hotel, or Airbnb within our active service areas.',
       colTreatments: 'Treatments', colInfo: 'Information', colContact: 'Contact',
       seeAll: 'See All →', about: 'About Us', howToBook: 'How to Book',
       faq: 'FAQ', hours: '08:00 – 22:00 WITA',
@@ -358,6 +339,7 @@ export const translations: Record<Lang, Translations> = {
       detail: 'Details',
       durationText: 'approx. {n} min',
       backHome: 'Back to Home',
+      emptyState: 'No treatments are available yet. Please contact us via WhatsApp.',
     },
     treatmentDetail: {
       backAll: '← All Treatments',
@@ -368,7 +350,7 @@ export const translations: Record<Lang, Translations> = {
       aboutTitle: 'About This Treatment',
       faqTitle: 'FAQ',
       ctaTitle: 'Ready to try {name}?',
-      ctaSubtitle: 'Our medical team is ready to come to your location within 30–60 minutes after your schedule is confirmed.',
+      ctaSubtitle: 'Our medical team is ready to come to your location based on the confirmed area and schedule.',
       bookBtn: 'Book {name} Now',
       askWaFirst: 'Ask via WhatsApp First',
       waMessage: "Hi, I'd like to ask about the {name} treatment",
@@ -389,7 +371,8 @@ export const translations: Record<Lang, Translations> = {
       safetyP1: 'Our service is designed to help support recovery and hydration. It is not intended for medical emergencies. If you experience an emergency, please contact local emergency services immediately.',
       safetyP2: 'Every team member holds an active medical license. Disposable sterile equipment is used for every session.',
       areasTitle: 'Service Areas',
-      areasSub: 'We serve the main tourist and residential areas across Bali.',
+      areasSub: 'We serve the tourist and residential locations listed as active service areas.',
+      areasEmpty: 'Service areas have not been configured yet. Please contact us to confirm your location.',
       checkAreaBtn: 'Check Area Availability',
       ctaTitle: 'Ready to Give It a Try?',
       ctaSub: 'Our medical team is ready to come to your location in Bali. Book now or consult us about your needs.',
@@ -400,7 +383,7 @@ export const translations: Record<Lang, Translations> = {
         { label: 'Medical', title: 'Professional Medical Staff', desc: 'Treatments are performed by licensed nurses and doctors with clinical experience.' },
         { label: 'On-call', title: 'We Come to You', desc: 'Team arrives at your villa, hotel, Airbnb, or home in key Bali areas.' },
         { label: 'Sterile', title: 'Single-Use Equipment', desc: 'All treatment equipment is prepared sterile and meets medical standards.' },
-        { label: 'Fast', title: '30–60 Minute Response', desc: 'Schedule confirmed via WhatsApp and team dispatched to your service area.' },
+        { label: 'Fast', title: 'Coordinated Response', desc: 'Schedule confirmed via WhatsApp and team dispatched to your service area.' },
       ],
       steps: [
         { num: '01', title: 'Choose Your Treatment', desc: 'Select the right treatment from our website or ask us via WhatsApp.' },
@@ -423,7 +406,7 @@ export const translations: Record<Lang, Translations> = {
       bookingDesc: 'Choose your treatment, date, time, and service location to book directly.',
       bookingBtn: 'Open Booking Form',
       hoursTitle: 'Service Hours',
-      hoursDesc: 'Every day from 08:00 – 22:00 WITA. Estimated arrival depends on the service area and team availability.',
+      hoursDesc: 'Service hours follow the active schedule. Estimated arrival depends on the service area and team availability.',
     },
     faqPage: {
       eyebrow: 'FAQ',
@@ -458,6 +441,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (saved === 'id' || saved === 'en') setLangState(saved);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
 
   const setLang = useCallback((l: Lang) => {
     localStorage.setItem('drip-lang', l);

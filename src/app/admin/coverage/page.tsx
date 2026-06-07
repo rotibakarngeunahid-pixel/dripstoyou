@@ -13,7 +13,7 @@ type Area = {
   sortOrder: number;
 };
 
-type ApiResponse<T> = { data?: T; error?: string; success?: boolean };
+type ApiResponse<T> = { data?: T; error?: string; message?: string; success?: boolean };
 
 const EMPTY = { name: '', slug: '', isActive: true, estimatedArrivalMinutes: '' as string | number, extraFeeAmount: '' as string | number, note: '', sortOrder: 0 };
 
@@ -39,10 +39,19 @@ export default function AdminCoveragePage() {
 
   async function load() {
     setLoading(true);
+    setError('');
     try {
-      const res = await fetch('/api/admin/coverage');
+      const res = await fetch('/api/admin/coverage', { cache: 'no-store' });
       const json = (await res.json()) as ApiResponse<Area[]>;
+      if (!res.ok) {
+        setAreas([]);
+        setError(json.message ?? json.error ?? 'Gagal memuat area layanan.');
+        return;
+      }
       setAreas(json.data ?? []);
+    } catch {
+      setAreas([]);
+      setError('Koneksi ke backend area layanan gagal.');
     } finally {
       setLoading(false);
     }
@@ -113,7 +122,7 @@ export default function AdminCoveragePage() {
         body: JSON.stringify(body),
       });
       const json = (await res.json()) as ApiResponse<Area>;
-      if (!res.ok) { setError(json.error ?? 'Gagal menyimpan.'); return; }
+      if (!res.ok) { setError(json.message ?? json.error ?? 'Gagal menyimpan.'); return; }
       showToast(editId ? 'Area berhasil diperbarui.' : 'Area berhasil ditambahkan.');
       setShowForm(false);
       setEditId(null);
@@ -158,6 +167,7 @@ export default function AdminCoveragePage() {
           {toast}
         </div>
       )}
+      {error && !showForm && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
       <div className="admin-page-head">
         <div>

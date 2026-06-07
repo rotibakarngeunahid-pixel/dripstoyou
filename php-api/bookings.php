@@ -11,7 +11,7 @@ checkBookingRateLimit(getIpHash());
 $body = getBodyJson();
 
 // ── Validation ────────────────────────────────────────────────────────────────
-requireFields($body, ['productId', 'customerName', 'customerPhone', 'bookingDate', 'bookingTime', 'locationType', 'address']);
+requireFields($body, ['productId', 'customerName', 'customerPhone', 'bookingDate', 'bookingTime', 'locationType', 'serviceAreaId', 'address']);
 
 $productId    = str_clean($body['productId'], 191);
 $customerName = str_clean($body['customerName'], 100);
@@ -20,7 +20,7 @@ $bookingDate  = str_clean($body['bookingDate'] ?? '', 10);
 $bookingTime  = str_clean($body['bookingTime'] ?? '', 5);
 $peopleCount  = max(1, min(10, (int)($body['peopleCount'] ?? 1)));
 $locationType = str_clean($body['locationType'] ?? '', 20);
-$serviceAreaId = isset($body['serviceAreaId']) ? str_clean($body['serviceAreaId'], 191) : null;
+$serviceAreaId = str_clean($body['serviceAreaId'], 191);
 $address      = str_clean($body['address'] ?? '', 500);
 $notes        = isset($body['notes']) ? str_clean($body['notes'], 1000) : null;
 
@@ -41,6 +41,11 @@ $stmt = $db->prepare('SELECT id, name FROM products WHERE id = ? AND is_active =
 $stmt->execute([$productId]);
 $product = $stmt->fetch();
 if (!$product) jsonError('Treatment tidak ditemukan', 404);
+
+// Only allow service areas currently enabled by the admin.
+$stmt = $db->prepare('SELECT id FROM service_areas WHERE id = ? AND is_active = 1 LIMIT 1');
+$stmt->execute([$serviceAreaId]);
+if (!$stmt->fetch()) jsonError('Area layanan tidak tersedia', 422);
 
 // Encrypt PII
 $phoneLast4        = substr($customerPhone, -4);

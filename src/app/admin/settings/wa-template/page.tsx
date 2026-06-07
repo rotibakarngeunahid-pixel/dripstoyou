@@ -101,7 +101,7 @@ export default function WaTemplatePage() {
   }
 
   function handleTestOpen() {
-    const waNumber = normalizeWa(process.env.NEXT_PUBLIC_WA_NUMBER ?? '6281200000000');
+    const waNumber = normalizeWa(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000');
     const msg      = applyTemplate(template, SAMPLE_DATA);
     window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
   }

@@ -262,3 +262,27 @@ function getClientIp(): string {
 function getIpHash(): string {
     return hash('sha256', getClientIp());
 }
+
+// Site settings helpers
+
+function getSiteSetting(string $key, ?string $default = null): ?string {
+    $db = getDb();
+    $stmt = $db->prepare('SELECT value_encrypted_or_json FROM site_settings WHERE `key` = ? LIMIT 1');
+    $stmt->execute([$key]);
+    $value = $stmt->fetchColumn();
+    return $value === false ? $default : (string)$value;
+}
+
+function setSiteSetting(string $key, string $value, ?string $adminId = null): void {
+    $db = getDb();
+    $now = date('Y-m-d H:i:s');
+    $stmt = $db->prepare(
+        'INSERT INTO site_settings (`key`, value_encrypted_or_json, updated_by_admin_id, updated_at)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           value_encrypted_or_json = VALUES(value_encrypted_or_json),
+           updated_by_admin_id = VALUES(updated_by_admin_id),
+           updated_at = VALUES(updated_at)'
+    );
+    $stmt->execute([$key, $value, $adminId, $now]);
+}

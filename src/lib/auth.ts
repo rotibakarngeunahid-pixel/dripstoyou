@@ -12,13 +12,12 @@ export function can(role: AdminRole, permission: string): boolean {
   return perms.includes('*') || perms.includes(permission);
 }
 
-export async function requireAdmin(req?: NextRequest): Promise<SessionData> {
+export async function requireAdmin(): Promise<SessionData> {
   return requireSession();
 }
 
 export async function requirePermission(
   permission: string,
-  req?: NextRequest
 ): Promise<SessionData> {
   const session = await requireSession();
   if (!can(session.role, permission)) {
@@ -34,8 +33,8 @@ export function adminApiHandler(
   return async (req: NextRequest) => {
     try {
       const session = permission
-        ? await requirePermission(permission, req)
-        : await requireAdmin(req);
+        ? await requirePermission(permission)
+        : await requireAdmin();
       return await handler(req, session);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Server error';

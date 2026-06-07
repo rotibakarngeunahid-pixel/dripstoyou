@@ -19,6 +19,8 @@ export async function PATCH(req: NextRequest) {
   });
 }
 
+export const PUT = PATCH;
+
 export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

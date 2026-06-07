@@ -2911,6 +2911,12 @@ textarea.control {
   line-height: 1.8;
   margin-bottom: 16px;
 }
+.legal-list {
+  margin: 0 0 20px 20px;
+  color: var(--text);
+  line-height: 1.75;
+}
+.legal-list li + li { margin-top: 6px; }
 
 @media (prefers-reduced-motion: reduce) {
   *,
