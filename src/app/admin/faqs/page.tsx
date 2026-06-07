@@ -12,17 +12,22 @@ type Faq = {
   isActive: boolean;
 };
 
+type FaqForm = {
+  questionEn: string;
+  answerEn: string;
+  sortOrder: number;
+  isActive: boolean;
+};
+
 type ApiResponse<T> = {
   data?: T;
   error?: string;
   message?: string;
 };
 
-const EMPTY: Omit<Faq, 'id'> = {
+const EMPTY: FaqForm = {
   questionEn: '',
   answerEn: '',
-  questionId: '',
-  answerId: '',
   sortOrder: 0,
   isActive: true,
 };
@@ -249,7 +254,7 @@ export default function AdminFaqsPage() {
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [form, setForm] = useState<Omit<Faq, 'id'>>(EMPTY);
+  const [form, setForm] = useState<FaqForm>(EMPTY);
   const [editId, setEditId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formErr, setFormErr] = useState('');
@@ -300,8 +305,6 @@ export default function AdminFaqsPage() {
     setForm({
       questionEn: faq.questionEn,
       answerEn: faq.answerEn,
-      questionId: faq.questionId,
-      answerId: faq.answerId,
       sortOrder: faq.sortOrder,
       isActive: faq.isActive,
     });
@@ -315,10 +318,8 @@ export default function AdminFaqsPage() {
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
-    const englishComplete = form.questionEn.trim() && form.answerEn.trim();
-    const indonesianComplete = form.questionId.trim() && form.answerId.trim();
-    if (!englishComplete && !indonesianComplete) {
-      setFormErr('Isi pertanyaan dan jawaban lengkap untuk minimal satu bahasa.');
+    if (!form.questionEn.trim() || !form.answerEn.trim()) {
+      setFormErr('Pertanyaan dan jawaban dalam bahasa Inggris wajib diisi.');
       return;
     }
     setSaving(true);
@@ -423,7 +424,7 @@ export default function AdminFaqsPage() {
       <div className="admin-page-head">
         <div>
           <h1 className="admin-title">Kelola FAQ</h1>
-          <p className="admin-subtitle">FAQ publik per bahasa. Bahasa yang kosong tidak akan ditampilkan.</p>
+          <p className="admin-subtitle">Tulis FAQ dalam bahasa Inggris — terjemahan Indonesia dibuat otomatis.</p>
         </div>
         <button className="button button-primary" type="button" onClick={openCreate}>
           + Tambah FAQ
@@ -465,22 +466,17 @@ export default function AdminFaqsPage() {
           <h2 className="form-card-title">{editId ? 'Edit FAQ' : 'Tambah FAQ Baru'}</h2>
           {formErr && <div className="alert alert-error" style={{ marginBottom: 12 }}>{formErr}</div>}
           <form onSubmit={handleSave}>
-            <div className="admin-form-grid">
+            <p style={{ fontSize: 13, color: '#777', marginBottom: 16, lineHeight: 1.6 }}>
+              Tulis dalam bahasa Inggris — terjemahan Indonesia dibuat otomatis saat disimpan.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <label className="admin-field">
-                <span className="admin-field-label">Pertanyaan (Indonesia)</span>
-                <input className="control" value={form.questionId} onChange={(e) => setForm(v => ({ ...v, questionId: e.target.value }))} placeholder="Berapa lama proses IV therapy?" />
+                <span className="admin-field-label">Question (English) *</span>
+                <input className="control" value={form.questionEn} onChange={(e) => setForm(v => ({ ...v, questionEn: e.target.value }))} placeholder="How long does IV therapy take?" required />
               </label>
               <label className="admin-field">
-                <span className="admin-field-label">Question (English)</span>
-                <input className="control" value={form.questionEn} onChange={(e) => setForm(v => ({ ...v, questionEn: e.target.value }))} placeholder="How long does IV therapy take?" />
-              </label>
-              <label className="admin-field">
-                <span className="admin-field-label">Jawaban (Indonesia)</span>
-                <textarea className="control" rows={4} value={form.answerId} onChange={(e) => setForm(v => ({ ...v, answerId: e.target.value }))} placeholder="Proses IV therapy biasanya..." />
-              </label>
-              <label className="admin-field">
-                <span className="admin-field-label">Answer (English)</span>
-                <textarea className="control" rows={4} value={form.answerEn} onChange={(e) => setForm(v => ({ ...v, answerEn: e.target.value }))} placeholder="IV therapy usually takes..." />
+                <span className="admin-field-label">Answer (English) *</span>
+                <textarea className="control" rows={4} value={form.answerEn} onChange={(e) => setForm(v => ({ ...v, answerEn: e.target.value }))} placeholder="IV therapy usually takes 30–60 minutes depending on the treatment..." required />
               </label>
               <label className="admin-field">
                 <span className="admin-field-label">Urutan Tampil</span>
@@ -500,7 +496,7 @@ export default function AdminFaqsPage() {
                 className={`button button-primary${saving ? ' loading' : ''}`}
                 type="submit" disabled={saving}
               >
-                {saving ? 'Menyimpan...' : editId ? 'Simpan Perubahan' : 'Tambah FAQ'}
+                {saving ? 'Menyimpan & Menerjemahkan...' : editId ? 'Simpan Perubahan' : 'Tambah FAQ'}
               </button>
               <button className="button button-secondary" type="button" onClick={cancelForm} disabled={saving}>
                 Batal

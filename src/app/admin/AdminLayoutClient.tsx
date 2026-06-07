@@ -26,7 +26,6 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Konten Website',
     items: [
-      { href: '/admin/about',        label: 'About' },
       { href: '/admin/faqs',         label: 'FAQ' },
       { href: '/admin/social-links', label: 'Social Links' },
     ],

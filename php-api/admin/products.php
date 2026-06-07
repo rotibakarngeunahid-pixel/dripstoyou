@@ -66,7 +66,7 @@ if ($method === 'POST') {
     $shortDescription = str_clean($body['shortDescription'] ?? '', 500);
     $fullDescription  = str_clean($body['fullDescription'] ?? '', 20000);
     $priceAmount      = max(0, (int)($body['priceAmount'] ?? 0));
-    $priceLabel       = str_clean($body['priceLabel'] ?? '', 100);
+    $priceLabel       = 'Rp ' . number_format($priceAmount, 0, ',', '.');
     $durationMinutes  = isset($body['durationMinutes']) ? max(1, (int)$body['durationMinutes']) : null;
     $imageUrl         = str_clean($body['imageUrl'] ?? '', 500);
     $label            = str_clean($body['label'] ?? '', 50);
@@ -136,12 +136,11 @@ if ($method === 'PATCH') {
                 'duration_minutes', 'image_url', 'label', 'is_active', 'show_on_homepage',
                 'homepage_order', 'category_id'];
 
-    // Map camelCase → snake_case
+    // Map camelCase → snake_case (priceLabel removed; auto-generated from priceAmount)
     $fieldMap = [
         'shortDescription' => 'short_description',
         'fullDescription'  => 'full_description',
         'priceAmount'      => 'price_amount',
-        'priceLabel'       => 'price_label',
         'durationMinutes'  => 'duration_minutes',
         'imageUrl'         => 'image_url',
         'isActive'         => 'is_active',
@@ -162,6 +161,11 @@ if ($method === 'PATCH') {
         }
         $updates[] = "`$snake` = ?";
         $params[]  = $val;
+        // Auto-regenerate price_label whenever price_amount is updated
+        if ($snake === 'price_amount') {
+            $updates[] = '`price_label` = ?';
+            $params[]  = 'Rp ' . number_format((int)$val, 0, ',', '.');
+        }
     }
 
     if (!empty($updates)) {

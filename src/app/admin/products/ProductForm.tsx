@@ -230,7 +230,6 @@ export function ProductForm({ product }: { product?: Product }) {
   const [shortDesc,     setShortDesc]     = useState(product?.short_description ?? '');
   const [fullDesc,      setFullDesc]      = useState(product?.full_description ?? '');
   const [price,         setPrice]         = useState(String(product?.price_amount ?? ''));
-  const [priceLabel,    setPriceLabel]    = useState(product?.price_label ?? '');
   const [duration,      setDuration]      = useState(String(product?.duration_minutes ?? '45'));
   const [imageUrl,      setImageUrl]      = useState(product?.image_url ?? '');
   const [label,         setLabel]         = useState(product?.label ?? '');
@@ -267,7 +266,6 @@ export function ProductForm({ product }: { product?: Product }) {
       shortDescription: shortDesc,
       fullDescription:  fullDesc,
       priceAmount:      parseInt(price, 10),
-      priceLabel,
       durationMinutes:  parseInt(duration, 10),
       imageUrl:         imageUrl || null,
       label:            label || null,
@@ -372,14 +370,10 @@ export function ProductForm({ product }: { product?: Product }) {
         </label>
 
         {/* Price / Duration */}
-        <div className="admin-form-grid three">
+        <div className="admin-form-grid">
           <label className="admin-field">
             <span className="admin-field-label">Harga (IDR) *</span>
             <input className="control" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required min="0" />
-          </label>
-          <label className="admin-field">
-            <span className="admin-field-label">Label Harga</span>
-            <input className="control" value={priceLabel} onChange={(e) => setPriceLabel(e.target.value)} placeholder="IDR 750.000" />
           </label>
           <label className="admin-field">
             <span className="admin-field-label">Durasi (menit)</span>

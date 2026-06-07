@@ -141,19 +141,11 @@ if ($method === 'DELETE') {
     if (!$id) jsonError('ID area wajib diisi', 400);
     findArea($db, $id);
 
-    $permanent = isset($_GET['permanent']) && $_GET['permanent'] === '1';
-
-    if ($permanent) {
-        // Unlink any bookings that reference this area before hard-deleting
-        $db->prepare('UPDATE bookings SET service_area_id = NULL WHERE service_area_id = ?')->execute([$id]);
-        $db->prepare('DELETE FROM service_areas WHERE id = ?')->execute([$id]);
-        auditLog('UPDATE_AREA', $admin['admin_id'], 'ServiceArea', $id, ['operation' => 'delete_permanent']);
-        jsonSuccess(null, 'Area layanan berhasil dihapus permanen');
-    } else {
-        $db->prepare('UPDATE service_areas SET is_active = 0 WHERE id = ?')->execute([$id]);
-        auditLog('UPDATE_AREA', $admin['admin_id'], 'ServiceArea', $id, ['operation' => 'deactivate']);
-        jsonSuccess(null, 'Area layanan dinonaktifkan');
-    }
+    // Always hard-delete: unlink any bookings first, then remove the record
+    $db->prepare('UPDATE bookings SET service_area_id = NULL WHERE service_area_id = ?')->execute([$id]);
+    $db->prepare('DELETE FROM service_areas WHERE id = ?')->execute([$id]);
+    auditLog('UPDATE_AREA', $admin['admin_id'], 'ServiceArea', $id, ['operation' => 'delete_permanent']);
+    jsonSuccess(null, 'Area layanan berhasil dihapus');
 }
 
 jsonError('Method not allowed', 405);

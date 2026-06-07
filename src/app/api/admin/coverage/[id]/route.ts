@@ -26,12 +26,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   });
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
-  const permanent = req.nextUrl.searchParams.get('permanent') === '1' ? '&permanent=1' : '';
-  return phpProxy(`${phpUrl(id)}${permanent}`, {
+  return phpProxy(phpUrl(id), {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
   });

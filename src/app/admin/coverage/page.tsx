@@ -391,14 +391,14 @@ export default function AdminCoveragePage() {
     setConfirm({
       open: true,
       danger: true,
-      title: 'Hapus Area Permanen',
-      message: `Area "${area.name}" akan dihapus secara permanen dari database. Semua booking yang terhubung akan kehilangan referensi area ini. Tindakan ini tidak dapat dibatalkan.`,
-      confirmLabel: 'Hapus Permanen',
+      title: 'Hapus Area',
+      message: `Area "${area.name}" akan dihapus secara permanen. Semua booking yang terhubung akan kehilangan referensi area ini. Tindakan ini tidak dapat dibatalkan.`,
+      confirmLabel: 'Hapus',
       onConfirm: async () => {
         setConfirm(c => ({ ...c, loading: true }));
         setDeleting(id);
         try {
-          const res = await fetch(`/api/admin/coverage/${id}?permanent=1`, { method: 'DELETE' });
+          const res = await fetch(`/api/admin/coverage/${id}`, { method: 'DELETE' });
           if (res.ok) {
             showToast('Area berhasil dihapus.');
             setAreas(prev => prev.filter(a => a.id !== id));
