@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ConfirmModal } from '@/components/admin/ConfirmModal';
 
 type SocialLink = {
   id: string;
@@ -39,15 +40,26 @@ export default function AdminSocialLinksPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [toggling, setToggling] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY);
   const [editId, setEditId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState('');
-  const [toast, setToast] = useState('');
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [confirm, setConfirm] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    loadingLabel?: string;
+    danger?: boolean;
+    loading?: boolean;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', confirmLabel: '', onConfirm: () => {} });
 
-  function showToast(msg: string) {
-    setToast(msg);
-    setTimeout(() => setToast(''), 3000);
+  function showToast(msg: string, type: 'success' | 'error' = 'success') {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
   }
 
   async function load() {
@@ -115,38 +127,93 @@ export default function AdminSocialLinksPage() {
       setShowForm(false);
       setEditId(null);
       void load();
+    } catch {
+      setError('Koneksi ke backend social links gagal.');
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm('Hapus link ini?')) return;
-    setDeleting(id);
-    try {
-      const res = await fetch(`/api/admin/social-links/${id}`, { method: 'DELETE' });
-      if (!res.ok) { showToast('Gagal menghapus link.'); return; }
-      showToast('Link dihapus.');
-      void load();
-    } finally {
-      setDeleting(null);
-    }
+  function askDelete(link: SocialLink) {
+    setConfirm({
+      open: true,
+      danger: true,
+      title: 'Hapus Social Link',
+      message: `Link "${link.label}" akan dihapus permanen dari website. Tindakan ini tidak dapat dibatalkan.`,
+      confirmLabel: 'Hapus Link',
+      loadingLabel: 'Menghapus...',
+      onConfirm: async () => {
+        setConfirm((current) => ({ ...current, loading: true }));
+        setDeleting(link.id);
+        try {
+          const res = await fetch(`/api/admin/social-links/${link.id}`, { method: 'DELETE' });
+          const json = (await res.json()) as ApiResponse<null>;
+          if (!res.ok) {
+            showToast(json.message ?? json.error ?? 'Gagal menghapus link.', 'error');
+            return;
+          }
+          showToast('Link dihapus.');
+          await load();
+          setConfirm((current) => ({ ...current, open: false, loading: false }));
+        } catch {
+          showToast('Koneksi gagal. Coba lagi.', 'error');
+        } finally {
+          setDeleting(null);
+          setConfirm((current) => ({ ...current, loading: false }));
+        }
+      },
+    });
   }
 
   async function toggleActive(link: SocialLink) {
-    await fetch(`/api/admin/social-links/${link.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ isActive: !link.isActive }),
-    });
-    void load();
+    setToggling(link.id);
+    try {
+      const res = await fetch(`/api/admin/social-links/${link.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !link.isActive }),
+      });
+      const json = (await res.json()) as ApiResponse<SocialLink>;
+      if (!res.ok) {
+        showToast(json.message ?? json.error ?? 'Gagal mengubah status link.', 'error');
+        return;
+      }
+      showToast(link.isActive ? 'Link dinonaktifkan.' : 'Link diaktifkan.');
+      setLinks((current) => current.map((item) => (
+        item.id === link.id ? { ...item, isActive: !link.isActive } : item
+      )));
+    } catch {
+      showToast('Koneksi gagal. Coba lagi.', 'error');
+    } finally {
+      setToggling(null);
+    }
   }
 
   return (
     <div className="admin-page">
+      <ConfirmModal
+        open={confirm.open}
+        title={confirm.title}
+        message={confirm.message}
+        confirmLabel={confirm.confirmLabel}
+        loadingLabel={confirm.loadingLabel}
+        danger={confirm.danger}
+        loading={confirm.loading}
+        onConfirm={confirm.onConfirm}
+        onCancel={() => setConfirm((current) => ({ ...current, open: false }))}
+      />
+
       {toast && (
-        <div className="alert" style={{ marginBottom: 16, background: '#ecfdf3', border: '1px solid #b7e4c7', color: '#167a3f' }}>
-          {toast}
+        <div
+          className="alert"
+          style={{
+            marginBottom: 16,
+            background: toast.type === 'success' ? '#ecfdf3' : '#fef2f2',
+            border: `1px solid ${toast.type === 'success' ? '#b7e4c7' : '#fecaca'}`,
+            color: toast.type === 'success' ? '#167a3f' : '#dc2626',
+          }}
+        >
+          {toast.msg}
         </div>
       )}
       {error && !showForm && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
@@ -243,8 +310,9 @@ export default function AdminSocialLinksPage() {
                       type="button"
                       style={{ cursor: 'pointer', background: link.isActive ? 'var(--pale-aqua)' : '#f5f5f5', color: link.isActive ? 'var(--teal)' : '#888', border: 'none', borderRadius: 6, padding: '3px 10px', fontSize: 12 }}
                       onClick={() => toggleActive(link)}
+                      disabled={toggling === link.id}
                     >
-                      {link.isActive ? 'Aktif' : 'Nonaktif'}
+                      {toggling === link.id ? '...' : link.isActive ? 'Aktif' : 'Nonaktif'}
                     </button>
                   </td>
                   <td>
@@ -253,7 +321,7 @@ export default function AdminSocialLinksPage() {
                       <button
                         className="button"
                         style={{ padding: '4px 12px', fontSize: 13, background: '#fee2e2', color: '#dc2626', border: 'none' }}
-                        onClick={() => handleDelete(link.id)}
+                        onClick={() => askDelete(link)}
                         disabled={deleting === link.id}
                         type="button"
                       >

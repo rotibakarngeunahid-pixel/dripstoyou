@@ -37,11 +37,11 @@ function formatFee(amount: number | null) {
 
 /* ─── Confirm Modal ─── */
 function ConfirmModal({
-  open, title, message, confirmLabel, danger,
+  open, title, message, confirmLabel, danger, loading,
   onConfirm, onCancel,
 }: {
   open: boolean; title: string; message: string;
-  confirmLabel: string; danger?: boolean;
+  confirmLabel: string; danger?: boolean; loading?: boolean;
   onConfirm: () => void; onCancel: () => void;
 }) {
   if (!open) return null;
@@ -64,7 +64,7 @@ function ConfirmModal({
           <button
             className="button button-secondary"
             style={{ minHeight: 40, padding: '8px 18px', fontSize: 13 }}
-            onClick={onCancel} type="button"
+            onClick={onCancel} type="button" disabled={loading}
           >
             Batal
           </button>
@@ -74,10 +74,11 @@ function ConfirmModal({
               minHeight: 40, padding: '8px 18px', fontSize: 13,
               background: danger ? '#dc2626' : 'var(--teal)',
               color: 'white', border: 'none',
+              opacity: loading ? 0.7 : 1,
             }}
-            onClick={onConfirm} type="button"
+            onClick={onConfirm} type="button" disabled={loading}
           >
-            {confirmLabel}
+            {loading ? 'Memproses...' : confirmLabel}
           </button>
         </div>
       </div>
@@ -269,7 +270,7 @@ export default function AdminCoveragePage() {
   const [toast,    setToast]    = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [confirm,  setConfirm]  = useState<{
     open: boolean; title: string; message: string; confirmLabel: string;
-    danger?: boolean; onConfirm: () => void;
+    danger?: boolean; loading?: boolean; onConfirm: () => void;
   }>({ open: false, title: '', message: '', confirmLabel: '', onConfirm: () => {} });
 
   function showToast(msg: string, type: 'success' | 'error' = 'success') {
@@ -337,6 +338,8 @@ export default function AdminCoveragePage() {
       if (!res.ok) { setFormErr(json.message ?? json.error ?? 'Gagal menyimpan.'); return; }
       showToast(editId ? 'Area berhasil diperbarui.' : 'Area berhasil ditambahkan.');
       setShowForm(false); setEditId(null); await load();
+    } catch {
+      setFormErr('Koneksi ke backend area layanan gagal.');
     } finally {
       setSaving(false);
     }
@@ -352,9 +355,14 @@ export default function AdminCoveragePage() {
       if (res.ok) {
         showToast(area.isActive ? 'Area dinonaktifkan.' : 'Area diaktifkan.');
         setAreas(prev => prev.map(a => a.id === area.id ? { ...a, isActive: !area.isActive } : a));
+        return true;
       } else {
         showToast('Gagal mengubah status area.', 'error');
+        return false;
       }
+    } catch {
+      showToast('Koneksi gagal. Coba lagi.', 'error');
+      return false;
     } finally {
       setToggling(null);
     }
@@ -370,8 +378,9 @@ export default function AdminCoveragePage() {
       message: `Area "${area.name}" akan disembunyikan dari publik. Anda bisa mengaktifkannya kembali kapan saja.`,
       confirmLabel: 'Nonaktifkan',
       onConfirm: async () => {
-        setConfirm(c => ({ ...c, open: false }));
-        await handleToggle(area);
+        setConfirm(c => ({ ...c, loading: true }));
+        const ok = await handleToggle(area);
+        setConfirm(c => ({ ...c, open: ok ? false : c.open, loading: false }));
       },
     });
   }
@@ -386,16 +395,23 @@ export default function AdminCoveragePage() {
       message: `Area "${area.name}" akan dihapus secara permanen dari database. Semua booking yang terhubung akan kehilangan referensi area ini. Tindakan ini tidak dapat dibatalkan.`,
       confirmLabel: 'Hapus Permanen',
       onConfirm: async () => {
-        setConfirm(c => ({ ...c, open: false }));
+        setConfirm(c => ({ ...c, loading: true }));
         setDeleting(id);
         try {
           const res = await fetch(`/api/admin/coverage/${id}?permanent=1`, { method: 'DELETE' });
           if (res.ok) {
             showToast('Area berhasil dihapus.');
             setAreas(prev => prev.filter(a => a.id !== id));
-          } else { showToast('Gagal menghapus area.', 'error'); }
+            setConfirm(c => ({ ...c, open: false, loading: false }));
+          } else {
+            const json = (await res.json()) as ApiResponse<null>;
+            showToast(json.message ?? json.error ?? 'Gagal menghapus area.', 'error');
+          }
+        } catch {
+          showToast('Koneksi gagal. Coba lagi.', 'error');
         } finally {
           setDeleting(null);
+          setConfirm(c => ({ ...c, loading: false }));
         }
       },
     });
@@ -416,6 +432,7 @@ export default function AdminCoveragePage() {
         message={confirm.message}
         confirmLabel={confirm.confirmLabel}
         danger={confirm.danger}
+        loading={confirm.loading}
         onConfirm={confirm.onConfirm}
         onCancel={() => setConfirm(c => ({ ...c, open: false }))}
       />

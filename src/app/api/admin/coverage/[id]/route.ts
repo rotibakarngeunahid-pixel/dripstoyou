@@ -8,17 +8,17 @@ function phpUrl(id: string) {
   return `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/coverage.php?id=${encodeURIComponent(id)}`;
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const id = req.nextUrl.pathname.split('/').at(-1)!;
+  const { id } = await params;
   return phpProxy(phpUrl(id), { headers: { Authorization: `Bearer ${session.adminToken ?? ''}` } });
 }
 
-export async function PUT(req: NextRequest) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const id = req.nextUrl.pathname.split('/').at(-1)!;
+  const { id } = await params;
   return phpProxy(phpUrl(id), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.adminToken ?? ''}` },
@@ -26,10 +26,10 @@ export async function PUT(req: NextRequest) {
   });
 }
 
-export async function DELETE(req: NextRequest) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const id        = req.nextUrl.pathname.split('/').at(-1)!;
+  const { id } = await params;
   const permanent = req.nextUrl.searchParams.get('permanent') === '1' ? '&permanent=1' : '';
   return phpProxy(`${phpUrl(id)}${permanent}`, {
     method: 'DELETE',

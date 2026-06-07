@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { getSession } from '@/lib/session';
 
 type BookingStatus = 'BARU' | 'KONFIRMASI' | 'DIPROSES' | 'SELESAI' | 'DIBATALKAN';
@@ -71,6 +72,9 @@ export default async function BookingsPage() {
           <h1 className="admin-title">Bookings</h1>
           <p className="admin-subtitle">{bookings.length} booking ditampilkan</p>
         </div>
+        <Link href="/api/admin/bookings/export" className="button button-secondary">
+          Export CSV
+        </Link>
       </div>
 
       <section className="table-shell">
@@ -78,7 +82,7 @@ export default async function BookingsPage() {
           <table className="data-table" style={{ minWidth: 1080 }}>
             <thead>
               <tr>
-                {['Kode', 'Pelanggan', 'No. HP', 'Treatment', 'Tanggal', 'Waktu', 'Orang', 'Area', 'Status', 'Dibuat'].map((heading) => (
+                {['Kode', 'Pelanggan', 'No. HP', 'Treatment', 'Tanggal', 'Waktu', 'Orang', 'Area', 'Status', 'Dibuat', 'Aksi'].map((heading) => (
                   <th key={heading}>{heading}</th>
                 ))}
               </tr>
@@ -104,12 +108,17 @@ export default async function BookingsPage() {
                       </span>
                     </td>
                     <td className="muted-small">{formatDate(booking.created_at, false)}</td>
+                    <td>
+                      <Link href={`/admin/bookings/${booking.id}`} className="button button-secondary" style={{ padding: '4px 12px', fontSize: 13 }}>
+                        Detail
+                      </Link>
+                    </td>
                   </tr>
                 );
               })}
               {bookings.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="empty-state">Belum ada booking</td>
+                  <td colSpan={11} className="empty-state">Belum ada booking</td>
                 </tr>
               )}
             </tbody>

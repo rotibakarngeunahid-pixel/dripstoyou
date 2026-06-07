@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { ConfirmModal } from '@/components/admin/ConfirmModal';
 
 const SAMPLE_DATA: Record<string, string> = {
   customer_name:  'Sarah Johnson',
@@ -41,6 +42,7 @@ export default function WaTemplatePage() {
   const [saving,       setSaving]       = useState(false);
   const [error,        setError]        = useState('');
   const [success,      setSuccess]      = useState('');
+  const [confirmReset, setConfirmReset] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -96,7 +98,7 @@ export default function WaTemplatePage() {
   }
 
   function handleReset() {
-    if (!confirm('Reset ke template default? Perubahan yang belum disimpan akan hilang.')) return;
+    setConfirmReset(false);
     setTemplate(defaultTpl);
   }
 
@@ -119,6 +121,15 @@ export default function WaTemplatePage() {
 
   return (
     <div className="admin-page" style={{ maxWidth: 900 }}>
+      <ConfirmModal
+        open={confirmReset}
+        title="Reset Template"
+        message="Template akan dikembalikan ke default. Perubahan yang belum disimpan akan hilang."
+        confirmLabel="Reset Default"
+        onConfirm={handleReset}
+        onCancel={() => setConfirmReset(false)}
+      />
+
       <div className="admin-page-head">
         <div>
           <h1 className="admin-title">WhatsApp Template</h1>
@@ -170,10 +181,10 @@ export default function WaTemplatePage() {
               <button className={`button button-primary${saving ? ' loading' : ''}`} type="submit" disabled={saving}>
                 {saving ? 'Menyimpan…' : 'Simpan Template'}
               </button>
-              <button type="button" className="button button-secondary" onClick={handleReset}>
+              <button type="button" className="button button-secondary" onClick={() => setConfirmReset(true)} disabled={saving}>
                 Reset Default
               </button>
-              <button type="button" className="button button-secondary" onClick={handleTestOpen}>
+              <button type="button" className="button button-secondary" onClick={handleTestOpen} disabled={saving}>
                 Test Buka WhatsApp
               </button>
             </div>

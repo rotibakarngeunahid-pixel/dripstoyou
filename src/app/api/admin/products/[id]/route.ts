@@ -19,7 +19,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
-  const phpRes = await phpAdminFetch(`products.php?id=${id}`, {}, session.adminToken);
+  const phpRes = await phpAdminFetch(`products.php?id=${encodeURIComponent(id)}`, {}, session.adminToken);
   return NextResponse.json(await phpRes.json(), { status: phpRes.status });
 }
 
@@ -28,7 +28,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
   const body   = await req.text();
-  const phpRes = await phpAdminFetch(`products.php?id=${id}`, { method: 'PATCH', body }, session.adminToken);
+  const phpRes = await phpAdminFetch(`products.php?id=${encodeURIComponent(id)}`, { method: 'PATCH', body }, session.adminToken);
   return NextResponse.json(await phpRes.json(), { status: phpRes.status });
 }
 
@@ -36,6 +36,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
-  const phpRes = await phpAdminFetch(`products.php?id=${id}`, { method: 'DELETE' }, session.adminToken);
+  const phpRes = await phpAdminFetch(`products.php?id=${encodeURIComponent(id)}`, { method: 'DELETE' }, session.adminToken);
   return NextResponse.json(await phpRes.json(), { status: phpRes.status });
 }

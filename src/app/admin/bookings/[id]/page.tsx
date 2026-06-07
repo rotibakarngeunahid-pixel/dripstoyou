@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { ConfirmModal } from '@/components/admin/ConfirmModal';
 
 const STATUS_OPTIONS = [
   { value: 'BARU', label: 'Baru', color: '#b8833e' },
@@ -63,20 +64,35 @@ export default function BookingDetailPage() {
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [confirmStatus, setConfirmStatus] = useState(false);
 
-  useEffect(() => {
-    fetch(`/api/admin/bookings/${id}`)
-      .then((res) => res.json() as Promise<ApiResponse<Booking>>)
-      .then((json) => {
-        setBooking(json.data ?? null);
-        setNewStatus(json.data?.status ?? '');
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Gagal memuat booking.');
-        setLoading(false);
-      });
-  }, [id]);
+  async function loadBooking() {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`/api/admin/bookings/${id}`, { cache: 'no-store' });
+      const json = (await res.json()) as ApiResponse<Booking>;
+      if (!res.ok) {
+        setBooking(null);
+        setError(json.message ?? json.error ?? 'Gagal memuat booking.');
+        return;
+      }
+      setBooking(json.data ?? null);
+      setNewStatus(json.data?.status ?? '');
+    } catch {
+      setError('Gagal memuat booking.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect, react-hooks/exhaustive-deps
+  useEffect(() => { void loadBooking(); }, [id]);
+
+  function requestStatusUpdate() {
+    if (!booking || newStatus === booking.status) return;
+    setConfirmStatus(true);
+  }
 
   async function updateStatus() {
     if (!booking || newStatus === booking.status) return;
@@ -95,6 +111,8 @@ export default function BookingDetailPage() {
       }
       setBooking((current) => (current ? { ...current, status: json.data?.status ?? newStatus } : current));
       setNote('');
+      setConfirmStatus(false);
+      await loadBooking();
     } catch {
       setError('Network error');
     } finally {
@@ -123,9 +141,22 @@ export default function BookingDetailPage() {
   }
 
   const currentColor = statusColor(booking.status);
+  const nextStatusLabel = STATUS_OPTIONS.find((item) => item.value === newStatus)?.label ?? newStatus;
 
   return (
     <div className="admin-page">
+      <ConfirmModal
+        open={confirmStatus}
+        title="Ubah Status Booking"
+        message={`Status booking ${booking.booking_code} akan diubah dari ${booking.status} menjadi ${nextStatusLabel}.`}
+        confirmLabel="Simpan Status"
+        loadingLabel="Menyimpan..."
+        loading={saving}
+        danger={newStatus === 'DIBATALKAN'}
+        onConfirm={updateStatus}
+        onCancel={() => setConfirmStatus(false)}
+      />
+
       <button className="icon-link" onClick={() => router.back()} type="button" style={{ background: 'none', border: 0, padding: 0, marginBottom: 20 }}>
         Kembali
       </button>
@@ -189,6 +220,7 @@ export default function BookingDetailPage() {
               key={status.value}
               onClick={() => setNewStatus(status.value)}
               type="button"
+              disabled={saving}
               style={{
                 borderColor: newStatus === status.value ? status.color : undefined,
                 color: newStatus === status.value ? status.color : undefined,
@@ -209,7 +241,7 @@ export default function BookingDetailPage() {
         {error && <div className="alert alert-error" style={{ marginBottom: 12 }}>{error}</div>}
         <button
           className={`button button-primary${saving ? ' loading' : ''}`}
-          onClick={updateStatus}
+          onClick={requestStatusUpdate}
           disabled={saving || newStatus === booking.status}
           type="button"
         >
