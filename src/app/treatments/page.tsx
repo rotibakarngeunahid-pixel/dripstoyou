@@ -1,14 +1,13 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
-import Link from 'next/link';
 import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
+import TreatmentsContent from '@/components/public/TreatmentsContent';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Treatments - Drips To You - Bali | Mobile IV Therapy',
-  description: 'Pilihan treatment IV therapy on-call terbaik di Bali. Hangover Recovery, Immune Booster, Energy Boost, dan Beauty Glow.',
+  description: 'Browse our IV therapy treatments in Bali: Hangover Recovery, Immune Booster, Energy Boost, and Beauty Glow. Delivered to your villa or hotel.',
 };
 
 interface Benefit {
@@ -86,98 +85,13 @@ async function getProducts(): Promise<Product[]> {
   }
 }
 
-function formatPrice(product: Product) {
-  return product.price_label ?? `IDR ${product.price_amount.toLocaleString('id-ID')}`;
-}
-
 export default async function TreatmentsPage() {
   const products = await getProducts();
 
   return (
     <>
       <Header />
-      <main className="page-shell">
-        <section className="page-hero centered">
-          <div className="page-hero-inner">
-            <div className="page-eyebrow">Treatment Kami</div>
-            <h1 className="page-title">
-              IV Therapy di <em>Mana Saja</em>
-            </h1>
-            <p className="page-subtitle">
-              Semua treatment dirancang oleh tenaga medis profesional dan diantar langsung ke lokasi Anda di Bali.
-            </p>
-            <div className="page-actions" style={{ justifyContent: 'center' }}>
-              <Link href="/booking" className="button button-gold">
-                Book Sekarang
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <section className="page-section">
-          <div className="product-grid">
-            {products.map((product) => (
-              <article className="product-card" key={product.id}>
-                <div className="product-media">
-                  {product.image_url && (
-                    <Image
-                      src={product.image_url}
-                      alt={`${product.name} IV therapy`}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
-                      className="card-photo"
-                    />
-                  )}
-                  {product.label && (
-                    <span
-                      className="status-pill"
-                      style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(255,255,255,.94)', color: 'var(--gold)' }}
-                    >
-                      {product.label}
-                    </span>
-                  )}
-                </div>
-
-                <div className="product-body">
-                  <h2 className="product-title">{product.name}</h2>
-                  <p className="product-desc">{product.short_description}</p>
-
-                  {product.benefits && product.benefits.length > 0 && (
-                    <ul className="product-benefits">
-                      {product.benefits.slice(0, 4).map((benefit) => (
-                        <li key={benefit.id}>{benefit.benefit_text}</li>
-                      ))}
-                    </ul>
-                  )}
-
-                  <div className="product-footer">
-                    <div className="price-row">
-                      <div>
-                        <div className="price-text">{formatPrice(product)}</div>
-                        {product.duration_minutes && (
-                          <div className="muted-small">sekitar {product.duration_minutes} menit</div>
-                        )}
-                      </div>
-                      <Link href={`/treatments/${product.slug}`} className="button button-secondary">
-                        Detail
-                      </Link>
-                    </div>
-                    <Link href={`/booking?treatment=${product.slug}`} className="button button-primary full">
-                      Book Sekarang
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <div style={{ textAlign: 'center', marginTop: 42 }}>
-            <Link href="/" className="icon-link">
-              Kembali ke Beranda
-            </Link>
-          </div>
-        </section>
-      </main>
+      <TreatmentsContent products={products} />
       <SiteFooter />
     </>
   );

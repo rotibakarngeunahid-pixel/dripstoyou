@@ -53,6 +53,40 @@ export interface Translations {
     brandDesc: string; colTreatments: string; colInfo: string; colContact: string;
     seeAll: string; about: string; howToBook: string; faq: string;
     hours: string; copyright: string;
+    termsConditions: string; privacyPolicy: string; waFloatMessage: string;
+  };
+  treatmentsPage: {
+    eyebrow: string; title: string; titleEm: string; subtitle: string;
+    bookNow: string; detail: string; durationText: string; backHome: string;
+  };
+  treatmentDetail: {
+    backAll: string; durationText: string; orderBtn: string; askWa: string;
+    benefitsTitle: string; aboutTitle: string; faqTitle: string;
+    ctaTitle: string; ctaSubtitle: string; bookBtn: string;
+    askWaFirst: string; waMessage: string;
+  };
+  aboutPage: {
+    eyebrow: string; title: string; titleEm: string; subtitle: string;
+    bookNow: string; chatWa: string;
+    missionTitle: string; missionP1: string; missionP2: string;
+    howItWorksTitle: string; howItWorksSub: string;
+    safetyTitle: string; safetyP1: string; safetyP2: string;
+    areasTitle: string; areasSub: string; checkAreaBtn: string;
+    ctaTitle: string; ctaSub: string; ctaBookBtn: string; ctaWaBtn: string;
+    waMessage: string;
+    values: { label: string; title: string; desc: string }[];
+    steps: { num: string; title: string; desc: string }[];
+  };
+  contactPage: {
+    eyebrow: string; title: string; subtitle: string;
+    waTag: string; waTitle: string; waDesc: string; waBtn: string;
+    bookingTag: string; bookingTitle: string; bookingDesc: string; bookingBtn: string;
+    hoursTitle: string; hoursDesc: string;
+  };
+  faqPage: {
+    eyebrow: string; title: string; subtitle: string;
+    emptyState: string; stillQ: string; stillQDesc: string;
+    askBtn: string; waMessage: string;
   };
 }
 
@@ -134,12 +168,102 @@ export const translations: Record<Lang, Translations> = {
     },
     footer: {
       brandDesc: 'Layanan mobile IV therapy premium yang hadir langsung ke villa, hotel, atau Airbnb kamu di seluruh Bali. Dipercaya lebih dari 500 tamu.',
-      colTreatments: 'Treatment', colInfo: 'Info', colContact: 'Kontak',
+      colTreatments: 'Treatment', colInfo: 'Informasi', colContact: 'Kontak',
       seeAll: 'Lihat Semua →', about: 'Tentang Kami', howToBook: 'Cara Booking',
       faq: 'FAQ', hours: '08:00 – 22:00 WITA',
       copyright: 'Hak cipta dilindungi. Mobile IV Therapy Premium di Bali.',
+      termsConditions: 'Syarat & Ketentuan',
+      privacyPolicy: 'Kebijakan Privasi',
+      waFloatMessage: 'Halo Drips To You - Bali, saya ingin informasi lebih lanjut',
+    },
+    treatmentsPage: {
+      eyebrow: 'Treatment Kami',
+      title: 'IV Therapy di',
+      titleEm: 'Mana Saja',
+      subtitle: 'Semua treatment dirancang oleh tenaga medis profesional dan diantar langsung ke lokasi Anda di Bali.',
+      bookNow: 'Book Sekarang',
+      detail: 'Detail',
+      durationText: 'sekitar {n} menit',
+      backHome: 'Kembali ke Beranda',
+    },
+    treatmentDetail: {
+      backAll: '← Semua Treatment',
+      durationText: 'sekitar {n} menit',
+      orderBtn: 'Pesan {name}',
+      askWa: 'Tanya via WhatsApp',
+      benefitsTitle: 'Kandungan & Manfaat',
+      aboutTitle: 'Tentang Treatment Ini',
+      faqTitle: 'FAQ',
+      ctaTitle: 'Siap mencoba {name}?',
+      ctaSubtitle: 'Tim medis kami siap hadir ke lokasi Anda dalam 30–60 menit setelah jadwal dikonfirmasi.',
+      bookBtn: 'Booking {name} Sekarang',
+      askWaFirst: 'Tanya dulu via WhatsApp',
+      waMessage: 'Halo, saya ingin tanya tentang treatment {name}',
+    },
+    aboutPage: {
+      eyebrow: 'Tentang Kami',
+      title: 'Kesehatan di',
+      titleEm: 'Ujung Jari Anda',
+      subtitle: 'Drips To You - Bali membantu tamu dan warga Bali mendapatkan IV therapy tanpa meninggalkan kenyamanan tempat menginap.',
+      bookNow: 'Booking Sekarang',
+      chatWa: 'Chat WhatsApp',
+      missionTitle: 'Misi Kami',
+      missionP1: 'Kami percaya perawatan kesehatan premium harus mudah diakses. Dengan menghadirkan tenaga medis langsung ke villa, hotel, Airbnb, atau rumah Anda, proses pemulihan menjadi lebih praktis dan nyaman.',
+      missionP2: 'Setiap sesi IV therapy dilakukan oleh tenaga medis terlisensi dengan peralatan steril berstandar medis. Keselamatan, kebersihan, dan komunikasi yang jelas menjadi prioritas utama.',
+      howItWorksTitle: 'Cara Kerja Layanan',
+      howItWorksSub: 'Dari booking hingga treatment selesai — mudah dan aman.',
+      safetyTitle: 'Keamanan & Kenyamanan',
+      safetyP1: 'Layanan kami dirancang untuk membantu mendukung pemulihan dan hidrasi tubuh. Bukan untuk kondisi darurat medis. Jika Anda mengalami kondisi darurat, segera hubungi layanan gawat darurat setempat.',
+      safetyP2: 'Setiap team member kami memiliki lisensi medis aktif. Peralatan sekali pakai dan steril digunakan pada setiap sesi.',
+      areasTitle: 'Area Layanan',
+      areasSub: 'Kami melayani area wisata dan hunian utama di Bali.',
+      checkAreaBtn: 'Cek Ketersediaan Area',
+      ctaTitle: 'Siap Mencoba?',
+      ctaSub: 'Tim medis kami siap hadir ke lokasi Anda di Bali. Booking sekarang atau konsultasikan kebutuhan Anda.',
+      ctaBookBtn: 'Booking Sekarang',
+      ctaWaBtn: 'Chat di WhatsApp',
+      waMessage: 'Halo, saya ingin tahu lebih lanjut tentang Drips To You Bali',
+      values: [
+        { label: 'Medis', title: 'Tenaga Medis Profesional', desc: 'Treatment dilakukan oleh perawat dan dokter berlisensi dengan pengalaman klinis.' },
+        { label: 'On-call', title: 'Datang ke Lokasi', desc: 'Tim datang ke villa, hotel, Airbnb, atau rumah di area utama Bali.' },
+        { label: 'Steril', title: 'Peralatan Sekali Pakai', desc: 'Semua alat treatment disiapkan steril dan mengikuti standar medis.' },
+        { label: 'Cepat', title: 'Respons 30–60 Menit', desc: 'Jadwal dikonfirmasi via WhatsApp dan tim bergerak sesuai area layanan.' },
+      ],
+      steps: [
+        { num: '01', title: 'Pilih Treatment', desc: 'Pilih treatment sesuai kebutuhan dari website atau tanyakan via WhatsApp.' },
+        { num: '02', title: 'Isi Form Booking', desc: 'Lengkapi data diri, tanggal, waktu, dan lokasi Anda.' },
+        { num: '03', title: 'Konfirmasi WhatsApp', desc: 'Tim kami menghubungi Anda untuk konfirmasi jadwal dan detail.' },
+        { num: '04', title: 'Tim Datang ke Lokasi', desc: 'Tenaga medis hadir ke lokasi Anda dalam waktu yang disepakati.' },
+        { num: '05', title: 'Treatment Selesai', desc: 'Nikmati treatment dalam kenyamanan tempat Anda. Aman dan profesional.' },
+      ],
+    },
+    contactPage: {
+      eyebrow: 'Kontak',
+      title: 'Butuh Bantuan?',
+      subtitle: 'Tim kami siap membantu konsultasi treatment, pengecekan area layanan, dan konfirmasi booking.',
+      waTag: 'WhatsApp',
+      waTitle: 'Chat Langsung',
+      waDesc: 'Respons tercepat untuk konsultasi treatment dan pertanyaan umum.',
+      waBtn: 'Chat via WhatsApp',
+      bookingTag: 'Booking',
+      bookingTitle: 'Form Website',
+      bookingDesc: 'Pilih treatment, tanggal, waktu, dan lokasi layanan untuk booking langsung.',
+      bookingBtn: 'Buka Form Booking',
+      hoursTitle: 'Jam Layanan',
+      hoursDesc: 'Setiap hari pukul 08:00 – 22:00 WITA. Estimasi kedatangan bergantung pada area layanan dan ketersediaan tim.',
+    },
+    faqPage: {
+      eyebrow: 'FAQ',
+      title: 'Ada Pertanyaan?',
+      subtitle: 'Temukan jawaban tentang proses booking, keamanan treatment, area layanan, dan konfirmasi jadwal.',
+      emptyState: 'FAQ akan segera tersedia. Silakan hubungi kami via WhatsApp untuk pertanyaan.',
+      stillQ: 'Masih ada pertanyaan?',
+      stillQDesc: 'Tim kami siap membantu Anda melalui WhatsApp.',
+      askBtn: 'Tanya via WhatsApp',
+      waMessage: 'Halo, saya punya pertanyaan tentang layanan Drips To You - Bali',
     },
   },
+
   en: {
     nav: {
       treatments: 'Treatments', howToBook: 'How to Book', coverage: 'Coverage',
@@ -184,7 +308,7 @@ export const translations: Record<Lang, Translations> = {
       areaCount: 'Areas Covered', responseTime: 'Response Time', coverage: 'South Bali Coverage',
       liveService: 'Active Service · 08:00 – 22:00 WITA',
       popular: '★ Popular', active: 'Active', ocean: 'Indian Ocean', north: 'NORTH BALI',
-      arrivalTime: 'Est. arrival', notInList: "Your area not on the list?", contactUs: 'Ask via booking',
+      arrivalTime: 'Est. arrival', notInList: 'Your area not on the list?', contactUs: 'Ask via booking',
     },
     gallery: {
       eyebrow: 'Premium Experience', title: 'Drips To You', titleEm: 'Moments',
@@ -217,10 +341,99 @@ export const translations: Record<Lang, Translations> = {
     },
     footer: {
       brandDesc: 'Premium mobile IV therapy delivered to your villa, hotel, or Airbnb across Bali. Trusted by 500+ guests.',
-      colTreatments: 'Treatments', colInfo: 'Info', colContact: 'Contact',
+      colTreatments: 'Treatments', colInfo: 'Information', colContact: 'Contact',
       seeAll: 'See All →', about: 'About Us', howToBook: 'How to Book',
       faq: 'FAQ', hours: '08:00 – 22:00 WITA',
       copyright: 'All rights reserved. Premium Mobile IV Therapy in Bali.',
+      termsConditions: 'Terms & Conditions',
+      privacyPolicy: 'Privacy Policy',
+      waFloatMessage: 'Hi Drips To You - Bali, I would like more information',
+    },
+    treatmentsPage: {
+      eyebrow: 'Our Treatments',
+      title: 'IV Therapy',
+      titleEm: 'Anywhere You Are',
+      subtitle: 'Every treatment is designed by medical professionals and delivered directly to your location in Bali.',
+      bookNow: 'Book Now',
+      detail: 'Details',
+      durationText: 'approx. {n} min',
+      backHome: 'Back to Home',
+    },
+    treatmentDetail: {
+      backAll: '← All Treatments',
+      durationText: 'approx. {n} min',
+      orderBtn: 'Book {name}',
+      askWa: 'Ask via WhatsApp',
+      benefitsTitle: 'Ingredients & Benefits',
+      aboutTitle: 'About This Treatment',
+      faqTitle: 'FAQ',
+      ctaTitle: 'Ready to try {name}?',
+      ctaSubtitle: 'Our medical team is ready to come to your location within 30–60 minutes after your schedule is confirmed.',
+      bookBtn: 'Book {name} Now',
+      askWaFirst: 'Ask via WhatsApp First',
+      waMessage: "Hi, I'd like to ask about the {name} treatment",
+    },
+    aboutPage: {
+      eyebrow: 'About Us',
+      title: 'Wellness',
+      titleEm: 'at Your Fingertips',
+      subtitle: 'Drips To You - Bali helps guests and Bali residents get IV therapy without leaving the comfort of their accommodation.',
+      bookNow: 'Book Now',
+      chatWa: 'Chat on WhatsApp',
+      missionTitle: 'Our Mission',
+      missionP1: 'We believe premium healthcare should be easily accessible. By bringing licensed medical professionals directly to your villa, hotel, Airbnb, or home, recovery becomes more convenient and comfortable.',
+      missionP2: 'Every IV therapy session is performed by licensed medical staff using sterile, medical-grade equipment. Safety, hygiene, and clear communication are our top priorities.',
+      howItWorksTitle: 'How the Service Works',
+      howItWorksSub: 'From booking to treatment completion — easy and safe.',
+      safetyTitle: 'Safety & Comfort',
+      safetyP1: 'Our service is designed to help support recovery and hydration. It is not intended for medical emergencies. If you experience an emergency, please contact local emergency services immediately.',
+      safetyP2: 'Every team member holds an active medical license. Disposable sterile equipment is used for every session.',
+      areasTitle: 'Service Areas',
+      areasSub: 'We serve the main tourist and residential areas across Bali.',
+      checkAreaBtn: 'Check Area Availability',
+      ctaTitle: 'Ready to Give It a Try?',
+      ctaSub: 'Our medical team is ready to come to your location in Bali. Book now or consult us about your needs.',
+      ctaBookBtn: 'Book Now',
+      ctaWaBtn: 'Chat on WhatsApp',
+      waMessage: "Hi, I'd like to learn more about Drips To You Bali",
+      values: [
+        { label: 'Medical', title: 'Professional Medical Staff', desc: 'Treatments are performed by licensed nurses and doctors with clinical experience.' },
+        { label: 'On-call', title: 'We Come to You', desc: 'Team arrives at your villa, hotel, Airbnb, or home in key Bali areas.' },
+        { label: 'Sterile', title: 'Single-Use Equipment', desc: 'All treatment equipment is prepared sterile and meets medical standards.' },
+        { label: 'Fast', title: '30–60 Minute Response', desc: 'Schedule confirmed via WhatsApp and team dispatched to your service area.' },
+      ],
+      steps: [
+        { num: '01', title: 'Choose Your Treatment', desc: 'Select the right treatment from our website or ask us via WhatsApp.' },
+        { num: '02', title: 'Fill the Booking Form', desc: 'Enter your details, preferred date, time, and location.' },
+        { num: '03', title: 'WhatsApp Confirmation', desc: 'Our team contacts you to confirm the schedule and details.' },
+        { num: '04', title: 'Team Arrives', desc: 'Our medical staff arrives at your location at the agreed time.' },
+        { num: '05', title: 'Treatment Complete', desc: 'Enjoy the treatment in the comfort of your space. Safe and professional.' },
+      ],
+    },
+    contactPage: {
+      eyebrow: 'Contact',
+      title: 'Need Help?',
+      subtitle: 'Our team is ready to assist with treatment consultations, service area checks, and booking confirmations.',
+      waTag: 'WhatsApp',
+      waTitle: 'Chat Directly',
+      waDesc: 'Fastest response for treatment consultations and general questions.',
+      waBtn: 'Chat via WhatsApp',
+      bookingTag: 'Booking',
+      bookingTitle: 'Website Form',
+      bookingDesc: 'Choose your treatment, date, time, and service location to book directly.',
+      bookingBtn: 'Open Booking Form',
+      hoursTitle: 'Service Hours',
+      hoursDesc: 'Every day from 08:00 – 22:00 WITA. Estimated arrival depends on the service area and team availability.',
+    },
+    faqPage: {
+      eyebrow: 'FAQ',
+      title: 'Have a Question?',
+      subtitle: 'Find answers about the booking process, treatment safety, service areas, and schedule confirmation.',
+      emptyState: 'FAQs will be available soon. Please contact us via WhatsApp for any questions.',
+      stillQ: 'Still have questions?',
+      stillQDesc: 'Our team is ready to help you via WhatsApp.',
+      askBtn: 'Ask via WhatsApp',
+      waMessage: 'Hi, I have a question about Drips To You - Bali services',
     },
   },
 };
