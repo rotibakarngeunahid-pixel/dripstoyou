@@ -3055,6 +3055,8 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   color: var(--text-muted);
   line-height: 1.8;
   font-style: italic;
+  text-align: justify;
+  hyphens: auto;
   margin-bottom: 32px;
   padding-bottom: 32px;
   border-bottom: 1px solid #f0ede8;
@@ -3086,6 +3088,8 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   color: #1a1a1a;
   line-height: 1.8;
   margin-bottom: 14px;
+  text-align: justify;
+  hyphens: auto;
 }
 .legal-para:last-child { margin-bottom: 0; }
 
@@ -3105,6 +3109,8 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   font-size: 1rem;
   color: #1a1a1a;
   line-height: 1.75;
+  text-align: justify;
+  hyphens: auto;
 }
 .legal-list li::before {
   content: '';
