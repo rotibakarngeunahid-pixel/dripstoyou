@@ -8,30 +8,27 @@ $admin = requireAuth();
 
 if (getMethod() !== 'POST') jsonError('Method not allowed', 405);
 
-// ── Config ────────────────────────────────────────────────────────────────────
-// Opsional: Tambahkan di config.php untuk override path upload:
-//   define('UPLOAD_DIR', '/home/namauser/public_html/uploads/products');
-//   define('UPLOAD_BASE_URL', 'https://dripstoyou.com');
-//
-// Jika UPLOAD_DIR tidak diset, file akan disimpan di folder uploads/products
-// relatif terhadap document root hosting (public_html).
+// ── Tentukan path dan URL upload ──────────────────────────────────────────────
+// Path selalu dihitung dari lokasi file ini (php-api/admin/upload.php)
+// sehingga tidak perlu UPLOAD_DIR di config.php.
+$phpApiDir = realpath(__DIR__ . '/..') ?: dirname(__DIR__);
+$uploadDir = $phpApiDir . '/uploads/products';
 
-// Tentukan direktori upload
-if (defined('UPLOAD_DIR')) {
-    $uploadDir = rtrim(UPLOAD_DIR, '/');
-} else {
-    $docRoot   = rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/\\');
-    $uploadDir = $docRoot . '/uploads/products';
-}
-
-// Tentukan base URL publik — auto-detect dari request jika UPLOAD_BASE_URL tidak diset
+// URL publik — gunakan UPLOAD_BASE_URL dari config jika ada, atau auto-detect
 if (defined('UPLOAD_BASE_URL')) {
     $uploadBaseUrl = rtrim(UPLOAD_BASE_URL, '/');
 } else {
     $proto         = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $uploadBaseUrl = $proto . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+    $host          = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    // Hitung path php-api relatif terhadap document root
+    $docRoot  = rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/\\');
+    $apiPath  = str_replace('\\', '/', $phpApiDir);
+    $rootPath = str_replace('\\', '/', $docRoot);
+    $relPath  = $docRoot ? ltrim(str_replace($rootPath, '', $apiPath), '/') : 'php-api';
+    $uploadBaseUrl = $proto . '://' . $host . '/' . $relPath;
 }
-$maxSize       = 5 * 1024 * 1024; // 5 MB
+
+$maxSize = 5 * 1024 * 1024; // 5 MB
 
 // ── Validasi file ─────────────────────────────────────────────────────────────
 if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
@@ -49,7 +46,7 @@ $file = $_FILES['file'];
 if ($file['size'] === 0) jsonError('File kosong', 400);
 if ($file['size'] > $maxSize) jsonError('Ukuran file maksimal 5MB', 400);
 
-// ── Deteksi tipe via magic bytes (abaikan ekstensi asli) ──────────────────────
+// ── Deteksi tipe via magic bytes ──────────────────────────────────────────────
 $handle = fopen($file['tmp_name'], 'rb');
 $bytes  = $handle ? unpack('C*', fread($handle, 12)) : [];
 if ($handle) fclose($handle);
@@ -66,18 +63,38 @@ if (count($b) >= 3 && $b[0] === 0xFF && $b[1] === 0xD8 && $b[2] === 0xFF) {
     jsonError('Format tidak didukung. Gunakan JPG, PNG, atau WEBP.', 400);
 }
 
-// ── Simpan file ───────────────────────────────────────────────────────────────
+// ── Buat folder jika belum ada ────────────────────────────────────────────────
 if (!is_dir($uploadDir)) {
-    if (!mkdir($uploadDir, 0755, true)) {
-        jsonError('Gagal membuat folder upload: ' . $uploadDir, 500);
+    $prevUmask = umask(0);
+    $created   = mkdir($uploadDir, 0755, true);
+    umask($prevUmask);
+
+    if (!$created && !is_dir($uploadDir)) {
+        $phpErr  = error_get_last();
+        $errMsg  = $phpErr['message'] ?? 'unknown error';
+        $parent  = dirname($uploadDir);
+        $writable = is_writable($parent) ? 'writable' : 'NOT writable';
+        jsonError(
+            'Gagal membuat folder upload. ' .
+            'Path: ' . $uploadDir . ' | ' .
+            'Parent (' . $parent . '): ' . $writable . ' | ' .
+            'Error: ' . $errMsg,
+            500
+        );
     }
 }
 
+if (!is_writable($uploadDir)) {
+    jsonError('Folder upload tidak bisa ditulis: ' . $uploadDir, 500);
+}
+
+// ── Simpan file ───────────────────────────────────────────────────────────────
 $filename = bin2hex(random_bytes(16)) . $ext;
 $destPath = $uploadDir . '/' . $filename;
 
 if (!move_uploaded_file($file['tmp_name'], $destPath)) {
-    jsonError('Gagal menyimpan file ke server', 500);
+    $phpErr = error_get_last();
+    jsonError('Gagal menyimpan file. Dest: ' . $destPath . ' | Error: ' . ($phpErr['message'] ?? 'unknown'), 500);
 }
 
 // ── Audit & response ──────────────────────────────────────────────────────────
