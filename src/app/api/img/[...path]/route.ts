@@ -21,11 +21,10 @@ export async function GET(
     return new NextResponse('Forbidden', { status: 403 });
   }
 
-  // Files live at the root of the PHP hosting domain (public_html/uploads/products/).
-  // Extract just the origin from NEXT_PUBLIC_API_BASE_URL (e.g. https://dripstoyou.com/php-api → https://dripstoyou.com)
-  // so that /api/img/products/:file proxies to https://dripstoyou.com/uploads/products/:file
-  const phpOrigin = new URL(phpBase).origin;
-  const imageUrl = `${phpOrigin}/uploads/${relPath}`;
+  // Files live at {API_BASE}/uploads/products/ on the PHP hosting.
+  // e.g. NEXT_PUBLIC_API_BASE_URL=https://dripstoyou.com/php-api
+  //   → fetches https://dripstoyou.com/php-api/uploads/products/:file
+  const imageUrl = `${phpBase.replace(/\/$/, '')}/uploads/${relPath}`;
 
   try {
     const res = await fetch(imageUrl, {
