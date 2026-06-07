@@ -50,27 +50,8 @@ export const POST = adminApiHandler('products:write', async (req: NextRequest, s
       return NextResponse.json({ error: msg }, { status: phpRes.status });
     }
 
-    // PHP returns the raw hosting URL (e.g. https://phpserver.com/uploads/products/xxx.webp)
-    // which may not be accessible from the browser because dripstoyou.com → Vercel, not the
-    // PHP host. Rewrite the URL to go through our /api/img proxy so the browser always
-    // loads images via Next.js, regardless of where PHP is hosted.
-    const data = phpData as { success?: boolean; data?: { publicUrl?: string; mimeType?: string } };
-    if (data?.data?.publicUrl) {
-      const rawUrl = data.data.publicUrl;
-      try {
-        const parsed = new URL(rawUrl);
-        // Extract just the filename from the PHP URL path
-        const filename = parsed.pathname.split('/').filter(Boolean).pop() ?? '';
-        if (filename) {
-          // Build the proxy URL using the current request's origin
-          const origin = new URL(req.url).origin;
-          data.data.publicUrl = `${origin}/api/img/products/${filename}`;
-        }
-      } catch {
-        // URL parsing failed — keep original
-      }
-    }
-
+    // PHP returns the direct URL (e.g. https://dripstoyou.com/php-api/uploads/products/xxx.webp).
+    // Files live on the PHP hosting which serves them at that URL directly — no proxy needed.
     return NextResponse.json(phpData);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Upload error';

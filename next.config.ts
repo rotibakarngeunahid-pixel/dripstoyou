@@ -11,14 +11,15 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  async rewrites() {
-    // Old product image URLs stored in the DB point to /uploads/products/ on this domain.
-    // dripstoyou.com (Vercel) has no /uploads/ directory — they live on the PHP host.
-    // Rewrite them transparently to the /api/img proxy so they load correctly.
+  async redirects() {
+    // Old image URLs in the DB use /uploads/products/ (root path).
+    // New uploads go to /php-api/uploads/products/ on the PHP host.
+    // Redirect old URLs so they resolve to the correct PHP host path.
     return [
       {
         source: '/uploads/products/:filename',
-        destination: '/api/img/products/:filename',
+        destination: 'https://dripstoyou.com/php-api/uploads/products/:filename',
+        permanent: false,
       },
     ];
   },
