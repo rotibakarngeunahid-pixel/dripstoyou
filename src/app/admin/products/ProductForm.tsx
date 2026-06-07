@@ -32,6 +32,72 @@ function slugify(value: string) {
     .replace(/^-|-$/g, '');
 }
 
+/* ─── Confirm Modal ─── */
+function ConfirmModal({
+  open, title, message, confirmLabel, danger, loading,
+  onConfirm, onCancel,
+}: {
+  open: boolean; title: string; message: string;
+  confirmLabel: string; danger?: boolean; loading?: boolean;
+  onConfirm: () => void; onCancel: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 1000,
+      background: 'rgba(0,0,0,0.45)', display: 'flex',
+      alignItems: 'center', justifyContent: 'center', padding: 20,
+    }}>
+      <div style={{
+        background: 'white', borderRadius: 20, padding: 32,
+        maxWidth: 420, width: '100%',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+      }}>
+        <h3 style={{ fontFamily: 'var(--font-playfair,Georgia,serif)', color: 'var(--teal)', fontSize: 20, marginBottom: 10 }}>
+          {title}
+        </h3>
+        <p style={{ color: '#555', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>{message}</p>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button
+            className="button button-secondary"
+            style={{ minHeight: 40, padding: '8px 18px', fontSize: 13 }}
+            onClick={onCancel} type="button" disabled={loading}
+          >
+            Batal
+          </button>
+          <button
+            className="button"
+            style={{
+              minHeight: 40, padding: '8px 18px', fontSize: 13,
+              background: danger ? '#dc2626' : 'var(--teal)',
+              color: 'white', border: 'none',
+              opacity: loading ? 0.7 : 1,
+            }}
+            onClick={onConfirm} type="button" disabled={loading}
+          >
+            {loading ? 'Menghapus...' : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Toast ─── */
+function Toast({ msg, type }: { msg: string; type: 'success' | 'error' }) {
+  return (
+    <div style={{
+      position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 2000, background: type === 'success' ? 'var(--teal)' : '#dc2626',
+      color: 'white', padding: '12px 24px', borderRadius: 12,
+      fontSize: 14, fontWeight: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+      whiteSpace: 'nowrap', pointerEvents: 'none',
+    }}>
+      {msg}
+    </div>
+  );
+}
+
 /* ─── Image upload component ─────────────────── */
 function ImageUpload({
   currentUrl,
@@ -173,10 +239,22 @@ export function ProductForm({ product }: { product?: Product }) {
   const [homepageOrder, setHomepageOrder] = useState(String(product?.homepage_order ?? '0'));
   const [benefits,      setBenefits]      = useState<string[]>(product?.benefits?.map((b) => b.benefit_text) ?? ['']);
   const [saving,        setSaving]        = useState(false);
+  const [deleting,      setDeleting]      = useState(false);
   const [error,         setError]         = useState('');
+  const [toast,         setToast]         = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [confirm,       setConfirm]       = useState<{
+    open: boolean; title: string; message: string;
+    confirmLabel: string; danger?: boolean; loading?: boolean;
+    onConfirm: () => void;
+  }>({ open: false, title: '', message: '', confirmLabel: '', onConfirm: () => {} });
 
   /* slug is generated server-side on create; kept on edit */
   const slugValue = isEdit ? (product?.slug ?? '') : slugify(name);
+
+  function showToast(msg: string, type: 'success' | 'error' = 'success') {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -205,150 +283,199 @@ export function ProductForm({ product }: { product?: Product }) {
     try {
       const res  = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = (await res.json()) as ApiResponse;
-      if (!res.ok) { setError(data.error ?? data.message ?? 'Gagal menyimpan'); return; }
-      router.push('/admin/products');
-      router.refresh();
+      if (!res.ok) {
+        setError(data.error ?? data.message ?? 'Gagal menyimpan. Coba lagi.');
+        return;
+      }
+      showToast(isEdit ? 'Produk berhasil diperbarui.' : 'Produk berhasil dibuat.');
+      setTimeout(() => {
+        router.push('/admin/products');
+        router.refresh();
+      }, 800);
     } catch {
-      setError('Network error');
+      setError('Koneksi gagal. Periksa jaringan dan coba lagi.');
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleDelete() {
-    if (!product?.id || !confirm(`Hapus produk "${name}"?`)) return;
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/admin/products/${product.id}`, { method: 'DELETE' });
-      if (!res.ok) { setError('Gagal menghapus'); return; }
-      router.push('/admin/products');
-      router.refresh();
-    } catch {
-      setError('Network error');
-    } finally {
-      setSaving(false);
-    }
+  function askDelete() {
+    if (!product?.id) return;
+    setConfirm({
+      open: true,
+      danger: true,
+      title: 'Hapus Produk',
+      message: `Produk "${name}" akan dihapus secara permanen. Semua data terkait akan hilang. Tindakan ini tidak dapat dibatalkan.`,
+      confirmLabel: 'Hapus Produk',
+      onConfirm: async () => {
+        setConfirm(c => ({ ...c, loading: true }));
+        setDeleting(true);
+        try {
+          const res = await fetch(`/api/admin/products/${product!.id}`, { method: 'DELETE' });
+          setConfirm(c => ({ ...c, open: false, loading: false }));
+          if (!res.ok) {
+            setError('Gagal menghapus produk. Coba lagi.');
+            showToast('Gagal menghapus produk.', 'error');
+            return;
+          }
+          showToast('Produk berhasil dihapus.');
+          setTimeout(() => {
+            router.push('/admin/products');
+            router.refresh();
+          }, 800);
+        } catch {
+          setConfirm(c => ({ ...c, open: false, loading: false }));
+          setError('Koneksi gagal. Coba lagi.');
+          showToast('Koneksi gagal. Coba lagi.', 'error');
+        } finally {
+          setDeleting(false);
+        }
+      },
+    });
   }
 
   return (
-    <form className="admin-form" onSubmit={handleSubmit}>
-      {/* Name */}
-      <label className="admin-field">
-        <span className="admin-field-label">Nama Produk *</span>
-        <input
-          className="control"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-      </label>
+    <>
+      {toast && <Toast msg={toast.msg} type={toast.type} />}
+      <ConfirmModal
+        open={confirm.open}
+        title={confirm.title}
+        message={confirm.message}
+        confirmLabel={confirm.confirmLabel}
+        danger={confirm.danger}
+        loading={confirm.loading}
+        onConfirm={confirm.onConfirm}
+        onCancel={() => setConfirm(c => ({ ...c, open: false }))}
+      />
 
-      {/* Descriptions */}
-      <label className="admin-field">
-        <span className="admin-field-label">Deskripsi Singkat</span>
-        <input className="control" value={shortDesc} onChange={(e) => setShortDesc(e.target.value)} maxLength={500} />
-      </label>
-
-      <label className="admin-field">
-        <span className="admin-field-label">Deskripsi Lengkap</span>
-        <textarea className="control" value={fullDesc} onChange={(e) => setFullDesc(e.target.value)} rows={5} />
-      </label>
-
-      {/* Price / Duration */}
-      <div className="admin-form-grid three">
+      <form className="admin-form" onSubmit={handleSubmit}>
+        {/* Name */}
         <label className="admin-field">
-          <span className="admin-field-label">Harga (IDR) *</span>
-          <input className="control" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required min="0" />
+          <span className="admin-field-label">Nama Produk *</span>
+          <input
+            className="control"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
         </label>
+
+        {/* Descriptions */}
         <label className="admin-field">
-          <span className="admin-field-label">Label Harga</span>
-          <input className="control" value={priceLabel} onChange={(e) => setPriceLabel(e.target.value)} placeholder="IDR 750.000" />
+          <span className="admin-field-label">Deskripsi Singkat</span>
+          <input className="control" value={shortDesc} onChange={(e) => setShortDesc(e.target.value)} maxLength={500} />
         </label>
+
         <label className="admin-field">
-          <span className="admin-field-label">Durasi (menit)</span>
-          <input className="control" type="number" value={duration} onChange={(e) => setDuration(e.target.value)} min="1" />
+          <span className="admin-field-label">Deskripsi Lengkap</span>
+          <textarea className="control" value={fullDesc} onChange={(e) => setFullDesc(e.target.value)} rows={5} />
         </label>
-      </div>
 
-      {/* Image upload */}
-      <div className="admin-field">
-        <span className="admin-field-label">Foto Produk</span>
-        <ImageUpload
-          currentUrl={imageUrl}
-          productName={name}
-          onUploaded={(url) => setImageUrl(url)}
-        />
-      </div>
+        {/* Price / Duration */}
+        <div className="admin-form-grid three">
+          <label className="admin-field">
+            <span className="admin-field-label">Harga (IDR) *</span>
+            <input className="control" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required min="0" />
+          </label>
+          <label className="admin-field">
+            <span className="admin-field-label">Label Harga</span>
+            <input className="control" value={priceLabel} onChange={(e) => setPriceLabel(e.target.value)} placeholder="IDR 750.000" />
+          </label>
+          <label className="admin-field">
+            <span className="admin-field-label">Durasi (menit)</span>
+            <input className="control" type="number" value={duration} onChange={(e) => setDuration(e.target.value)} min="1" />
+          </label>
+        </div>
 
-      {/* Badge label */}
-      <label className="admin-field">
-        <span className="admin-field-label">Label Badge</span>
-        <input className="control" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Popular, New…" maxLength={50} />
-      </label>
+        {/* Image upload */}
+        <div className="admin-field">
+          <span className="admin-field-label">Foto Produk</span>
+          <ImageUpload
+            currentUrl={imageUrl}
+            productName={name}
+            onUploaded={(url) => setImageUrl(url)}
+          />
+        </div>
 
-      {/* Toggles */}
-      <div className="admin-form-grid three">
-        <label className="admin-field" style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} style={{ width: 16, height: 16 }} />
-          <span className="admin-field-label">Aktif</span>
-        </label>
-        <label className="admin-field" style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <input type="checkbox" checked={showOnHomepage} onChange={(e) => setShowOnHomepage(e.target.checked)} style={{ width: 16, height: 16 }} />
-          <span className="admin-field-label">Tampil di Homepage</span>
-        </label>
+        {/* Badge label */}
         <label className="admin-field">
-          <span className="admin-field-label">Urutan Homepage</span>
-          <input className="control" type="number" value={homepageOrder} onChange={(e) => setHomepageOrder(e.target.value)} min="0" />
+          <span className="admin-field-label">Label Badge</span>
+          <input className="control" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Popular, New…" maxLength={50} />
         </label>
-      </div>
 
-      {/* Benefits */}
-      <div className="admin-field">
-        <span className="admin-field-label">Benefit / Kandungan</span>
-        {benefits.map((benefit, index) => (
-          <div key={index} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 8, marginBottom: 8 }}>
-            <input
-              className="control"
-              value={benefit}
-              onChange={(e) => setBenefits((prev) => prev.map((v, i) => (i === index ? e.target.value : v)))}
-              placeholder={`Benefit ${index + 1}`}
-            />
-            <button
-              className="button button-secondary"
-              type="button"
-              onClick={() => setBenefits((prev) => prev.filter((_, i) => i !== index))}
-              aria-label={`Hapus benefit ${index + 1}`}
-            >
-              Hapus
-            </button>
-          </div>
-        ))}
-        <button className="button button-secondary" type="button" onClick={() => setBenefits((prev) => [...prev, ''])}>
-          Tambah Benefit
-        </button>
-      </div>
+        {/* Toggles */}
+        <div className="admin-form-grid three">
+          <label className="admin-field" style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} style={{ width: 16, height: 16 }} />
+            <span className="admin-field-label">Aktif</span>
+          </label>
+          <label className="admin-field" style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <input type="checkbox" checked={showOnHomepage} onChange={(e) => setShowOnHomepage(e.target.checked)} style={{ width: 16, height: 16 }} />
+            <span className="admin-field-label">Tampil di Homepage</span>
+          </label>
+          <label className="admin-field">
+            <span className="admin-field-label">Urutan Homepage</span>
+            <input className="control" type="number" value={homepageOrder} onChange={(e) => setHomepageOrder(e.target.value)} min="0" />
+          </label>
+        </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
+        {/* Benefits */}
+        <div className="admin-field">
+          <span className="admin-field-label">Benefit / Kandungan</span>
+          {benefits.map((benefit, index) => (
+            <div key={index} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 8, marginBottom: 8 }}>
+              <input
+                className="control"
+                value={benefit}
+                onChange={(e) => setBenefits((prev) => prev.map((v, i) => (i === index ? e.target.value : v)))}
+                placeholder={`Benefit ${index + 1}`}
+              />
+              <button
+                className="button button-secondary"
+                type="button"
+                onClick={() => setBenefits((prev) => prev.filter((_, i) => i !== index))}
+                aria-label={`Hapus benefit ${index + 1}`}
+              >
+                Hapus
+              </button>
+            </div>
+          ))}
+          <button className="button button-secondary" type="button" onClick={() => setBenefits((prev) => [...prev, ''])}>
+            Tambah Benefit
+          </button>
+        </div>
 
-      <div className="admin-form-actions">
-        <button className={`button button-primary${saving ? ' loading' : ''}`} type="submit" disabled={saving}>
-          {saving ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Buat Produk'}
-        </button>
-        <button className="button button-secondary" type="button" onClick={() => router.back()}>
-          Batal
-        </button>
-        {isEdit && (
+        {error && <div className="alert alert-error">{error}</div>}
+
+        <div className="admin-form-actions">
+          <button
+            className={`button button-primary${saving ? ' loading' : ''}`}
+            type="submit"
+            disabled={saving || deleting}
+          >
+            {saving ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Buat Produk'}
+          </button>
           <button
             className="button button-secondary"
             type="button"
-            onClick={handleDelete}
-            disabled={saving}
-            style={{ color: '#c0392b', borderColor: 'rgba(192,57,43,.35)', marginLeft: 'auto' }}
+            onClick={() => router.back()}
+            disabled={saving || deleting}
           >
-            Hapus Produk
+            Batal
           </button>
-        )}
-      </div>
-    </form>
+          {isEdit && (
+            <button
+              className="button button-secondary"
+              type="button"
+              onClick={askDelete}
+              disabled={saving || deleting}
+              style={{ color: '#c0392b', borderColor: 'rgba(192,57,43,.35)', marginLeft: 'auto' }}
+            >
+              {deleting ? 'Menghapus…' : 'Hapus Produk'}
+            </button>
+          )}
+        </div>
+      </form>
+    </>
   );
 }

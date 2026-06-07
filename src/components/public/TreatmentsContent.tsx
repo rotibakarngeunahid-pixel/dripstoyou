@@ -69,6 +69,7 @@ export default function TreatmentsContent({ products }: Props) {
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
                     className="card-photo"
+                    unoptimized
                   />
                 )}
                 {product.label && (

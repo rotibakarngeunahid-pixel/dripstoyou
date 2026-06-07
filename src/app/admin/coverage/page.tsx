@@ -336,7 +336,7 @@ export default function AdminCoveragePage() {
       const json   = (await res.json()) as ApiResponse<Area>;
       if (!res.ok) { setFormErr(json.message ?? json.error ?? 'Gagal menyimpan.'); return; }
       showToast(editId ? 'Area berhasil diperbarui.' : 'Area berhasil ditambahkan.');
-      setShowForm(false); setEditId(null); void load();
+      setShowForm(false); setEditId(null); await load();
     } finally {
       setSaving(false);
     }
@@ -351,7 +351,7 @@ export default function AdminCoveragePage() {
       });
       if (res.ok) {
         showToast(area.isActive ? 'Area dinonaktifkan.' : 'Area diaktifkan.');
-        void load();
+        setAreas(prev => prev.map(a => a.id === area.id ? { ...a, isActive: !area.isActive } : a));
       } else {
         showToast('Gagal mengubah status area.', 'error');
       }
@@ -390,8 +390,10 @@ export default function AdminCoveragePage() {
         setDeleting(id);
         try {
           const res = await fetch(`/api/admin/coverage/${id}?permanent=1`, { method: 'DELETE' });
-          if (res.ok) { showToast('Area berhasil dihapus.'); void load(); }
-          else { showToast('Gagal menghapus area.', 'error'); }
+          if (res.ok) {
+            showToast('Area berhasil dihapus.');
+            setAreas(prev => prev.filter(a => a.id !== id));
+          } else { showToast('Gagal menghapus area.', 'error'); }
         } finally {
           setDeleting(null);
         }

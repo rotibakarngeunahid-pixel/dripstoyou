@@ -100,6 +100,7 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
               fill
               sizes="(max-width: 900px) 100vw, 820px"
               className="card-photo"
+              unoptimized
             />
           </div>
         )}

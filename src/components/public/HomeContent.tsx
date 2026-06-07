@@ -184,6 +184,7 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
                     alt={`${p.name} IV Therapy Bali`}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
+                    unoptimized
                   />
                 )}
                 {p.label && (
