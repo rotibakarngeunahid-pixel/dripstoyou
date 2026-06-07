@@ -36,7 +36,7 @@ interface Props {
 const IK = 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image';
 const BRAND = {
   logo:   `${IK}/drips-to-you-bali-icon.webp`,
-  photo1: '/img/hero-mobile-iv-bali-branded.webp',
+  photo1: '/img/hero-new.jpg',
   photo2: `${IK}/photo_6134052561527443396_y.webp`, // medical team / preparation
   photo3: `${IK}/photo_6131724036417982600_y.webp`, // IV drip visual
   photo4: `${IK}/photo_6134052561527443397_y.webp`, // villa/hotel service
@@ -138,11 +138,11 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
       <div className="hero-photo-wrap landing-hero-media" aria-hidden="true">
         <Image
           src={BRAND.photo1}
-          alt=""
+          alt="Hero Mobile IV Bali"
           fill
           priority
-          quality={90}
-          sizes="(max-width: 640px) 300vw, 100vw"
+          quality={100}
+          sizes="100vw"
           className="hero-photo landing-hero-photo"
         />
         <div className="hero-photo-overlay landing-hero-overlay" />

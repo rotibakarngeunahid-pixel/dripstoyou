@@ -241,7 +241,7 @@ a { text-decoration: none; }
 /* Photo itself — no blur/filter, top-anchored so head is visible */
 .hero-photo {
   object-fit: cover;
-  object-position: 70% top;
+  object-position: center top;
 }
 
 /* Mobile overlay: strong left+top fade for legibility */
