@@ -24,9 +24,9 @@ function encodeFaqText(string $en, string $id): string {
     return json_encode(['en' => $en, 'id' => $id], JSON_UNESCAPED_UNICODE);
 }
 
-function translateToIndonesian(string $text): string {
+function translateText(string $text, string $from, string $to): string {
     if (empty(trim($text))) return '';
-    $url = 'https://api.mymemory.translated.net/get?q=' . urlencode($text) . '&langpair=en|id';
+    $url = 'https://api.mymemory.translated.net/get?q=' . urlencode($text) . '&langpair=' . $from . '|' . $to;
     $ch = curl_init();
     curl_setopt_array($ch, [
         CURLOPT_URL => $url,
@@ -45,6 +45,14 @@ function translateToIndonesian(string $text): string {
     if (!is_string($translated) || empty(trim($translated))) return '';
     if ((int)($data['responseStatus'] ?? 0) !== 200) return '';
     return trim($translated);
+}
+
+function translateToIndonesian(string $text): string {
+    return translateText($text, 'en', 'id');
+}
+
+function translateToEnglish(string $text): string {
+    return translateText($text, 'id', 'en');
 }
 
 function formatFaq(array $faq): array {
@@ -77,14 +85,25 @@ if ($method === 'GET') {
 
 if ($method === 'POST') {
     $body = getBodyJson();
-    $questionEn = str_clean($body['questionEn'] ?? '', 500);
-    $answerEn = str_clean($body['answerEn'] ?? '', 10000);
-    if ($questionEn === '' || $answerEn === '') {
-        jsonError('Pertanyaan dan jawaban bahasa Inggris wajib diisi', 422);
-    }
+    $sourceLang = in_array($body['sourceLang'] ?? '', ['en', 'id'], true) ? $body['sourceLang'] : 'en';
 
-    $questionId = translateToIndonesian($questionEn);
-    $answerId = translateToIndonesian($answerEn);
+    if ($sourceLang === 'id') {
+        $questionId = str_clean($body['questionId'] ?? ($body['question'] ?? ''), 500);
+        $answerId   = str_clean($body['answerId'] ?? ($body['answer'] ?? ''), 10000);
+        if ($questionId === '' || $answerId === '') {
+            jsonError('Pertanyaan dan jawaban dalam Bahasa Indonesia wajib diisi', 422);
+        }
+        $questionEn = translateToEnglish($questionId);
+        $answerEn   = translateToEnglish($answerId);
+    } else {
+        $questionEn = str_clean($body['questionEn'] ?? ($body['question'] ?? ''), 500);
+        $answerEn   = str_clean($body['answerEn'] ?? ($body['answer'] ?? ''), 10000);
+        if ($questionEn === '' || $answerEn === '') {
+            jsonError('Pertanyaan dan jawaban bahasa Inggris wajib diisi', 422);
+        }
+        $questionId = translateToIndonesian($questionEn);
+        $answerId   = translateToIndonesian($answerEn);
+    }
 
     $newId = generateId();
     $db->prepare(
@@ -108,30 +127,50 @@ if ($method === 'PUT' || $method === 'PATCH') {
     $updates = [];
     $params = [];
 
-    $hasEnglishText =
-        array_key_exists('questionEn', $body) ||
-        array_key_exists('answerEn', $body);
-    if ($hasEnglishText) {
+    $hasTextUpdate =
+        array_key_exists('questionEn', $body) || array_key_exists('answerEn', $body) ||
+        array_key_exists('questionId', $body) || array_key_exists('answerId', $body) ||
+        array_key_exists('question', $body)   || array_key_exists('answer', $body);
+
+    if ($hasTextUpdate) {
         $current = findFaq($db, $id);
         $currentQuestion = decodeFaqText($current['question']);
-        $currentAnswer = decodeFaqText($current['answer']);
-        $questionEn = str_clean($body['questionEn'] ?? $currentQuestion['en'], 500);
-        $answerEn = str_clean($body['answerEn'] ?? $currentAnswer['en'], 10000);
-        if ($questionEn === '' || $answerEn === '') {
-            jsonError('Pertanyaan dan jawaban bahasa Inggris wajib diisi', 422);
-        }
-        $enChanged = ($questionEn !== $currentQuestion['en'] || $answerEn !== $currentAnswer['en']);
-        if ($enChanged) {
-            $questionId = translateToIndonesian($questionEn);
-            $answerId = translateToIndonesian($answerEn);
+        $currentAnswer   = decodeFaqText($current['answer']);
+        $sourceLang = in_array($body['sourceLang'] ?? '', ['en', 'id'], true) ? $body['sourceLang'] : 'en';
+
+        if ($sourceLang === 'id') {
+            $questionId = str_clean($body['questionId'] ?? ($body['question'] ?? $currentQuestion['id']), 500);
+            $answerId   = str_clean($body['answerId']   ?? ($body['answer']   ?? $currentAnswer['id']),   10000);
+            if ($questionId === '' || $answerId === '') {
+                jsonError('Pertanyaan dan jawaban dalam Bahasa Indonesia wajib diisi', 422);
+            }
+            $idChanged = ($questionId !== $currentQuestion['id'] || $answerId !== $currentAnswer['id']);
+            if ($idChanged) {
+                $questionEn = translateToEnglish($questionId);
+                $answerEn   = translateToEnglish($answerId);
+            } else {
+                $questionEn = $currentQuestion['en'];
+                $answerEn   = $currentAnswer['en'];
+            }
         } else {
-            $questionId = $currentQuestion['id'];
-            $answerId = $currentAnswer['id'];
+            $questionEn = str_clean($body['questionEn'] ?? ($body['question'] ?? $currentQuestion['en']), 500);
+            $answerEn   = str_clean($body['answerEn']   ?? ($body['answer']   ?? $currentAnswer['en']),   10000);
+            if ($questionEn === '' || $answerEn === '') {
+                jsonError('Pertanyaan dan jawaban bahasa Inggris wajib diisi', 422);
+            }
+            $enChanged = ($questionEn !== $currentQuestion['en'] || $answerEn !== $currentAnswer['en']);
+            if ($enChanged) {
+                $questionId = translateToIndonesian($questionEn);
+                $answerId   = translateToIndonesian($answerEn);
+            } else {
+                $questionId = $currentQuestion['id'];
+                $answerId   = $currentAnswer['id'];
+            }
         }
         $updates[] = 'question = ?';
-        $params[] = encodeFaqText($questionEn, $questionId);
+        $params[]  = encodeFaqText($questionEn, $questionId);
         $updates[] = 'answer = ?';
-        $params[] = encodeFaqText($answerEn, $answerId);
+        $params[]  = encodeFaqText($answerEn, $answerId);
     }
     if (array_key_exists('sortOrder', $body)) {
         $updates[] = 'sort_order = ?';

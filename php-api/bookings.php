@@ -66,20 +66,48 @@ if (!$bookingCode) jsonError('Gagal membuat kode booking, silakan coba lagi', 50
 $bookingId = generateId();
 $now       = date('Y-m-d H:i:s');
 
-$stmt = $db->prepare(
-    'INSERT INTO bookings
-     (id, booking_code, product_id, customer_name, customer_phone_encrypted,
-      customer_phone_last4, booking_date, booking_time, people_count,
-      location_type, service_area_id, address_encrypted, notes_encrypted,
-      status, source, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "BARU", "WEBSITE", ?, ?)'
-);
-$stmt->execute([
-    $bookingId, $bookingCode, $productId, $customerName,
-    $phoneEncrypted, $phoneLast4, $bookingDate, $bookingTime,
-    $peopleCount, $locationType, $serviceAreaId,
-    $addressEncrypted, $notesEncrypted, $now, $now,
-]);
+// ── Concurrency check: lock slot to prevent double booking ─────────────────
+$db->beginTransaction();
+try {
+    // Lock any existing active bookings at this exact slot (pessimistic lock)
+    $conflict = $db->prepare(
+        "SELECT id FROM bookings
+         WHERE booking_date = ?
+           AND booking_time = ?
+           AND service_area_id = ?
+           AND status NOT IN ('DIBATALKAN')
+         LIMIT 1
+         FOR UPDATE"
+    );
+    $conflict->execute([$bookingDate, $bookingTime, $serviceAreaId]);
+    if ($conflict->fetch()) {
+        $db->rollBack();
+        jsonError(
+            'Maaf, slot waktu ini baru saja dipesan oleh orang lain. Silakan pilih waktu yang berbeda.',
+            409
+        );
+    }
+
+    $stmt = $db->prepare(
+        'INSERT INTO bookings
+         (id, booking_code, product_id, customer_name, customer_phone_encrypted,
+          customer_phone_last4, booking_date, booking_time, people_count,
+          location_type, service_area_id, address_encrypted, notes_encrypted,
+          status, source, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "BARU", "WEBSITE", ?, ?)'
+    );
+    $stmt->execute([
+        $bookingId, $bookingCode, $productId, $customerName,
+        $phoneEncrypted, $phoneLast4, $bookingDate, $bookingTime,
+        $peopleCount, $locationType, $serviceAreaId,
+        $addressEncrypted, $notesEncrypted, $now, $now,
+    ]);
+
+    $db->commit();
+} catch (Exception $e) {
+    if ($db->inTransaction()) $db->rollBack();
+    jsonError('Gagal membuat booking, coba lagi. Jika masalah berlanjut, hubungi kami via WhatsApp.', 500);
+}
 
 auditLog('CREATE_BOOKING', null, 'Booking', $bookingCode, [
     'product'   => $product['name'],

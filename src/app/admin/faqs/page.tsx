@@ -13,8 +13,9 @@ type Faq = {
 };
 
 type FaqForm = {
-  questionEn: string;
-  answerEn: string;
+  question: string;
+  answer: string;
+  sourceLang: 'en' | 'id';
   sortOrder: number;
   isActive: boolean;
 };
@@ -26,8 +27,9 @@ type ApiResponse<T> = {
 };
 
 const EMPTY: FaqForm = {
-  questionEn: '',
-  answerEn: '',
+  question: '',
+  answer: '',
+  sourceLang: 'en',
   sortOrder: 0,
   isActive: true,
 };
@@ -302,9 +304,11 @@ export default function AdminFaqsPage() {
   }
 
   function openEdit(faq: Faq) {
+    const preferId = !!(faq.questionId && faq.answerId);
     setForm({
-      questionEn: faq.questionEn,
-      answerEn: faq.answerEn,
+      question: preferId ? faq.questionId : faq.questionEn,
+      answer: preferId ? faq.answerId : faq.answerEn,
+      sourceLang: preferId ? 'id' : 'en',
       sortOrder: faq.sortOrder,
       isActive: faq.isActive,
     });
@@ -318,17 +322,25 @@ export default function AdminFaqsPage() {
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
-    if (!form.questionEn.trim() || !form.answerEn.trim()) {
-      setFormErr('Pertanyaan dan jawaban dalam bahasa Inggris wajib diisi.');
+    if (!form.question.trim() || !form.answer.trim()) {
+      setFormErr(
+        form.sourceLang === 'id'
+          ? 'Pertanyaan dan jawaban dalam Bahasa Indonesia wajib diisi.'
+          : 'Pertanyaan dan jawaban dalam bahasa Inggris wajib diisi.',
+      );
       return;
     }
     setSaving(true);
     setFormErr('');
+    const payload =
+      form.sourceLang === 'id'
+        ? { questionId: form.question, answerId: form.answer, sourceLang: 'id', sortOrder: form.sortOrder, isActive: form.isActive }
+        : { questionEn: form.question, answerEn: form.answer, sourceLang: 'en', sortOrder: form.sortOrder, isActive: form.isActive };
     try {
       const res = await fetch(editId ? `/api/admin/faqs/${editId}` : '/api/admin/faqs', {
         method: editId ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const json = (await res.json()) as ApiResponse<Faq>;
       if (!res.ok) {
@@ -424,7 +436,7 @@ export default function AdminFaqsPage() {
       <div className="admin-page-head">
         <div>
           <h1 className="admin-title">Kelola FAQ</h1>
-          <p className="admin-subtitle">Tulis FAQ dalam bahasa Inggris — terjemahan Indonesia dibuat otomatis.</p>
+          <p className="admin-subtitle">Tulis FAQ dalam bahasa Indonesia atau Inggris — sistem menerjemahkan otomatis.</p>
         </div>
         <button className="button button-primary" type="button" onClick={openCreate}>
           + Tambah FAQ
@@ -466,17 +478,56 @@ export default function AdminFaqsPage() {
           <h2 className="form-card-title">{editId ? 'Edit FAQ' : 'Tambah FAQ Baru'}</h2>
           {formErr && <div className="alert alert-error" style={{ marginBottom: 12 }}>{formErr}</div>}
           <form onSubmit={handleSave}>
+            {/* Language selector */}
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              {(['id', 'en'] as const).map(lang => (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => setForm(v => ({ ...v, sourceLang: lang, question: '', answer: '' }))}
+                  style={{
+                    padding: '7px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    border: `1.5px solid ${form.sourceLang === lang ? 'var(--teal)' : 'rgba(0,0,0,0.12)'}`,
+                    background: form.sourceLang === lang ? 'var(--pale-aqua)' : 'white',
+                    color: form.sourceLang === lang ? 'var(--teal)' : '#888',
+                  }}
+                >
+                  {lang === 'id' ? '🇮🇩 Indonesia' : '🇬🇧 English'}
+                </button>
+              ))}
+            </div>
             <p style={{ fontSize: 13, color: '#777', marginBottom: 16, lineHeight: 1.6 }}>
-              Tulis dalam bahasa Inggris — terjemahan Indonesia dibuat otomatis saat disimpan.
+              {form.sourceLang === 'id'
+                ? 'Tulis dalam Bahasa Indonesia — terjemahan Inggris dibuat otomatis saat disimpan.'
+                : 'Tulis dalam bahasa Inggris — terjemahan Indonesia dibuat otomatis saat disimpan.'}
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <label className="admin-field">
-                <span className="admin-field-label">Question (English) *</span>
-                <input className="control" value={form.questionEn} onChange={(e) => setForm(v => ({ ...v, questionEn: e.target.value }))} placeholder="How long does IV therapy take?" required />
+                <span className="admin-field-label">
+                  {form.sourceLang === 'id' ? 'Pertanyaan (Indonesia) *' : 'Question (English) *'}
+                </span>
+                <input
+                  className="control"
+                  value={form.question}
+                  onChange={(e) => setForm(v => ({ ...v, question: e.target.value }))}
+                  placeholder={form.sourceLang === 'id' ? 'Berapa lama sesi IV therapy?' : 'How long does IV therapy take?'}
+                  required
+                />
               </label>
               <label className="admin-field">
-                <span className="admin-field-label">Answer (English) *</span>
-                <textarea className="control" rows={4} value={form.answerEn} onChange={(e) => setForm(v => ({ ...v, answerEn: e.target.value }))} placeholder="IV therapy usually takes 30–60 minutes depending on the treatment..." required />
+                <span className="admin-field-label">
+                  {form.sourceLang === 'id' ? 'Jawaban (Indonesia) *' : 'Answer (English) *'}
+                </span>
+                <textarea
+                  className="control"
+                  rows={4}
+                  value={form.answer}
+                  onChange={(e) => setForm(v => ({ ...v, answer: e.target.value }))}
+                  placeholder={form.sourceLang === 'id'
+                    ? 'Sesi IV therapy biasanya memakan waktu 30–60 menit tergantung treatment...'
+                    : 'IV therapy usually takes 30–60 minutes depending on the treatment...'}
+                  required
+                />
               </label>
               <label className="admin-field">
                 <span className="admin-field-label">Urutan Tampil</span>
@@ -496,7 +547,7 @@ export default function AdminFaqsPage() {
                 className={`button button-primary${saving ? ' loading' : ''}`}
                 type="submit" disabled={saving}
               >
-                {saving ? 'Menyimpan & Menerjemahkan...' : editId ? 'Simpan Perubahan' : 'Tambah FAQ'}
+                {saving ? 'Menyimpan & Menerjemahkan…' : editId ? 'Simpan Perubahan' : 'Tambah FAQ'}
               </button>
               <button className="button button-secondary" type="button" onClick={cancelForm} disabled={saving}>
                 Batal

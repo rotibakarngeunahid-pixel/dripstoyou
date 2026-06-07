@@ -1,6 +1,7 @@
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { getSession } from '@/lib/session';
 
 type BookingStatus = 'BARU' | 'KONFIRMASI' | 'DIPROSES' | 'SELESAI' | 'DIBATALKAN';
 
@@ -24,6 +25,7 @@ interface Booking {
   id: string;
   booking_code: string;
   customer_name: string;
+  customer_phone: string;
   customer_phone_last4: string;
   booking_date: string;
   booking_time: string;
@@ -36,21 +38,6 @@ interface Booking {
   service_area_name: string | null;
 }
 
-async function getBookings(token: string): Promise<Booking[]> {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bookings.php?limit=100`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: 'no-store',
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!res.ok) return [];
-    const json = await res.json();
-    return Array.isArray(json.data) ? json.data : [];
-  } catch {
-    return [];
-  }
-}
-
 function formatDate(value: string, withYear = true) {
   return new Date(value).toLocaleDateString('id-ID', {
     day: '2-digit',
@@ -59,23 +46,101 @@ function formatDate(value: string, withYear = true) {
   });
 }
 
-export default async function BookingsPage() {
-  const session = await getSession();
-  if (!session.adminId) redirect('/admin/login');
+export default function BookingsPage() {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [secondsAgo, setSecondsAgo] = useState(0);
 
-  const bookings = await getBookings(session.adminToken);
+  const fetchBookings = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/bookings', { cache: 'no-store' });
+      if (res.status === 401) {
+        window.location.href = '/admin/login';
+        return;
+      }
+      const json = await res.json();
+      if (res.ok && Array.isArray(json.data)) {
+        setBookings(json.data);
+        setError('');
+        setLastUpdated(new Date());
+        setSecondsAgo(0);
+      } else {
+        setError(json.error ?? 'Gagal memuat booking.');
+      }
+    } catch {
+      setError('Koneksi ke backend gagal.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial fetch + 10-second polling
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchBookings();
+    const poll = setInterval(() => { void fetchBookings(); }, 10000);
+    return () => clearInterval(poll);
+  }, [fetchBookings]);
+
+  // "Last updated X seconds ago" counter
+  useEffect(() => {
+    if (!lastUpdated) return;
+    const tick = setInterval(() => {
+      setSecondsAgo(Math.round((Date.now() - lastUpdated.getTime()) / 1000));
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [lastUpdated]);
+
+  if (loading) {
+    return (
+      <div className="admin-page wide">
+        <div className="admin-page-head">
+          <div>
+            <h1 className="admin-title">Bookings</h1>
+            <p className="admin-subtitle">Memuat…</p>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="skeleton" style={{ height: 56, borderRadius: 12 }} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-page wide">
       <div className="admin-page-head">
         <div>
           <h1 className="admin-title">Bookings</h1>
-          <p className="admin-subtitle">{bookings.length} booking ditampilkan</p>
+          <p className="admin-subtitle">
+            {bookings.length} booking ditampilkan
+            {lastUpdated && (
+              <span style={{ marginLeft: 12, fontSize: 11, color: '#aaa' }}>
+                · diperbarui {secondsAgo}d lalu
+              </span>
+            )}
+          </p>
         </div>
-        <Link href="/api/admin/bookings/export" className="button button-secondary">
-          Export CSV
-        </Link>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={() => { void fetchBookings(); }}
+            style={{ fontSize: 13 }}
+          >
+            ↻ Refresh
+          </button>
+          <Link href="/api/admin/bookings/export" className="button button-secondary">
+            Export CSV
+          </Link>
+        </div>
       </div>
+
+      {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
 
       <section className="table-shell">
         <div className="table-wrap">
@@ -95,19 +160,21 @@ export default async function BookingsPage() {
                     <td className="mono" style={{ color: 'var(--teal)', fontWeight: 800 }}>
                       {booking.booking_code}
                     </td>
-                    <td>{booking.customer_name}</td>
-                    <td className="mono muted-small">...{booking.customer_phone_last4}</td>
-                    <td>{booking.product_name}</td>
-                    <td className="muted-small">{formatDate(booking.booking_date)}</td>
-                    <td className="muted-small">{booking.booking_time}</td>
-                    <td className="muted-small">{booking.people_count}</td>
-                    <td className="muted-small">{booking.service_area_name ?? booking.location_type}</td>
-                    <td>
+                    <td data-label="Pelanggan">{booking.customer_name}</td>
+                    <td data-label="No. HP" className="mono muted-small" style={{ whiteSpace: 'nowrap' }}>
+                      {booking.customer_phone ?? `...${booking.customer_phone_last4}`}
+                    </td>
+                    <td data-label="Treatment">{booking.product_name}</td>
+                    <td data-label="Tanggal" className="muted-small">{formatDate(booking.booking_date)}</td>
+                    <td data-label="Waktu" className="muted-small">{booking.booking_time}</td>
+                    <td data-label="Orang" className="muted-small">{booking.people_count}</td>
+                    <td data-label="Area" className="muted-small">{booking.service_area_name ?? booking.location_type}</td>
+                    <td data-label="Status">
                       <span className="status-pill" style={{ color, background: `${color}18` }}>
                         {STATUS_LABELS[booking.status] ?? booking.status}
                       </span>
                     </td>
-                    <td className="muted-small">{formatDate(booking.created_at, false)}</td>
+                    <td data-label="Dibuat" className="muted-small">{formatDate(booking.created_at, false)}</td>
                     <td>
                       <Link href={`/admin/bookings/${booking.id}`} className="button button-secondary" style={{ padding: '4px 12px', fontSize: 13 }}>
                         Detail

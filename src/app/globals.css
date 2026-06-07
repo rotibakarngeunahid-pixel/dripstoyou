@@ -4013,3 +4013,208 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
     animation: none;
   }
 }
+
+/* ─────────────────────────────────────────────
+   ADMIN — MOBILE RESPONSIVE TABLE AS CARDS
+   Hide table on mobile; show data-card rows
+───────────────────────────────────────────── */
+
+/* Mobile card layout for .data-table rows */
+@media (max-width: 767px) {
+  .admin-page {
+    padding: 20px 16px 48px;
+  }
+
+  /* Make table-shell not clip content at mobile */
+  .table-shell {
+    border-radius: var(--r-card);
+    overflow: visible;
+  }
+
+  /* Hide standard table wrapper, show cards instead */
+  .table-wrap {
+    overflow: visible;
+  }
+
+  .data-table {
+    display: block;
+    min-width: 0;
+    border: none;
+  }
+
+  .data-table thead {
+    display: none;
+  }
+
+  .data-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .data-table tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 14px;
+    background: white;
+    border: 1px solid rgba(23,39,38,.1);
+    border-radius: var(--r-card);
+    padding: 16px;
+    box-shadow: var(--shadow-card);
+  }
+
+  .data-table td {
+    display: block;
+    padding: 0;
+    border: none;
+    font-size: .83rem;
+    line-height: 1.45;
+  }
+
+  /* Make empty-state and full-width cells span both columns */
+  .data-table td.empty-state,
+  .data-table td[colspan] {
+    grid-column: 1 / -1;
+    padding: 24px 0 8px;
+    text-align: center;
+  }
+
+  /* Code column — first cell: full row, large font */
+  .data-table tr td:first-child {
+    grid-column: 1 / -1;
+    font-size: .95rem;
+    font-weight: 800;
+    color: var(--teal);
+    padding-bottom: 6px;
+    border-bottom: 1px solid #f0eee8;
+    margin-bottom: 4px;
+  }
+
+  /* Action column — full row */
+  .data-table tr td:last-child {
+    grid-column: 1 / -1;
+    padding-top: 6px;
+    border-top: 1px solid #f0eee8;
+    margin-top: 4px;
+  }
+
+  .data-table tr td:last-child .button,
+  .data-table tr td:last-child a.button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Label each cell using data-label attr (set via JS or static) */
+  .data-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    font-size: .65rem;
+    font-weight: 800;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+
+  /* Admin page head on mobile: stack vertically */
+  .admin-page-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .admin-page-head .button,
+  .admin-page-head a.button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Form fields: full-width stacked */
+  .admin-form-grid,
+  .admin-form-grid.three {
+    grid-template-columns: 1fr;
+  }
+
+  /* Booking detail grid: single column */
+  .admin-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* History items: single column */
+  .history-item {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  /* Status button row: wrap tightly */
+  .status-button-row {
+    gap: 8px;
+  }
+
+  .status-choice {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 80px;
+    font-size: .78rem;
+    padding: 8px 10px;
+  }
+
+  /* Form card padding on mobile */
+  .form-card {
+    padding: 18px 16px;
+  }
+
+  /* Admin page: table-head actions stack */
+  .table-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 16px 16px 0;
+  }
+
+  /* Modal: full screen on mobile */
+  [style*="alignItems: center"][style*="justifyContent: center"] > div {
+    max-width: 100% !important;
+    border-radius: 16px !important;
+  }
+}
+
+/* Drawer admin nav: always visible as full-height side panel on desktop */
+@media (min-width: 768px) {
+  .admin-layout {
+    flex-direction: row;
+  }
+
+  .admin-drawer {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    flex-shrink: 0;
+    transform: none !important;
+    width: 220px;
+    border-right: 1px solid rgba(255,255,255,.08);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .admin-drawer-overlay {
+    display: none !important;
+  }
+
+  .admin-hamburger {
+    display: none;
+  }
+
+  .admin-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .admin-topbar {
+    grid-template-columns: 1fr auto !important;
+  }
+
+  .admin-topbar-title {
+    display: none;
+  }
+}

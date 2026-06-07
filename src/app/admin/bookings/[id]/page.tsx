@@ -113,6 +113,8 @@ export default function BookingDetailPage() {
       setNote('');
       setConfirmStatus(false);
       await loadBooking();
+      // Force the bookings list to refetch on next visit by busting the cache
+      void fetch('/api/admin/bookings', { cache: 'no-store' }).catch(() => {});
     } catch {
       setError('Network error');
     } finally {
@@ -157,8 +159,13 @@ export default function BookingDetailPage() {
         onCancel={() => setConfirmStatus(false)}
       />
 
-      <button className="icon-link" onClick={() => router.back()} type="button" style={{ background: 'none', border: 0, padding: 0, marginBottom: 20 }}>
-        Kembali
+      <button
+        className="button button-secondary"
+        onClick={() => router.back()}
+        type="button"
+        style={{ marginBottom: 20 }}
+      >
+        ← Kembali
       </button>
 
       <div className="admin-page-head">

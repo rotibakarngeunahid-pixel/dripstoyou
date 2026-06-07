@@ -33,7 +33,8 @@ if ($method === 'GET' && !$id) {
     $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
     $stmt = $db->prepare(
-        "SELECT b.id, b.booking_code, b.customer_name, b.customer_phone_last4,
+        "SELECT b.id, b.booking_code, b.customer_name,
+                b.customer_phone_last4, b.customer_phone_encrypted,
                 b.booking_date, b.booking_time, b.people_count, b.location_type,
                 b.status, b.source, b.created_at,
                 p.name AS product_name, p.price_label,
@@ -47,6 +48,17 @@ if ($method === 'GET' && !$id) {
     );
     $stmt->execute($params);
     $bookings = $stmt->fetchAll();
+
+    // Decrypt phone for each booking (admin has right to see full numbers)
+    foreach ($bookings as &$b) {
+        $decrypted = null;
+        if (!empty($b['customer_phone_encrypted'])) {
+            try { $decrypted = decryptField($b['customer_phone_encrypted']); } catch (Exception $e) {}
+        }
+        $b['customer_phone'] = $decrypted ?? ('···' . $b['customer_phone_last4']);
+        unset($b['customer_phone_encrypted']);
+    }
+    unset($b);
 
     jsonSuccess($bookings);
 }

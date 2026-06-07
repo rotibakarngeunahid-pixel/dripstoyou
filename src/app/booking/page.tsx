@@ -17,6 +17,7 @@ type Product = {
   price_amount: number;
   short_description?: string | null;
   duration_minutes?: number | null;
+  image_url?: string | null;
   label?: string | null;
 };
 
@@ -455,6 +456,46 @@ function Sidebar({
   );
 }
 
+/* ─── Product Cap (image or gradient fallback) ─── */
+function ProductCap({
+  grad, name, imageUrl, label,
+}: {
+  grad: string; name: string; imageUrl: string | null; label: string | null;
+}) {
+  const [imgFailed, setImgFailed] = useState(false);
+  const showImage = imageUrl && !imgFailed;
+
+  return (
+    <div
+      className="bk-tc-cap"
+      style={{ background: showImage ? '#dfe7e5' : grad, position: 'relative' }}
+    >
+      {showImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageUrl}
+          alt={name}
+          onError={() => setImgFailed(true)}
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            objectFit: 'cover', display: 'block',
+          }}
+        />
+      ) : (
+        <span className="bk-tc-initial">{name[0]}</span>
+      )}
+      {label && (
+        <div className={`bk-tc-badge${label.toLowerCase() === 'premium' ? ' new' : ''}`} style={{ position: 'relative', zIndex: 2 }}>
+          {label}
+        </div>
+      )}
+      <div className="bk-tc-check" style={{ position: 'relative', zIndex: 2 }}>
+        <IcCheck />
+      </div>
+    </div>
+  );
+}
+
 /* ─── Step 1: Treatment ─── */
 function Step1({
   bk, products, loading, selectedId, onSelect, onNext,
@@ -493,16 +534,8 @@ function Step1({
                     onClick={() => onSelect(p.id)}
                     aria-pressed={sel}
                   >
-                    <div className="bk-tc-cap" style={{ background: grad }}>
-                      <span className="bk-tc-initial">{p.name[0]}</span>
-                      {p.label && (
-                        <div className={`bk-tc-badge${p.label.toLowerCase() === 'premium' ? ' new' : ''}`}>
-                          {p.label}
-                        </div>
-                      )}
-                      <div className="bk-tc-check"><IcCheck /></div>
-                    </div>
-                    <div className="bk-tc-body">
+                    <ProductCap grad={grad} name={p.name} imageUrl={p.image_url ?? null} label={p.label ?? null} />
+                    <div className="bk-tc-body" style={{ position: 'relative' }}>
                       <div className="bk-tc-name">{p.name}</div>
                       {p.short_description && <div className="bk-tc-desc">{p.short_description}</div>}
                       <div className="bk-tc-price">{formatPrice(p)}</div>
@@ -851,10 +884,17 @@ function SuccessScreen({
         >
           <IcWA /> {bk.btnWa}
         </a>
+        <Link
+          href={`/cek-booking?code=${encodeURIComponent(bookingCode)}`}
+          className="bk-btn bk-btn-ghost bk-btn-full"
+          style={{ marginTop: 10, textAlign: 'center', justifyContent: 'center' }}
+        >
+          {lang === 'id' ? '🔍 Lacak Status Booking' : '🔍 Track Booking Status'}
+        </Link>
         <button
           type="button"
           className="bk-btn bk-btn-ghost bk-btn-full"
-          style={{ marginTop: 10 }}
+          style={{ marginTop: 6 }}
           onClick={onReset}
         >
           {bk.btnNew}
