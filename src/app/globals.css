@@ -3492,7 +3492,7 @@ textarea.control {
 
 .landing-hero-photo {
   object-fit: cover;
-  object-position: 65% center;
+  object-position: 55% center;
   filter: none;
 }
 
@@ -3617,7 +3617,7 @@ textarea.control {
 
 @media (max-width: 900px) {
   .landing-hero-photo {
-    object-position: 69% center;
+    object-position: 50% center;
   }
 
   .landing-hero-overlay {
@@ -3675,7 +3675,7 @@ textarea.control {
   }
 
   .landing-hero-photo {
-    object-position: 72% center;
+    object-position: 50% 18%;
   }
 
   .landing-hero-content {
