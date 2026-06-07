@@ -29,8 +29,9 @@ export async function PUT(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const id = req.nextUrl.pathname.split('/').at(-1)!;
-  return phpProxy(phpUrl(id), {
+  const id        = req.nextUrl.pathname.split('/').at(-1)!;
+  const permanent = req.nextUrl.searchParams.get('permanent') === '1' ? '&permanent=1' : '';
+  return phpProxy(`${phpUrl(id)}${permanent}`, {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
   });

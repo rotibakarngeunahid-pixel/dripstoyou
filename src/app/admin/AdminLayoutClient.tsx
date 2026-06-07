@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
-type NavItem = { href: string; label: string };
+type NavItem  = { href: string; label: string };
 type NavGroup = { label: string; items: NavItem[] };
 
 const NAV_GROUPS: NavGroup[] = [
@@ -34,8 +34,8 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Pengaturan',
     items: [
-      { href: '/admin/settings',              label: 'Pengaturan Umum' },
-      { href: '/admin/settings/wa-template',  label: 'WhatsApp Template' },
+      { href: '/admin/settings',             label: 'Pengaturan Umum' },
+      { href: '/admin/settings/wa-template', label: 'WhatsApp Template' },
     ],
   },
   {
@@ -49,32 +49,45 @@ const NAV_GROUPS: NavGroup[] = [
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const pathname  = usePathname();
   const router    = useRouter();
-  const [open,       setOpen]       = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
-  const [validatedPath, setValidatedPath] = useState<string | null>(null);
+  const [open,        setOpen]        = useState(false);
+  const [loggingOut,  setLoggingOut]  = useState(false);
+  const [sessionOk,   setSessionOk]   = useState(false);
   const drawerRef = useRef<HTMLElement>(null);
+  // stable ref so the interval closure always sees latest router
+  const routerRef = useRef(router);
+  useEffect(() => { routerRef.current = router; }, [router]);
 
+  // Verify session once on mount, then re-check every 4 minutes in the background.
+  // This prevents the per-navigation "Memverifikasi sesi…" loading flash.
   useEffect(() => {
-    if (pathname === '/admin/login') return;
-
     let active = true;
-    fetch('/api/admin/auth/me', { cache: 'no-store' })
-      .then((res) => {
-        if (!res.ok) throw new Error(res.status === 401 ? 'expired' : 'unavailable');
-        if (active) setValidatedPath(pathname);
-      })
-      .catch((error: Error) => {
+
+    const verify = async () => {
+      try {
+        const res = await fetch('/api/admin/auth/me', { cache: 'no-store' });
         if (!active) return;
-        const reason = error.message === 'expired'
-          ? '?reason=session-expired'
-          : '?reason=auth-unavailable';
-        router.replace(`/admin/login${reason}`);
-      });
+        if (res.ok) {
+          setSessionOk(true);
+        } else if (res.status === 401) {
+          setSessionOk(false);
+          routerRef.current.replace('/admin/login?reason=session-expired');
+        }
+        // 503 (config issue) — keep current sessionOk; don't boot the user
+      } catch {
+        // network error — keep current state; navigation will fail gracefully
+      }
+    };
 
-    return () => { active = false; };
-  }, [pathname, router]);
+    void verify();
+    const interval = setInterval(verify, 4 * 60 * 1000);
 
-  /* trap focus / close on Escape */
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []); // intentionally runs once on mount
+
+  /* close drawer on Escape, lock body scroll */
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
@@ -87,11 +100,12 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   }, [open]);
 
   if (pathname === '/admin/login') return <>{children}</>;
-  if (validatedPath !== pathname) {
+
+  if (!sessionOk) {
     return (
       <main className="admin-login-shell">
         <section className="admin-login-card" style={{ textAlign: 'center' }}>
-          <p>Memverifikasi sesi admin...</p>
+          <p>Memverifikasi sesi admin…</p>
         </section>
       </main>
     );
@@ -107,7 +121,6 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     }
   }
 
-  /* find active page label for topbar title */
   let activeLabel = 'Admin';
   for (const group of NAV_GROUPS) {
     for (const item of group.items) {

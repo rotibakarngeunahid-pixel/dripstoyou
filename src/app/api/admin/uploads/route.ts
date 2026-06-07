@@ -54,7 +54,11 @@ export const POST = adminApiHandler('products:write', async (req: NextRequest) =
 
   const ext = mime === 'image/jpeg' ? '.jpg' : mime === 'image/png' ? '.png' : '.webp';
   const filename  = `${randomUUID()}${ext}`;
-  const uploadDir = join(process.cwd(), 'public', 'uploads', 'products');
+
+  // UPLOAD_DIR: absolute path to write files (e.g. /var/www/app/public/uploads/products)
+  // UPLOAD_PUBLIC_PATH: URL prefix served by Nginx (default /uploads/products)
+  const uploadDir    = process.env.UPLOAD_DIR    ?? join(process.cwd(), 'public', 'uploads', 'products');
+  const uploadPublic = process.env.UPLOAD_PUBLIC_PATH ?? '/uploads/products';
 
   try {
     await mkdir(uploadDir, { recursive: true });
@@ -64,6 +68,6 @@ export const POST = adminApiHandler('products:write', async (req: NextRequest) =
     return NextResponse.json({ error: `Storage error: ${msg}` }, { status: 500 });
   }
 
-  const publicUrl = `/uploads/products/${filename}`;
+  const publicUrl = `${uploadPublic}/${filename}`;
   return NextResponse.json({ success: true, data: { publicUrl, mimeType: mime } });
 });
