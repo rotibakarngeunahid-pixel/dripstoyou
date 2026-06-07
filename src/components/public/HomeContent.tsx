@@ -36,7 +36,8 @@ interface Props {
 const IK = 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image';
 const BRAND = {
   logo:   `${IK}/drips-to-you-bali-icon.webp`,
-  photo1: '/img/home-section-dripstoyou.webp',
+  photo1:       '/img/home-section-dripstoyou.webp',
+  photo1Mobile: '/img/hero-section-mobile.webp',
   photo2: `${IK}/photo_6134052561527443396_y.webp`, // medical team / preparation
   photo3: `${IK}/photo_6131724036417982600_y.webp`, // IV drip visual
   photo4: `${IK}/photo_6134052561527443397_y.webp`, // villa/hotel service
@@ -142,8 +143,17 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
           fill
           priority
           quality={100}
-          sizes="(max-width: 640px) 100vw, (max-width: 900px) 100vw, 100vw"
-          className="hero-photo landing-hero-photo"
+          sizes="100vw"
+          className="hero-photo landing-hero-photo landing-hero-photo--desktop"
+        />
+        <Image
+          src={BRAND.photo1Mobile}
+          alt="Perawat Drips To You Bali"
+          fill
+          priority
+          quality={100}
+          sizes="100vw"
+          className="hero-photo landing-hero-photo landing-hero-photo--mobile"
         />
         <div className="hero-photo-overlay landing-hero-overlay" />
       </div>

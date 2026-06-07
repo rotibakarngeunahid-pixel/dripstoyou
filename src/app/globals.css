@@ -3496,6 +3496,9 @@ textarea.control {
   filter: none;
 }
 
+.landing-hero-photo--mobile { display: none; }
+.landing-hero-photo--desktop { display: block; }
+
 .landing-hero-overlay {
   position: absolute;
   inset: 0;
@@ -3674,8 +3677,10 @@ textarea.control {
     align-items: stretch;
   }
 
-  .landing-hero-photo {
-    object-position: 50% 18%;
+  .landing-hero-photo--desktop { display: none; }
+  .landing-hero-photo--mobile {
+    display: block;
+    object-position: 50% 20%;
   }
 
   .landing-hero-content {
