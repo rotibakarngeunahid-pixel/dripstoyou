@@ -9,16 +9,28 @@ $admin = requireAuth();
 if (getMethod() !== 'POST') jsonError('Method not allowed', 405);
 
 // ── Config ────────────────────────────────────────────────────────────────────
-// Tambahkan dua baris ini di config.php:
-//   define('UPLOAD_DIR',      '/home/namauser/public_html/uploads/products');
+// Opsional: Tambahkan di config.php untuk override path upload:
+//   define('UPLOAD_DIR', '/home/namauser/public_html/uploads/products');
 //   define('UPLOAD_BASE_URL', 'https://dripstoyou.com');
+//
+// Jika UPLOAD_DIR tidak diset, file akan disimpan di folder uploads/products
+// relatif terhadap document root hosting (public_html).
 
-if (!defined('UPLOAD_DIR') || !defined('UPLOAD_BASE_URL')) {
-    jsonError('Konfigurasi UPLOAD_DIR dan UPLOAD_BASE_URL belum diset di config.php', 500);
+// Tentukan direktori upload
+if (defined('UPLOAD_DIR')) {
+    $uploadDir = rtrim(UPLOAD_DIR, '/');
+} else {
+    $docRoot   = rtrim($_SERVER['DOCUMENT_ROOT'] ?? '', '/\\');
+    $uploadDir = $docRoot . '/uploads/products';
 }
 
-$uploadDir     = rtrim(UPLOAD_DIR, '/');
-$uploadBaseUrl = rtrim(UPLOAD_BASE_URL, '/');
+// Tentukan base URL publik — auto-detect dari request jika UPLOAD_BASE_URL tidak diset
+if (defined('UPLOAD_BASE_URL')) {
+    $uploadBaseUrl = rtrim(UPLOAD_BASE_URL, '/');
+} else {
+    $proto         = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $uploadBaseUrl = $proto . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
+}
 $maxSize       = 5 * 1024 * 1024; // 5 MB
 
 // ── Validasi file ─────────────────────────────────────────────────────────────

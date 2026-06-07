@@ -95,7 +95,7 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
         {product.image_url && (
           <div className="product-media" style={{ height: 360, borderRadius: 'var(--r-card)', overflow: 'hidden', marginBottom: 24 }}>
             <Image
-              src={product.image_url.replace(/^http:\/\//, 'https://')}
+              src={product.image_url}
               alt={`${product.name} IV therapy`}
               fill
               sizes="(max-width: 900px) 100vw, 820px"

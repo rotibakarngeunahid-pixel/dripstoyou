@@ -30,6 +30,15 @@ define('ALLOWED_ORIGINS', [
 // ── WhatsApp ──────────────────────────────────────────────────────────────────
 define('WHATSAPP_NUMBER', '6281200000000');
 
+// ── Upload Storage (opsional — ada nilai default jika tidak diset) ─────────────
+// UPLOAD_DIR: path absolut ke folder penyimpanan gambar produk di server.
+//   Default: {DOCUMENT_ROOT}/uploads/products  (biasanya public_html/uploads/products)
+// UPLOAD_BASE_URL: URL publik dari folder uploads (auto-detect dari HTTP_HOST jika kosong).
+//   Catatan: Next.js di Vercel akan menge-proxy gambar via /api/img/, jadi
+//   nilai ini hanya digunakan sebagai fallback akses langsung ke PHP server.
+// define('UPLOAD_DIR',      '/home/namauser/public_html/uploads/products');
+// define('UPLOAD_BASE_URL', 'https://dripstoyou.com');
+
 // ── Session Duration ──────────────────────────────────────────────────────────
 define('SESSION_DURATION_HOURS', 8);
 

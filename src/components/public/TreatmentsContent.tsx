@@ -64,7 +64,7 @@ export default function TreatmentsContent({ products }: Props) {
               <div className="product-media">
                 {product.image_url && (
                   <Image
-                    src={product.image_url.replace(/^http:\/\//, 'https://')}
+                    src={product.image_url}
                     alt={`${product.name} IV therapy`}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
