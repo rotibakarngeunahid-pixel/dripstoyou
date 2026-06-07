@@ -79,7 +79,7 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
 
   const waBookingMsg = lang === 'en'
     ? 'Hello Drips To You - Bali, I would like to book an IV therapy treatment'
-    : 'Halo Drips To You - Bali, saya ingin booking treatment IV therapy';
+    : 'Halo Drips To You - Bali, saya ingin memesan treatment IV therapy';
 
   const displayProducts = homepageProducts ?? [];
   const displayAreas    = serviceAreas && serviceAreas.length > 0
