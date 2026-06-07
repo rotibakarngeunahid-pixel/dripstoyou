@@ -1,27 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { randomUUID } from 'crypto';
 import { adminApiHandler } from '@/lib/auth';
+import type { SessionData } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 
-function detectMime(buf: Uint8Array): string | null {
-  // JPEG: FF D8 FF
-  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
-  // PNG: 89 50 4E 47
-  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'image/png';
-  // WebP: RIFF????WEBP
-  if (
-    buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
-    buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50
-  ) return 'image/webp';
-  return null;
-}
-
-export const POST = adminApiHandler('products:write', async (req: NextRequest) => {
+export const POST = adminApiHandler('products:write', async (req: NextRequest, session: SessionData) => {
   let formData: FormData;
   try {
     formData = await req.formData();
@@ -33,41 +18,41 @@ export const POST = adminApiHandler('products:write', async (req: NextRequest) =
   if (!file || typeof file === 'string') {
     return NextResponse.json({ error: 'File tidak ditemukan dalam request' }, { status: 400 });
   }
-
+  if (file.size === 0) {
+    return NextResponse.json({ error: 'File kosong' }, { status: 400 });
+  }
   if (file.size > MAX_SIZE) {
     return NextResponse.json({ error: 'Ukuran file maksimal 5MB' }, { status: 400 });
   }
 
-  if (file.size === 0) {
-    return NextResponse.json({ error: 'File kosong' }, { status: 400 });
-  }
-
-  const buffer = new Uint8Array(await file.arrayBuffer());
-  const mime   = detectMime(buffer);
-
-  if (!mime) {
-    return NextResponse.json(
-      { error: 'Format tidak didukung. Gunakan JPG, PNG, atau WEBP.' },
-      { status: 400 },
-    );
-  }
-
-  const ext = mime === 'image/jpeg' ? '.jpg' : mime === 'image/png' ? '.png' : '.webp';
-  const filename  = `${randomUUID()}${ext}`;
-
-  // UPLOAD_DIR: absolute path to write files (e.g. /var/www/app/public/uploads/products)
-  // UPLOAD_PUBLIC_PATH: URL prefix served by Nginx (default /uploads/products)
-  const uploadDir    = process.env.UPLOAD_DIR    ?? join(process.cwd(), 'public', 'uploads', 'products');
-  const uploadPublic = process.env.UPLOAD_PUBLIC_PATH ?? '/uploads/products';
+  // Forward the file to the PHP backend (which has a persistent filesystem).
+  // Vercel is serverless — it cannot write files permanently.
+  const phpFormData = new FormData();
+  phpFormData.append('file', file, (file as File).name ?? 'upload');
 
   try {
-    await mkdir(uploadDir, { recursive: true });
-    await writeFile(join(uploadDir, filename), buffer);
-  } catch (fsErr) {
-    const msg = fsErr instanceof Error ? fsErr.message : 'File write failed';
-    return NextResponse.json({ error: `Storage error: ${msg}` }, { status: 500 });
-  }
+    const phpRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/upload.php`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
+        body: phpFormData,
+        cache: 'no-store',
+        signal: AbortSignal.timeout(30_000),
+      },
+    );
 
-  const publicUrl = `${uploadPublic}/${filename}`;
-  return NextResponse.json({ success: true, data: { publicUrl, mimeType: mime } });
+    let phpData: unknown;
+    try { phpData = await phpRes.json(); } catch { phpData = {}; }
+
+    if (!phpRes.ok) {
+      const msg = (phpData as { message?: string }).message ?? 'Upload gagal di server';
+      return NextResponse.json({ error: msg }, { status: phpRes.status });
+    }
+
+    return NextResponse.json(phpData);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Upload error';
+    return NextResponse.json({ error: `Upload error: ${msg}` }, { status: 500 });
+  }
 });
