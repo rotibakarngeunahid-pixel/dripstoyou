@@ -8,7 +8,11 @@ $admin = requireAuth();
 $method = getMethod();
 $id = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
 $db = getDb();
-ensureFaqTranslationSchema($db);
+try {
+    ensureFaqTranslationSchema($db);
+} catch (Throwable $e) {
+    jsonError('Schema migration failed: ' . $e->getMessage(), 500);
+}
 
 function ensureFaqTranslationSchema(PDO $db): void {
     if (!tableExists($db, 'faqs')) {
