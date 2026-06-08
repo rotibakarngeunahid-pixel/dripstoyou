@@ -118,28 +118,6 @@ export default function TreatmentsContent({ products }: Props) {
           </div>
         ) : (
           <>
-            {/* Currency header */}
-            <div className="tp-header-row">
-              <div>
-                <p className="tp-header-title">
-                  {isEn ? 'Choose currency per treatment' : 'Pilih mata uang per treatment'}
-                </p>
-                <p className="tp-header-sub">
-                  {isEn
-                    ? 'Each treatment supports multiple currencies. Select your preferred currency on each card.'
-                    : 'Setiap treatment mendukung beberapa mata uang. Pilih mata uang pilihan Anda di setiap kartu.'}
-                </p>
-              </div>
-              <div className="tp-auto-note">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="12" y1="8" x2="12" y2="12"/>
-                  <line x1="12" y1="16" x2="12.01" y2="16"/>
-                </svg>
-                <span>{isEn ? 'Prices update automatically.' : 'Harga diperbarui otomatis.'}</span>
-              </div>
-            </div>
-
             {/* Treatment grid */}
             <div className="tp-grid">
               {products.map((product) => {
@@ -244,54 +222,25 @@ export default function TreatmentsContent({ products }: Props) {
               })}
             </div>
 
-            {/* Footer note */}
-            <div className="tp-footer-note">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="8" x2="12" y2="12"/>
-                <line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <span>
-                {isEn
-                  ? 'Taxes may vary by location. Local pricing in Indonesian Rupiah.'
-                  : 'Pajak dapat bervariasi berdasarkan lokasi. Harga lokal dalam Rupiah Indonesia.'}
-              </span>
-            </div>
-
-            {/* Info boxes */}
-            <div className="tp-info-boxes">
-              <div className="tp-info-box">
-                <div className="tp-info-box-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
-                  </svg>
-                </div>
-                <div>
-                  <div className="tp-info-box-title">
-                    {isEn ? 'Local pricing in Indonesian Rupiah' : 'Harga lokal dalam Rupiah Indonesia'}
-                  </div>
-                  <div className="tp-info-box-desc">
-                    {isEn ? 'Best value for residents and locals.' : 'Nilai terbaik untuk warga dan penduduk lokal.'}
-                  </div>
-                </div>
+            {/* Currency header — below grid */}
+            <div className="tp-header-row">
+              <div>
+                <p className="tp-header-title">
+                  {isEn ? 'Choose currency per treatment' : 'Pilih mata uang per treatment'}
+                </p>
+                <p className="tp-header-sub">
+                  {isEn
+                    ? 'Each treatment supports multiple currencies. Select your preferred currency on each card.'
+                    : 'Setiap treatment mendukung beberapa mata uang. Pilih mata uang pilihan Anda di setiap kartu.'}
+                </p>
               </div>
-              <div className="tp-info-box">
-                <div className="tp-info-box-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="2" y1="12" x2="22" y2="12"/>
-                    <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-                  </svg>
-                </div>
-                <div>
-                  <div className="tp-info-box-title">
-                    {isEn ? 'International guest-friendly pricing' : 'Harga ramah tamu internasional'}
-                  </div>
-                  <div className="tp-info-box-desc">
-                    {isEn ? 'Transparent, auto-converted for travelers.' : 'Transparan, dikonversi otomatis untuk wisatawan.'}
-                  </div>
-                </div>
+              <div className="tp-auto-note">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <span>{isEn ? 'Prices update automatically.' : 'Harga diperbarui otomatis.'}</span>
               </div>
             </div>
           </>
