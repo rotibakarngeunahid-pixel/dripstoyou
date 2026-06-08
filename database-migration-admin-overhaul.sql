@@ -34,6 +34,20 @@ ON DUPLICATE KEY UPDATE
   `value_encrypted_or_json` = VALUES(`value_encrypted_or_json`),
   `updated_at` = VALUES(`updated_at`);
 
+-- Create faqs table if it does not exist yet (for databases set up before FAQ feature was added).
+-- If the table already exists this is a no-op.
+CREATE TABLE IF NOT EXISTS `faqs` (
+  `id` VARCHAR(191) NOT NULL,
+  `question` VARCHAR(500) NOT NULL,
+  `answer` TEXT NOT NULL,
+  `sort_order` INTEGER NOT NULL DEFAULT 0,
+  `is_active` BOOLEAN NOT NULL DEFAULT true,
+  PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Add translation columns to faqs.
+-- NOTE: MySQL 8 does not support ADD COLUMN IF NOT EXISTS.
+-- If these columns already exist you will see "Duplicate column name" errors — that is safe to ignore.
 ALTER TABLE `faqs`
   ADD COLUMN `source_lang` VARCHAR(10) NOT NULL DEFAULT 'auto',
   ADD COLUMN `translations_json` JSON NULL;

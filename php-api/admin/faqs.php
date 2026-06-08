@@ -11,6 +11,21 @@ $db = getDb();
 ensureFaqTranslationSchema($db);
 
 function ensureFaqTranslationSchema(PDO $db): void {
+    if (!tableExists($db, 'faqs')) {
+        $db->exec(
+            "CREATE TABLE IF NOT EXISTS `faqs` (
+                `id` VARCHAR(191) NOT NULL,
+                `question` VARCHAR(500) NOT NULL,
+                `answer` TEXT NOT NULL,
+                `source_lang` VARCHAR(10) NOT NULL DEFAULT 'auto',
+                `translations_json` JSON NULL,
+                `sort_order` INTEGER NOT NULL DEFAULT 0,
+                `is_active` BOOLEAN NOT NULL DEFAULT true,
+                PRIMARY KEY (`id`)
+            ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+        );
+        return;
+    }
     if (!columnExists($db, 'faqs', 'source_lang')) {
         $db->exec("ALTER TABLE `faqs` ADD COLUMN `source_lang` VARCHAR(10) NOT NULL DEFAULT 'auto' AFTER `answer`");
     }
