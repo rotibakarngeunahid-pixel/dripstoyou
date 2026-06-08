@@ -281,15 +281,21 @@ function normalizeCurrencyCode(?string $currency): string {
 }
 
 function tableExists(PDO $db, string $table): bool {
-    $stmt = $db->prepare('SHOW TABLES LIKE ?');
+    $stmt = $db->prepare(
+        'SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?'
+    );
     $stmt->execute([$table]);
-    return (bool)$stmt->fetchColumn();
+    return (int)$stmt->fetchColumn() > 0;
 }
 
 function columnExists(PDO $db, string $table, string $column): bool {
-    $stmt = $db->prepare("SHOW COLUMNS FROM `$table` LIKE ?");
-    $stmt->execute([$column]);
-    return (bool)$stmt->fetchColumn();
+    $stmt = $db->prepare(
+        'SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?'
+    );
+    $stmt->execute([$table, $column]);
+    return (int)$stmt->fetchColumn() > 0;
 }
 
 function ensureCurrencySchema(PDO $db): void {
