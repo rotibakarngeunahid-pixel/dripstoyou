@@ -2,6 +2,7 @@
 // CRUD /api/admin/faqs.php
 
 require_once __DIR__ . '/../helpers.php';
+require_once __DIR__ . '/../offline-translate.php';
 handleCors();
 
 $admin = requireAuth();
@@ -80,25 +81,7 @@ function detectFaqLanguage(string $question, string $answer): string {
 
 function translateText(string $text, string $from, string $to): string {
     if (empty(trim($text))) return '';
-    $url = 'https://api.mymemory.translated.net/get?q=' . urlencode($text) . '&langpair=' . $from . '|' . $to;
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 8,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_USERAGENT => 'DripstoyouFAQ/1.0',
-    ]);
-    $response = curl_exec($ch);
-    curl_close($ch);
-    if ($response === false) return '';
-    $data = json_decode($response, true);
-    if (!is_array($data) || !isset($data['responseData']['translatedText'])) return '';
-    $translated = $data['responseData']['translatedText'];
-    if (!is_string($translated) || empty(trim($translated))) return '';
-    if ((int)($data['responseStatus'] ?? 0) !== 200) return '';
-    return trim($translated);
+    return offline_translate_text($text, $to, $from);
 }
 
 function buildFaqTranslations(string $question, string $answer, string $sourceLang): array {

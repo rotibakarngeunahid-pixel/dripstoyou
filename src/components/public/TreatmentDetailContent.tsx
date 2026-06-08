@@ -60,24 +60,42 @@ const HOW_IT_WORKS = {
 };
 
 // Field indices in the translation array
-// [0] name, [1] short_description, [2] full_description, [3+] benefit texts
+// [0] name, [1] short_description, [2] full_description, [3+] benefit texts, then FAQ pairs
 const IDX_NAME  = 0;
 const IDX_SHORT = 1;
 const IDX_FULL  = 2;
 const IDX_BENEFITS_START = 3;
+
+function localizedBadge(label: string | null, lang: 'en' | 'id'): string | null {
+  if (!label) return null;
+  const normalized = label.trim().toLowerCase();
+  if (lang === 'en') {
+    if (normalized === 'baru') return 'New';
+    if (normalized === 'populer') return 'Popular';
+    if (normalized === 'terlaris') return 'Best Seller';
+  }
+  if (lang === 'id') {
+    if (normalized === 'new') return 'Baru';
+    if (normalized === 'popular') return 'Populer';
+    if (normalized === 'best seller' || normalized === 'bestseller') return 'Terlaris';
+  }
+  return label;
+}
 
 export default function TreatmentDetailContent({ product, waNumber }: Props) {
   const { t, lang } = useLanguage();
   const [openFaq, setOpenFaq] = useState<string | null>(null);
   const [stickyVisible, setStickyVisible] = useState(false);
 
-  // Build translation input: [name, short_description, full_description, ...benefit_texts]
+  // Build translation input: [name, short_description, full_description, ...benefit_texts, ...faq question/answer]
   const benefitTexts = product.benefits.map(b => b.benefit_text);
+  const faqTexts = product.faqs.flatMap(f => [f.question, f.answer]);
   const allFields: (string | null)[] = [
     product.name,
     product.short_description,
     product.full_description,
     ...benefitTexts,
+    ...faqTexts,
   ];
 
   const { translated, loading: translating } = useAutoTranslate(
@@ -92,8 +110,15 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
   const tBenefits  = product.benefits.map((b, i) =>
     translating ? null : (translated[IDX_BENEFITS_START + i] ?? b.benefit_text),
   );
+  const faqStart = IDX_BENEFITS_START + benefitTexts.length;
+  const tFaqs = product.faqs.map((faq, i) => ({
+    question: translating ? faq.question : (translated[faqStart + i * 2] ?? faq.question),
+    answer: translating ? faq.answer : (translated[faqStart + i * 2 + 1] ?? faq.answer),
+  }));
+  const displayName = tName ?? product.name;
+  const displayBadge = localizedBadge(product.label, lang);
 
-  const waMessage = t.treatmentDetail.waMessage.replace('{name}', product.name);
+  const waMessage = t.treatmentDetail.waMessage.replace('{name}', displayName);
   const waContactUrl = buildWhatsAppUrl(waNumber, waMessage);
   const bookUrl = `/booking?treatment=${product.slug}`;
   const steps = HOW_IT_WORKS[lang] ?? HOW_IT_WORKS.en;
@@ -117,14 +142,14 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
             <Link href="/treatments" className="td-back-link">
               ← {isId ? 'Semua Treatment' : 'All Treatments'}
             </Link>
-            {product.label && (
-              <span className="td-badge">{product.label}</span>
+            {displayBadge && (
+              <span className="td-badge">{displayBadge}</span>
             )}
 
             {/* Product name — skeleton on dark bg while translating */}
             {translating
               ? <div className="skeleton-dark" style={{ height: 52, marginBottom: 16, borderRadius: 8 }} />
-              : <h1 className="td-hero-title">{tName ?? product.name}</h1>
+              : <h1 className="td-hero-title">{displayName}</h1>
             }
 
             {/* Short description */}
@@ -162,7 +187,7 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
               <div className="td-hero-photo-wrap">
                 <Image
                   src={product.image_url}
-                  alt={`${product.name} IV therapy`}
+                  alt={`${displayName} IV therapy`}
                   fill
                   sizes="(max-width: 900px) 100vw, 44vw"
                   className="td-hero-img"
@@ -232,7 +257,7 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
               <div className="td-about-img-wrap reveal">
                 <Image
                   src={product.image_url}
-                  alt={product.name}
+                  alt={displayName}
                   fill
                   sizes="(max-width: 900px) 100vw, 50vw"
                   className="td-about-img"
@@ -280,14 +305,14 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
               {isId ? 'Pertanyaan yang Sering Ditanyakan' : 'Frequently Asked Questions'}
             </h2>
             <div className="td-faq-list">
-              {product.faqs.map((faq) => (
+              {product.faqs.map((faq, i) => (
                 <div key={faq.id} className={`td-faq-item${openFaq === faq.id ? ' open' : ''}`}>
                   <button
                     className="td-faq-q"
                     onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
                     aria-expanded={openFaq === faq.id}
                   >
-                    <span>{faq.question}</span>
+                    <span>{tFaqs[i]?.question ?? faq.question}</span>
                     <svg
                       className="td-faq-arrow"
                       viewBox="0 0 24 24"
@@ -301,7 +326,7 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
                     </svg>
                   </button>
                   <div className="td-faq-a">
-                    <p>{faq.answer}</p>
+                    <p>{tFaqs[i]?.answer ?? faq.answer}</p>
                   </div>
                 </div>
               ))}
@@ -316,13 +341,13 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
           <div className="td-cta-inner reveal">
             <div className="td-cta-text">
               <h2 className="td-cta-title">
-                {t.treatmentDetail.ctaTitle.replace('{name}', product.name)}
+                {t.treatmentDetail.ctaTitle.replace('{name}', displayName)}
               </h2>
               <p className="td-cta-sub">{t.treatmentDetail.ctaSubtitle}</p>
             </div>
             <div className="td-cta-actions">
               <Link href={bookUrl} className="button button-gold">
-                {t.treatmentDetail.bookBtn.replace('{name}', product.name)}
+                {t.treatmentDetail.bookBtn.replace('{name}', displayName)}
               </Link>
               <a
                 href={waContactUrl}
@@ -340,7 +365,7 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
       {/* ── MOBILE STICKY CTA (only on mobile) ── */}
       <div className={`td-sticky-cta${stickyVisible ? ' visible' : ''}`} aria-hidden={!stickyVisible}>
         <div className="td-sticky-price">
-          <span className="td-sticky-name">{product.name}</span>
+          <span className="td-sticky-name">{displayName}</span>
           <span className="td-sticky-amount">{formatPrice(product)}</span>
         </div>
         <div className="td-sticky-btns">

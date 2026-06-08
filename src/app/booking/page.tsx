@@ -6,6 +6,7 @@ import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import { useLanguage } from '@/contexts/language';
 import { formatPrice as formatCurrencyPrice, getCurrencyOption } from '@/lib/currency';
+import { useAutoTranslate } from '@/hooks/useAutoTranslate';
 
 /* ─── Types ─── */
 type ApiResponse<T> = { success?: boolean; message?: string; data?: T; error?: string };
@@ -990,6 +991,19 @@ export default function BookingPage() {
   const [success, setSuccess]       = useState<{ bookingCode: string } | null>(null);
 
   const slotReqRef = useRef(0);
+  const productTexts = useMemo(
+    () => products.flatMap(p => [p.name, p.short_description ?? '']),
+    [products],
+  );
+  const { translated: translatedProducts } = useAutoTranslate(productTexts, lang, 'booking_products');
+  const localizedProducts = useMemo(
+    () => products.map((product, idx) => ({
+      ...product,
+      name: translatedProducts[idx * 2] ?? product.name,
+      short_description: translatedProducts[idx * 2 + 1] ?? product.short_description,
+    })),
+    [products, translatedProducts],
+  );
 
   useEffect(() => {
     let active = true;
@@ -1104,8 +1118,8 @@ export default function BookingPage() {
     slotReqRef.current++;
   }
 
-  const productIdx  = products.findIndex(p => p.id === productId);
-  const product     = productIdx >= 0 ? products[productIdx] : undefined;
+  const productIdx  = localizedProducts.findIndex(p => p.id === productId);
+  const product     = productIdx >= 0 ? localizedProducts[productIdx] : undefined;
   const productGrad = productIdx >= 0 ? GRADIENTS[productIdx % GRADIENTS.length] : undefined;
   const areaName    = areas.find(a => a.id === form.areaId)?.name ?? '';
 
@@ -1163,7 +1177,7 @@ export default function BookingPage() {
             {step === 1 && (
               <Step1
                 bk={bk}
-                products={products}
+                products={localizedProducts}
                 loading={loadingInitial}
                 selectedId={productId}
                 onSelect={handleProductSelect}

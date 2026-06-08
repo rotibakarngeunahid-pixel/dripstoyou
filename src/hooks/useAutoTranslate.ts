@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
+import { translateTextsOffline, type TranslationLang } from '@/lib/offline-translate';
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 
 function djb2Hash(s: string): string {
   let h = 5381;
@@ -32,18 +33,10 @@ function writeCache(key: string, data: string[]): void {
   try {
     localStorage.setItem(key, JSON.stringify(data));
   } catch {
-    // Storage full or unavailable — ignore
+    // Storage full or unavailable.
   }
 }
 
-/**
- * Translates an array of texts from Indonesian to the given targetLang.
- *
- * - targetLang === 'id': returns original texts immediately, no fetch
- * - Cache key includes a content hash so stale content auto-invalidates
- * - Returns loading=true while fetch is in progress → caller should show skeletons
- * - Falls back to original texts on any error
- */
 export function useAutoTranslate(
   texts: (string | null | undefined)[],
   targetLang: string,
@@ -56,23 +49,14 @@ export function useAutoTranslate(
     loading: false,
   });
 
-  const abortRef = useRef<AbortController | null>(null);
-
   useEffect(() => {
     const normed = normalize(texts);
+    const target: TranslationLang = targetLang === 'en' ? 'en' : 'id';
+    const sKey = `trans_${CACHE_VERSION}_${cacheKey}_${target}_${textsHash}`;
 
-    // Source language — no translation needed
-    if (targetLang === 'id') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setState({ data: normed, loading: false });
-      return;
-    }
-
-    const sKey = `trans_${CACHE_VERSION}_${cacheKey}_${targetLang}_${textsHash}`;
-
-    // Serve from cache if available and length matches
     const cached = readCache(sKey);
     if (cached && cached.length === texts.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setState({
         data: cached.map(t => (t === '__null__' ? null : t)),
         loading: false,
@@ -80,47 +64,23 @@ export function useAutoTranslate(
       return;
     }
 
-    // Filter non-null texts for the API call
     const nonNulls = normed.filter((t): t is string => t !== null);
     if (!nonNulls.length) {
       setState({ data: normed, loading: false });
       return;
     }
 
-    // Start loading (triggers skeleton display in consuming component)
-    setState({ data: null, loading: true });
-
-    abortRef.current?.abort();
-    const ctrl = new AbortController();
-    abortRef.current = ctrl;
-
-    fetch('/api/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ texts: nonNulls, targetLang }),
-      signal: ctrl.signal,
-    })
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json() as Promise<{ translations?: string[] }>;
-      })
-      .then(({ translations = nonNulls }) => {
-        let i = 0;
-        const result: (string | null)[] = normed.map(t =>
-          t === null ? null : (translations[i++] ?? t),
-        );
-        writeCache(sKey, result.map(t => (t === null ? '__null__' : t)));
-        setState({ data: result, loading: false });
-      })
-      .catch(err => {
-        if ((err as Error).name === 'AbortError') return;
-        // Graceful fallback to originals
-        setState({ data: normed, loading: false });
-      });
-
-    return () => {
-      ctrl.abort();
-    };
+    try {
+      const translations = translateTextsOffline(nonNulls, target, 'auto');
+      let i = 0;
+      const result: (string | null)[] = normed.map(t =>
+        t === null ? null : (translations[i++] ?? t),
+      );
+      writeCache(sKey, result.map(t => (t === null ? '__null__' : t)));
+      setState({ data: result, loading: false });
+    } catch {
+      setState({ data: normed, loading: false });
+    }
     // deps: cacheKey + targetLang + textsHash covers all inputs without needing texts reference
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheKey, targetLang, textsHash]);
@@ -128,6 +88,6 @@ export function useAutoTranslate(
   const normed = normalize(texts);
   return {
     translated: state.data ?? normed,
-    loading: state.loading || (targetLang !== 'id' && state.data === null),
+    loading: state.loading,
   };
 }

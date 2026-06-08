@@ -7,6 +7,8 @@ if (!defined('DB_HOST')) {
     require_once __DIR__ . '/config.php';
 }
 
+date_default_timezone_set('Asia/Makassar');
+
 // ── Database Connection ───────────────────────────────────────────────────────
 
 function getDb(): PDO {
@@ -261,6 +263,144 @@ function getClientIp(): string {
 
 function getIpHash(): string {
     return hash('sha256', getClientIp());
+}
+
+function parseDateYmdStrict(string $dateStr): ?array {
+    if (!preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $dateStr, $m)) {
+        return null;
+    }
+    $year = (int)$m[1];
+    $month = (int)$m[2];
+    $day = (int)$m[3];
+    return checkdate($month, $day, $year) ? [$year, $month, $day] : null;
+}
+
+function timeToMinutesStrict(?string $time): ?int {
+    if (!is_string($time) || !preg_match('/^(\d{2}):(\d{2})(?::(\d{2}))?$/', $time, $m)) {
+        return null;
+    }
+    $hour = (int)$m[1];
+    $minute = (int)$m[2];
+    $second = isset($m[3]) ? (int)$m[3] : 0;
+    if ($hour < 0 || $hour > 23 || $minute < 0 || $minute > 59 || $second < 0 || $second > 59) {
+        return null;
+    }
+    return $hour * 60 + $minute;
+}
+
+function minutesToTime(int $minutes): string {
+    return sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);
+}
+
+function getDateAvailability(PDO $db, string $dateStr): array {
+    $parts = parseDateYmdStrict($dateStr);
+    if ($parts === null) {
+        throw new InvalidArgumentException('Invalid date');
+    }
+
+    [$year, $month, $day] = $parts;
+    $date = DateTimeImmutable::createFromFormat('!Y-m-d', sprintf('%04d-%02d-%02d', $year, $month, $day));
+    if (!$date) {
+        throw new InvalidArgumentException('Invalid date');
+    }
+
+    $today = new DateTimeImmutable('today');
+    if ($date < $today) {
+        return ['available' => false, 'slots' => [], 'maxBookingsPerSlot' => 0];
+    }
+
+    $dayOfWeek = (int)$date->format('w');
+    $stmt = $db->prepare(
+        'SELECT is_open, open_time, close_time, slot_duration_minutes, max_bookings_per_slot, min_prebooking_minutes
+         FROM   schedule_settings
+         WHERE  day_of_week = ?
+         LIMIT  1'
+    );
+    $stmt->execute([$dayOfWeek]);
+    $schedule = $stmt->fetch();
+
+    if (!$schedule || !(bool)$schedule['is_open']) {
+        return ['available' => false, 'slots' => [], 'maxBookingsPerSlot' => 0];
+    }
+
+    $openMinutes = timeToMinutesStrict($schedule['open_time'] ?? null);
+    $closeMinutes = timeToMinutesStrict($schedule['close_time'] ?? null);
+    $slotDur = max(1, (int)($schedule['slot_duration_minutes'] ?? 60));
+    $maxPerSlot = max(1, (int)($schedule['max_bookings_per_slot'] ?? 1));
+    $minPrebooking = max(0, (int)($schedule['min_prebooking_minutes'] ?? 0));
+
+    if ($openMinutes === null || $closeMinutes === null || $closeMinutes <= $openMinutes) {
+        return ['available' => false, 'slots' => [], 'maxBookingsPerSlot' => $maxPerSlot];
+    }
+
+    $stmt = $db->prepare('SELECT id FROM blocked_dates WHERE date = ? AND is_full_day = 1 LIMIT 1');
+    $stmt->execute([$dateStr]);
+    if ($stmt->fetch()) {
+        return ['available' => false, 'slots' => [], 'maxBookingsPerSlot' => $maxPerSlot];
+    }
+
+    $blockedRanges = [];
+    $stmt = $db->prepare(
+        'SELECT start_time, end_time
+         FROM blocked_dates
+         WHERE date = ? AND is_full_day = 0 AND start_time IS NOT NULL AND end_time IS NOT NULL'
+    );
+    $stmt->execute([$dateStr]);
+    foreach ($stmt->fetchAll() as $row) {
+        $start = timeToMinutesStrict($row['start_time'] ?? null);
+        $end = timeToMinutesStrict($row['end_time'] ?? null);
+        if ($start !== null && $end !== null && $end > $start) {
+            $blockedRanges[] = [$start, $end];
+        }
+    }
+
+    $stmt = $db->prepare(
+        "SELECT booking_time, COUNT(*) AS cnt
+         FROM   bookings
+         WHERE  booking_date = ?
+           AND  status NOT IN ('DIBATALKAN')
+         GROUP  BY booking_time"
+    );
+    $stmt->execute([$dateStr]);
+    $counts = [];
+    foreach ($stmt->fetchAll() as $r) {
+        $bookingMinutes = timeToMinutesStrict($r['booking_time'] ?? null);
+        if ($bookingMinutes !== null) {
+            $counts[minutesToTime($bookingMinutes)] = (int)$r['cnt'];
+        }
+    }
+
+    $nowPlusBuffer = (new DateTimeImmutable('now'))->modify('+' . $minPrebooking . ' minutes');
+    $slots = [];
+    for ($m = $openMinutes; $m + $slotDur <= $closeMinutes; $m += $slotDur) {
+        $slot = minutesToTime($m);
+        $slotEnd = $m + $slotDur;
+        $slotDateTime = DateTimeImmutable::createFromFormat('!Y-m-d H:i', $dateStr . ' ' . $slot);
+        if ($slotDateTime && $slotDateTime < $nowPlusBuffer) {
+            continue;
+        }
+
+        $blocked = false;
+        foreach ($blockedRanges as [$blockStart, $blockEnd]) {
+            if ($m < $blockEnd && $slotEnd > $blockStart) {
+                $blocked = true;
+                break;
+            }
+        }
+        if ($blocked) {
+            continue;
+        }
+
+        if (($counts[$slot] ?? 0) < $maxPerSlot) {
+            $slots[] = $slot;
+        }
+    }
+
+    return [
+        'available' => count($slots) > 0,
+        'slots' => $slots,
+        'maxBookingsPerSlot' => $maxPerSlot,
+    ];
 }
 
 // Currency helpers

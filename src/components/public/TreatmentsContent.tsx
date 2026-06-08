@@ -78,6 +78,22 @@ function getSecondaryPrices(product: Product, selectedCurrency: string): string 
     .join(' · ');
 }
 
+function localizedBadge(label: string | null, lang: 'en' | 'id', t: ReturnType<typeof useLanguage>['t']): string | null {
+  if (!label) return null;
+  const normalized = label.trim().toLowerCase();
+  if (lang === 'en') {
+    if (normalized === 'baru') return t.treatments.badge.new;
+    if (normalized === 'populer') return t.treatments.badge.popular;
+    if (normalized === 'terlaris') return t.treatments.badge.bestSeller;
+  }
+  if (lang === 'id') {
+    if (normalized === 'new') return t.treatments.badge.new;
+    if (normalized === 'popular') return t.treatments.badge.popular;
+    if (normalized === 'best seller' || normalized === 'bestseller') return t.treatments.badge.bestSeller;
+  }
+  return label;
+}
+
 export default function TreatmentsContent({ products }: Props) {
   const { t, lang } = useLanguage();
   const [cardCurrencies, setCardCurrencies] = useState<Record<string, string>>({});
@@ -147,6 +163,7 @@ export default function TreatmentsContent({ products }: Props) {
 
                 const tName = getTranslated(idx, 0, product.name);
                 const tDesc = getTranslated(idx, 1, product.short_description);
+                const badge = localizedBadge(product.label, lang, t);
 
                 return (
                   <article className="tp-card" key={product.id}>
@@ -165,8 +182,8 @@ export default function TreatmentsContent({ products }: Props) {
                         <div className="tp-card-placeholder" />
                       )}
                       <div className="tp-card-overlay" />
-                      {product.label && (
-                        <span className="tp-card-badge">{product.label}</span>
+                      {badge && (
+                        <span className="tp-card-badge">{badge}</span>
                       )}
                     </div>
 
