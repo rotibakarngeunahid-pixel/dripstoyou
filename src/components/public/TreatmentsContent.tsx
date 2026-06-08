@@ -30,8 +30,13 @@ interface Props {
   products: Product[];
 }
 
-function formatPrice(product: Product) {
-  return product.price_label ?? formatCurrencyPrice(product.price_amount, product.currency);
+function parsePriceDisplay(product: Product): { primary: string; secondary: string | null } {
+  const raw = product.price_label ?? formatCurrencyPrice(product.price_amount, product.currency);
+  if (raw.includes('/')) {
+    const parts = raw.split('/').map((s) => s.trim());
+    return { primary: parts[0], secondary: parts.slice(1).join(' / ') };
+  }
+  return { primary: raw, secondary: null };
 }
 
 export default function TreatmentsContent({ products }: Props) {
@@ -61,62 +66,89 @@ export default function TreatmentsContent({ products }: Props) {
           </div>
         ) : (
           <div className="product-grid">
-          {products.map((product) => (
-            <article className="product-card" key={product.id}>
-              <div className="product-media">
-                {product.image_url && (
-                  <Image
-                    src={product.image_url}
-                    alt={`${product.name} IV therapy`}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 360px"
-                    className="card-photo"
-                    unoptimized
-                  />
-                )}
-                {product.label && (
-                  <span
-                    className="status-pill"
-                    style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(255,255,255,.94)', color: 'var(--gold)' }}
-                  >
-                    {product.label}
-                  </span>
-                )}
-              </div>
-
-              <div className="product-body">
-                <h2 className="product-title">{product.name}</h2>
-                <p className="product-desc">{product.short_description}</p>
-
-                {product.benefits && product.benefits.length > 0 && (
-                  <ul className="product-benefits">
-                    {product.benefits.slice(0, 4).map((benefit) => (
-                      <li key={benefit.id}>{benefit.benefit_text}</li>
-                    ))}
-                  </ul>
-                )}
-
-                <div className="product-footer">
-                  <div className="price-row">
-                    <div>
-                      <div className="price-text">{formatPrice(product)}</div>
-                      {product.duration_minutes && (
-                        <div className="muted-small">
-                          {t.treatmentsPage.durationText.replace('{n}', String(product.duration_minutes))}
-                        </div>
-                      )}
-                    </div>
-                    <Link href={`/treatments/${product.slug}`} className="button button-secondary">
-                      {t.treatmentsPage.detail}
-                    </Link>
+            {products.map((product) => {
+              const { primary, secondary } = parsePriceDisplay(product);
+              return (
+                <article className="product-card" key={product.id}>
+                  <div className="product-media">
+                    {product.image_url && (
+                      <Image
+                        src={product.image_url}
+                        alt={`${product.name} IV therapy`}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
+                        className="card-photo"
+                        unoptimized
+                      />
+                    )}
+                    <div className="product-media-overlay" />
+                    {product.label && (
+                      <span className="product-label-pill">{product.label}</span>
+                    )}
                   </div>
-                  <Link href={`/booking?treatment=${product.slug}`} className="button button-primary full">
-                    {t.treatmentsPage.bookNow}
-                  </Link>
-                </div>
-              </div>
-            </article>
-          ))}
+
+                  <div className="product-body">
+                    <h2 className="product-title">{product.name}</h2>
+                    {product.short_description && (
+                      <p className="product-desc">{product.short_description}</p>
+                    )}
+
+                    {product.benefits && product.benefits.length > 0 && (
+                      <div className="product-chips">
+                        {product.benefits.slice(0, 4).map((benefit) => (
+                          <span key={benefit.id} className="benefit-chip">
+                            {benefit.benefit_text}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="product-footer">
+                      <div className="product-price-block">
+                        <div className="product-price-primary">{primary}</div>
+                        {secondary && (
+                          <div className="product-price-secondary">{secondary}</div>
+                        )}
+                        {product.duration_minutes && (
+                          <div className="product-duration">
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            {t.treatmentsPage.durationText.replace('{n}', String(product.duration_minutes))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="product-actions">
+                        <Link
+                          href={`/treatments/${product.slug}`}
+                          className="button button-secondary product-btn-detail"
+                        >
+                          {t.treatmentsPage.detail}
+                        </Link>
+                        <Link
+                          href={`/booking?treatment=${product.slug}`}
+                          className="button button-primary product-btn-book"
+                        >
+                          {t.treatmentsPage.bookNow}
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
 
