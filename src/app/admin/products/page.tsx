@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
+import { formatPrice as formatCurrencyPrice } from '@/lib/currency';
 
 interface Product {
   id: string;
@@ -8,6 +9,7 @@ interface Product {
   slug: string;
   short_description: string | null;
   price_amount: number;
+  currency: string | null;
   price_label: string | null;
   duration_minutes: number | null;
   label: string | null;
@@ -34,7 +36,7 @@ async function getProducts(token: string): Promise<Product[]> {
 }
 
 function formatPrice(product: Product) {
-  return product.price_label ?? `IDR ${product.price_amount.toLocaleString('id-ID')}`;
+  return product.price_label ?? formatCurrencyPrice(product.price_amount, product.currency);
 }
 
 export default async function ProductsPage() {

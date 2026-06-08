@@ -14,11 +14,11 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
 };
 
 const STATUS_COLORS: Record<BookingStatus, string> = {
-  BARU: '#b8833e',
-  KONFIRMASI: '#276f73',
-  DIPROSES: '#5e9c98',
-  SELESAI: '#1b8f4d',
-  DIBATALKAN: '#c0392b',
+  BARU: 'status-pending',
+  KONFIRMASI: 'status-confirmed',
+  DIPROSES: 'status-processing',
+  SELESAI: 'status-done',
+  DIBATALKAN: 'status-cancelled',
 };
 
 interface Booking {
@@ -154,7 +154,7 @@ export default function BookingsPage() {
             </thead>
             <tbody>
               {bookings.map((booking) => {
-                const color = STATUS_COLORS[booking.status] ?? '#667676';
+                const statusClass = STATUS_COLORS[booking.status] ?? 'status-processing';
                 return (
                   <tr key={booking.id}>
                     <td className="mono" style={{ color: 'var(--teal)', fontWeight: 800 }}>
@@ -170,7 +170,7 @@ export default function BookingsPage() {
                     <td data-label="Orang" className="muted-small">{booking.people_count}</td>
                     <td data-label="Area" className="muted-small">{booking.service_area_name ?? booking.location_type}</td>
                     <td data-label="Status">
-                      <span className="status-pill" style={{ color, background: `${color}18` }}>
+                      <span className={`status-pill ${statusClass}`}>
                         {STATUS_LABELS[booking.status] ?? booking.status}
                       </span>
                     </td>

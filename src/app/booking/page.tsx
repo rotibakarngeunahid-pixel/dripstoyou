@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import { useLanguage } from '@/contexts/language';
+import { formatPrice as formatCurrencyPrice } from '@/lib/currency';
 
 /* ─── Types ─── */
 type ApiResponse<T> = { success?: boolean; message?: string; data?: T; error?: string };
@@ -15,6 +16,7 @@ type Product = {
   name: string;
   price_label: string | null;
   price_amount: number;
+  currency: string | null;
   short_description?: string | null;
   duration_minutes?: number | null;
   image_url?: string | null;
@@ -245,7 +247,7 @@ const GRADIENTS = [
 ];
 
 /* ─── Utils ─── */
-const fmtIDR = (n: number) => 'IDR ' + n.toLocaleString('id-ID');
+const fmtMoney = (n: number, currency?: string | null) => formatCurrencyPrice(n, currency);
 const fmtDate = (s: string, lang: 'en' | 'id' = 'en') => {
   if (!s) return '';
   return new Date(s + 'T00:00:00').toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-GB', {
@@ -253,7 +255,7 @@ const fmtDate = (s: string, lang: 'en' | 'id' = 'en') => {
   });
 };
 function formatPrice(p: Product) {
-  return p.price_label ?? fmtIDR(p.price_amount);
+  return p.price_label ?? fmtMoney(p.price_amount, p.currency);
 }
 function initForm(): FormState {
   return { date: '', time: '', people: 1, locType: 'VILLA', areaId: '', address: '', name: '', phone: '', notes: '' };
@@ -435,8 +437,8 @@ function Sidebar({
         {product && (
           <div className="bk-sum-footer">
             <div className="bk-sum-total-k">{bk.sidebarTotal}</div>
-            <div className="bk-sum-total-v">{fmtIDR(product.price_amount * people)}</div>
-            {people > 1 && <div className="bk-sum-note">{people} × {fmtIDR(product.price_amount)}</div>}
+            <div className="bk-sum-total-v">{fmtMoney(product.price_amount * people, product.currency)}</div>
+            {people > 1 && <div className="bk-sum-note">{people} × {fmtMoney(product.price_amount, product.currency)}</div>}
             <div className="bk-sum-note" style={{ marginTop: 6 }}>{bk.sidebarNote}</div>
           </div>
         )}
@@ -779,7 +781,7 @@ function Step3({
           <div className="bk-mob-sum-swatch" style={{ background: productGrad }} />
           <div className="bk-mob-sum-eyebrow">{bk.summaryEyebrow}</div>
           <div className="bk-mob-sum-name">{product.name}</div>
-          <div className="bk-mob-sum-price">{fmtIDR(product.price_amount * form.people)}</div>
+          <div className="bk-mob-sum-price">{fmtMoney(product.price_amount * form.people, product.currency)}</div>
           <div className="bk-mob-sum-divider" />
           {form.date && <div className="bk-mob-sum-row">📅 {fmtDate(form.date, lang)} · {form.time} WITA</div>}
           {areaName && <div className="bk-mob-sum-row">📍 {areaName}{loc ? ` · ${loc.l}` : ''}</div>}
@@ -848,7 +850,7 @@ function SuccessScreen({
     [bk.detailLabels[2], form.time ? form.time + ' WITA' : '—'],
     [bk.detailLabels[3], areaName || '—'],
     [bk.detailLabels[4], form.name],
-    [bk.detailLabels[5], product ? fmtIDR(product.price_amount * form.people) : '—'],
+    [bk.detailLabels[5], product ? fmtMoney(product.price_amount * form.people, product.currency) : '—'],
   ];
 
   return (

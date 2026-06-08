@@ -9,6 +9,7 @@ interface Product {
   short_description: string | null;
   full_description: string | null;
   price_amount: number;
+  currency: string | null;
   price_label: string | null;
   duration_minutes: number | null;
   image_url: string | null;

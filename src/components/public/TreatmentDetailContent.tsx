@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/language';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
+import { formatPrice as formatCurrencyPrice } from '@/lib/currency';
 
 interface Benefit {
   id: string;
@@ -24,6 +25,7 @@ interface Product {
   short_description: string | null;
   full_description: string | null;
   price_amount: number;
+  currency: string | null;
   price_label: string | null;
   duration_minutes: number | null;
   image_url: string | null;
@@ -38,7 +40,7 @@ interface Props {
 }
 
 function formatPrice(product: Product) {
-  return product.price_label ?? `IDR ${product.price_amount.toLocaleString('id-ID')}`;
+  return product.price_label ?? formatCurrencyPrice(product.price_amount, product.currency);
 }
 
 const HOW_IT_WORKS = {

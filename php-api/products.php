@@ -8,6 +8,7 @@ handleCors();
 requireMethod('GET');
 
 $db   = getDb();
+ensureCurrencySchema($db);
 $slug = isset($_GET['slug']) ? str_clean($_GET['slug'], 200) : null;
 $incB = !empty($_GET['include_benefits']);
 $incF = !empty($_GET['include_faqs']);
@@ -16,7 +17,7 @@ if ($slug !== null) {
     // ── Single product by slug ────────────────────────────────────────────────
     $stmt = $db->prepare(
         'SELECT p.id, p.name, p.slug, p.short_description, p.full_description,
-                p.price_amount, p.price_label, p.duration_minutes,
+                p.price_amount, p.currency, p.price_label, p.duration_minutes,
                 p.image_url, p.label, p.show_on_homepage, p.homepage_order,
                 p.created_at, p.updated_at,
                 c.name AS category_name, c.slug AS category_slug
@@ -39,7 +40,7 @@ if ($slug !== null) {
 // ── List all active products ──────────────────────────────────────────────────
 $stmt = $db->query(
     'SELECT p.id, p.name, p.slug, p.short_description, p.full_description,
-            p.price_amount, p.price_label, p.duration_minutes,
+            p.price_amount, p.currency, p.price_label, p.duration_minutes,
             p.image_url, p.label, p.show_on_homepage, p.homepage_order,
             p.created_at, p.updated_at,
             c.name AS category_name, c.slug AS category_slug
@@ -62,7 +63,8 @@ jsonSuccess($products);
 function formatProduct(PDO $db, array $p, bool $incBenefits, bool $incFaqs): array {
     $p['category'] = $p['category_name'] ? ['name' => $p['category_name'], 'slug' => $p['category_slug']] : null;
     unset($p['category_name'], $p['category_slug']);
-    $p['price_amount']   = (int)$p['price_amount'];
+    $p['price_amount']   = (float)$p['price_amount'];
+    $p['currency']       = normalizeCurrencyCode($p['currency'] ?? 'IDR');
     $p['homepage_order'] = (int)$p['homepage_order'];
     $p['show_on_homepage'] = (bool)$p['show_on_homepage'];
 

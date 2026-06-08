@@ -48,15 +48,22 @@ export default function AdminLoginPage() {
       const data = (await res.json()) as LoginResponse;
       if (!res.ok) {
         setError(data.error ?? data.message ?? 'Login failed');
+        setLoading(false);
         return;
       }
       setSuccess(data.message ?? 'Login berhasil. Mengalihkan ke dashboard...');
-      window.setTimeout(() => {
-        router.replace('/admin/dashboard?login=success');
-      }, 500);
+      await new Promise((resolve) => window.setTimeout(resolve, 120));
+      const verifyRes = await fetch('/api/admin/auth/me', { cache: 'no-store' });
+      if (!verifyRes.ok) {
+        setSuccess('');
+        setError('Login berhasil, tetapi sesi admin belum siap. Silakan coba login kembali.');
+        setLoading(false);
+        return;
+      }
+      router.replace('/admin/dashboard?login=success');
+      router.refresh();
     } catch {
       setError('Koneksi ke server gagal. Silakan coba lagi.');
-    } finally {
       setLoading(false);
     }
   }
@@ -113,7 +120,7 @@ export default function AdminLoginPage() {
           )}
 
           <button className={`button button-gold full${loading ? ' loading' : ''}`} type="submit" disabled={loading || Boolean(success)}>
-            {loading ? 'Memverifikasi...' : success ? 'Login Berhasil' : 'Masuk'}
+            {loading ? 'Memverifikasi sesi...' : success ? 'Login Berhasil' : 'Masuk'}
           </button>
         </form>
       </section>

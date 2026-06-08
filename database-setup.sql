@@ -70,7 +70,8 @@ CREATE TABLE `products` (
     `slug` VARCHAR(200) NOT NULL,
     `short_description` VARCHAR(500) NULL,
     `full_description` TEXT NULL,
-    `price_amount` INTEGER NOT NULL,
+    `price_amount` DECIMAL(12,2) NOT NULL,
+    `currency` VARCHAR(10) NOT NULL DEFAULT 'IDR',
     `price_label` VARCHAR(100) NULL,
     `duration_minutes` INTEGER NULL,
     `image_url` VARCHAR(500) NULL,
@@ -206,10 +207,25 @@ CREATE TABLE `site_settings` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `currency_settings` (
+    `code` VARCHAR(10) NOT NULL,
+    `symbol` VARCHAR(8) NOT NULL,
+    `name` VARCHAR(50) NOT NULL,
+    `decimal_places` INTEGER NOT NULL DEFAULT 0,
+    `manual_rate_to_idr` DECIMAL(18,6) NULL,
+    `is_active` BOOLEAN NOT NULL DEFAULT true,
+    `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`code`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `faqs` (
     `id` VARCHAR(191) NOT NULL,
     `question` VARCHAR(500) NOT NULL,
     `answer` TEXT NOT NULL,
+    `source_lang` VARCHAR(10) NOT NULL DEFAULT 'auto',
+    `translations_json` JSON NULL,
     `sort_order` INTEGER NOT NULL DEFAULT 0,
     `is_active` BOOLEAN NOT NULL DEFAULT true,
 
@@ -330,3 +346,15 @@ ALTER TABLE `audit_logs` ADD CONSTRAINT `audit_logs_actor_admin_id_fkey` FOREIGN
 
 -- AddForeignKey
 ALTER TABLE `security_events` ADD CONSTRAINT `security_events_actor_admin_id_fkey` FOREIGN KEY (`actor_admin_id`) REFERENCES `admins`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- SeedCurrencySettings
+INSERT INTO `currency_settings` (`code`, `symbol`, `name`, `decimal_places`, `is_active`) VALUES
+    ('IDR', 'Rp', 'Indonesian Rupiah', 0, true),
+    ('USD', '$', 'US Dollar', 2, true),
+    ('AUD', 'A$', 'Australian Dollar', 2, true),
+    ('EUR', '€', 'Euro', 2, true),
+    ('SGD', 'S$', 'Singapore Dollar', 2, true)
+ON DUPLICATE KEY UPDATE
+    `symbol` = VALUES(`symbol`),
+    `name` = VALUES(`name`),
+    `decimal_places` = VALUES(`decimal_places`);

@@ -263,6 +263,111 @@ function getIpHash(): string {
     return hash('sha256', getClientIp());
 }
 
+// Currency helpers
+
+function currencyCatalog(): array {
+    return [
+        'IDR' => ['symbol' => 'Rp', 'name' => 'Indonesian Rupiah', 'decimal_places' => 0],
+        'USD' => ['symbol' => '$',  'name' => 'US Dollar',         'decimal_places' => 2],
+        'AUD' => ['symbol' => 'A$', 'name' => 'Australian Dollar', 'decimal_places' => 2],
+        'EUR' => ['symbol' => '€',  'name' => 'Euro',              'decimal_places' => 2],
+        'SGD' => ['symbol' => 'S$', 'name' => 'Singapore Dollar',  'decimal_places' => 2],
+    ];
+}
+
+function normalizeCurrencyCode(?string $currency): string {
+    $code = strtoupper(trim((string)($currency ?: 'IDR')));
+    return array_key_exists($code, currencyCatalog()) ? $code : 'IDR';
+}
+
+function tableExists(PDO $db, string $table): bool {
+    $stmt = $db->prepare('SHOW TABLES LIKE ?');
+    $stmt->execute([$table]);
+    return (bool)$stmt->fetchColumn();
+}
+
+function columnExists(PDO $db, string $table, string $column): bool {
+    $stmt = $db->prepare("SHOW COLUMNS FROM `$table` LIKE ?");
+    $stmt->execute([$column]);
+    return (bool)$stmt->fetchColumn();
+}
+
+function ensureCurrencySchema(PDO $db): void {
+    static $done = false;
+    if ($done) return;
+
+    if (!columnExists($db, 'products', 'currency')) {
+        $db->exec("ALTER TABLE `products` ADD COLUMN `currency` VARCHAR(10) NOT NULL DEFAULT 'IDR' AFTER `price_amount`");
+    }
+
+    $stmt = $db->prepare("SHOW COLUMNS FROM `products` LIKE 'price_amount'");
+    $stmt->execute();
+    $priceColumn = $stmt->fetch();
+    if ($priceColumn && strpos(strtolower((string)$priceColumn['Type']), 'int') !== false) {
+        $db->exec("ALTER TABLE `products` MODIFY COLUMN `price_amount` DECIMAL(12,2) NOT NULL");
+    }
+
+    $db->exec(
+        "CREATE TABLE IF NOT EXISTS `currency_settings` (
+            `code` VARCHAR(10) NOT NULL,
+            `symbol` VARCHAR(8) NOT NULL,
+            `name` VARCHAR(50) NOT NULL,
+            `decimal_places` INTEGER NOT NULL DEFAULT 0,
+            `manual_rate_to_idr` DECIMAL(18,6) NULL,
+            `is_active` BOOLEAN NOT NULL DEFAULT true,
+            `updated_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+            PRIMARY KEY (`code`)
+        ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    );
+
+    $stmt = $db->prepare(
+        'INSERT INTO currency_settings (code, symbol, name, decimal_places, is_active, updated_at)
+         VALUES (?, ?, ?, ?, 1, NOW())
+         ON DUPLICATE KEY UPDATE
+           symbol = VALUES(symbol),
+           name = VALUES(name),
+           decimal_places = VALUES(decimal_places)'
+    );
+
+    foreach (currencyCatalog() as $code => $meta) {
+        $stmt->execute([$code, $meta['symbol'], $meta['name'], $meta['decimal_places']]);
+    }
+
+    $done = true;
+}
+
+function formatCurrencyAmount($amount, ?string $currency = 'IDR'): string {
+    $code = normalizeCurrencyCode($currency);
+    $meta = currencyCatalog()[$code];
+    $decimals = (int)$meta['decimal_places'];
+    $formatted = number_format((float)$amount, $decimals, '.', $code === 'IDR' ? '.' : ',');
+
+    if ($code === 'IDR') {
+        return 'Rp ' . $formatted;
+    }
+
+    return $meta['symbol'] . $formatted;
+}
+
+function getCurrencySettings(PDO $db): array {
+    ensureCurrencySchema($db);
+    $rows = $db->query(
+        'SELECT code, symbol, name, decimal_places, manual_rate_to_idr, is_active
+         FROM currency_settings
+         ORDER BY FIELD(code, "IDR", "USD", "AUD", "EUR", "SGD"), code ASC'
+    )->fetchAll();
+
+    foreach ($rows as &$row) {
+        $row['decimalPlaces'] = (int)$row['decimal_places'];
+        $row['manualRateToIdr'] = $row['manual_rate_to_idr'] !== null ? (float)$row['manual_rate_to_idr'] : null;
+        $row['isActive'] = (bool)$row['is_active'];
+        unset($row['decimal_places'], $row['manual_rate_to_idr'], $row['is_active']);
+    }
+    unset($row);
+
+    return $rows;
+}
+
 // Site settings helpers
 
 function getSiteSetting(string $key, ?string $default = null): ?string {

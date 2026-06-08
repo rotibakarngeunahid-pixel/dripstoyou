@@ -23,8 +23,8 @@ export default function FaqContent({ faqs, waNumber }: Props) {
   const localizedFaqs = faqs
     .map((faq) => ({
       id: faq.id,
-      question: lang === 'en' ? faq.questionEn : faq.questionId,
-      answer: lang === 'en' ? faq.answerEn : faq.answerId,
+      question: lang === 'en' ? (faq.questionEn || faq.questionId) : (faq.questionId || faq.questionEn),
+      answer: lang === 'en' ? (faq.answerEn || faq.answerId) : (faq.answerId || faq.answerEn),
     }))
     .filter((faq) => faq.question && faq.answer);
 

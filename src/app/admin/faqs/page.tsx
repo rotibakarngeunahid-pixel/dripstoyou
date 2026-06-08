@@ -8,6 +8,7 @@ type Faq = {
   answerEn: string;
   questionId: string;
   answerId: string;
+  sourceLang?: 'en' | 'id' | 'auto';
   sortOrder: number;
   isActive: boolean;
 };
@@ -15,7 +16,6 @@ type Faq = {
 type FaqForm = {
   question: string;
   answer: string;
-  sourceLang: 'en' | 'id';
   sortOrder: number;
   isActive: boolean;
 };
@@ -29,7 +29,6 @@ type ApiResponse<T> = {
 const EMPTY: FaqForm = {
   question: '',
   answer: '',
-  sourceLang: 'en',
   sortOrder: 0,
   isActive: true,
 };
@@ -102,17 +101,17 @@ function Toast({ msg, type }: { msg: string; type: 'success' | 'error' }) {
 
 /* ─── FAQ Card ─── */
 function FaqCard({
-  faq, onEdit, onToggle, onDelete, deleting, toggling,
+  faq, onEdit, onToggle, onDelete, onRegenerate, deleting, toggling, regenerating,
 }: {
   faq: Faq;
   onEdit: (f: Faq) => void;
   onToggle: (f: Faq) => void;
   onDelete: (id: string) => void;
+  onRegenerate: (f: Faq) => void;
   deleting: string | null;
   toggling: string | null;
+  regenerating: string | null;
 }) {
-  const hasEn = !!(faq.questionEn || faq.answerEn);
-  const hasId = !!(faq.questionId || faq.answerId);
   const displayQuestion = faq.questionId || faq.questionEn || '(Pertanyaan belum diisi)';
   const displayAnswer = faq.answerId || faq.answerEn || '';
 
@@ -173,25 +172,15 @@ function FaqCard({
         )}
       </div>
 
-      {/* Language pills */}
       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
         <span style={{
           display: 'inline-flex', alignItems: 'center', gap: 4,
-          background: hasId ? 'var(--pale-aqua)' : '#f3f4f6',
-          color: hasId ? 'var(--teal)' : '#9ca3af',
+          background: 'var(--pale-aqua)',
+          color: 'var(--teal)',
           fontSize: 11, fontWeight: 700, padding: '4px 10px',
           borderRadius: 999, letterSpacing: 0.3,
         }}>
-          {hasId ? '✓' : '○'} Indonesia
-        </span>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', gap: 4,
-          background: hasEn ? 'var(--pale-aqua)' : '#f3f4f6',
-          color: hasEn ? 'var(--teal)' : '#9ca3af',
-          fontSize: 11, fontWeight: 700, padding: '4px 10px',
-          borderRadius: 999, letterSpacing: 0.3,
-        }}>
-          {hasEn ? '✓' : '○'} English
+          Auto-translate aktif
         </span>
         <span style={{
           display: 'inline-flex', alignItems: 'center',
@@ -216,6 +205,15 @@ function FaqCard({
           type="button"
         >
           Edit
+        </button>
+        <button
+          className="button button-secondary"
+          style={{ padding: '7px 14px', fontSize: 12, minHeight: 34, flex: '1 1 auto' }}
+          onClick={() => onRegenerate(faq)}
+          disabled={regenerating === faq.id}
+          type="button"
+        >
+          {regenerating === faq.id ? 'Memproses...' : 'Regenerate Translation'}
         </button>
         <button
           className="button"
@@ -255,6 +253,7 @@ export default function AdminFaqsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [form, setForm] = useState<FaqForm>(EMPTY);
   const [editId, setEditId] = useState<string | null>(null);
@@ -304,11 +303,9 @@ export default function AdminFaqsPage() {
   }
 
   function openEdit(faq: Faq) {
-    const preferId = !!(faq.questionId && faq.answerId);
     setForm({
-      question: preferId ? faq.questionId : faq.questionEn,
-      answer: preferId ? faq.answerId : faq.answerEn,
-      sourceLang: preferId ? 'id' : 'en',
+      question: faq.questionId || faq.questionEn,
+      answer: faq.answerId || faq.answerEn,
       sortOrder: faq.sortOrder,
       isActive: faq.isActive,
     });
@@ -323,19 +320,12 @@ export default function AdminFaqsPage() {
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
     if (!form.question.trim() || !form.answer.trim()) {
-      setFormErr(
-        form.sourceLang === 'id'
-          ? 'Pertanyaan dan jawaban dalam Bahasa Indonesia wajib diisi.'
-          : 'Pertanyaan dan jawaban dalam bahasa Inggris wajib diisi.',
-      );
+      setFormErr('Pertanyaan dan jawaban wajib diisi.');
       return;
     }
     setSaving(true);
     setFormErr('');
-    const payload =
-      form.sourceLang === 'id'
-        ? { questionId: form.question, answerId: form.answer, sourceLang: 'id', sortOrder: form.sortOrder, isActive: form.isActive }
-        : { questionEn: form.question, answerEn: form.answer, sourceLang: 'en', sortOrder: form.sortOrder, isActive: form.isActive };
+    const payload = { question: form.question, answer: form.answer, sortOrder: form.sortOrder, isActive: form.isActive };
     try {
       const res = await fetch(editId ? `/api/admin/faqs/${editId}` : '/api/admin/faqs', {
         method: editId ? 'PUT' : 'POST',
@@ -376,6 +366,27 @@ export default function AdminFaqsPage() {
       showToast('Koneksi gagal. Coba lagi.', 'error');
     } finally {
       setToggling(null);
+    }
+  }
+
+  async function handleRegenerate(faq: Faq) {
+    setRegenerating(faq.id);
+    try {
+      const res = await fetch(`/api/admin/faqs/${faq.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ regenerateTranslation: true }),
+      });
+      if (!res.ok) {
+        showToast('Gagal memperbarui terjemahan.', 'error');
+        return;
+      }
+      showToast('Terjemahan FAQ diperbarui.');
+      await load();
+    } catch {
+      showToast('Koneksi gagal. Coba lagi.', 'error');
+    } finally {
+      setRegenerating(null);
     }
   }
 
@@ -478,54 +489,28 @@ export default function AdminFaqsPage() {
           <h2 className="form-card-title">{editId ? 'Edit FAQ' : 'Tambah FAQ Baru'}</h2>
           {formErr && <div className="alert alert-error" style={{ marginBottom: 12 }}>{formErr}</div>}
           <form onSubmit={handleSave}>
-            {/* Language selector */}
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-              {(['id', 'en'] as const).map(lang => (
-                <button
-                  key={lang}
-                  type="button"
-                  onClick={() => setForm(v => ({ ...v, sourceLang: lang, question: '', answer: '' }))}
-                  style={{
-                    padding: '7px 18px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    border: `1.5px solid ${form.sourceLang === lang ? 'var(--teal)' : 'rgba(0,0,0,0.12)'}`,
-                    background: form.sourceLang === lang ? 'var(--pale-aqua)' : 'white',
-                    color: form.sourceLang === lang ? 'var(--teal)' : '#888',
-                  }}
-                >
-                  {lang === 'id' ? '🇮🇩 Indonesia' : '🇬🇧 English'}
-                </button>
-              ))}
-            </div>
             <p style={{ fontSize: 13, color: '#777', marginBottom: 16, lineHeight: 1.6 }}>
-              {form.sourceLang === 'id'
-                ? 'Tulis dalam Bahasa Indonesia — terjemahan Inggris dibuat otomatis saat disimpan.'
-                : 'Tulis dalam bahasa Inggris — terjemahan Indonesia dibuat otomatis saat disimpan.'}
+              Tulis FAQ dalam satu bahasa. Sistem akan mendeteksi bahasa sumber dan menerjemahkan otomatis saat disimpan.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <label className="admin-field">
-                <span className="admin-field-label">
-                  {form.sourceLang === 'id' ? 'Pertanyaan (Indonesia) *' : 'Question (English) *'}
-                </span>
+                <span className="admin-field-label">Pertanyaan *</span>
                 <input
                   className="control"
                   value={form.question}
                   onChange={(e) => setForm(v => ({ ...v, question: e.target.value }))}
-                  placeholder={form.sourceLang === 'id' ? 'Berapa lama sesi IV therapy?' : 'How long does IV therapy take?'}
+                  placeholder="Berapa lama sesi IV therapy?"
                   required
                 />
               </label>
               <label className="admin-field">
-                <span className="admin-field-label">
-                  {form.sourceLang === 'id' ? 'Jawaban (Indonesia) *' : 'Answer (English) *'}
-                </span>
+                <span className="admin-field-label">Jawaban *</span>
                 <textarea
                   className="control"
                   rows={4}
                   value={form.answer}
                   onChange={(e) => setForm(v => ({ ...v, answer: e.target.value }))}
-                  placeholder={form.sourceLang === 'id'
-                    ? 'Sesi IV therapy biasanya memakan waktu 30–60 menit tergantung treatment...'
-                    : 'IV therapy usually takes 30–60 minutes depending on the treatment...'}
+                  placeholder="Sesi IV therapy biasanya memakan waktu 30-60 menit tergantung treatment..."
                   required
                 />
               </label>
@@ -578,9 +563,11 @@ export default function AdminFaqsPage() {
               faq={faq}
               onEdit={openEdit}
               onToggle={handleToggle}
+              onRegenerate={handleRegenerate}
               onDelete={askDelete}
               deleting={deleting}
               toggling={toggling}
+              regenerating={regenerating}
             />
           ))}
         </div>

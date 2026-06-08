@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/language';
+import { formatPrice as formatCurrencyPrice } from '@/lib/currency';
 
 export interface HomepageProduct {
   id: string;
@@ -10,6 +11,7 @@ export interface HomepageProduct {
   slug: string;
   short_description: string | null;
   price_amount: number;
+  currency: string | null;
   price_label: string | null;
   image_url: string | null;
   label: string | null;
@@ -170,7 +172,7 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
   if (products.length === 0) return null;
 
   function formatPrice(p: HomepageProduct) {
-    return p.price_label ?? `IDR ${p.price_amount.toLocaleString('id-ID')}`;
+    return p.price_label ?? formatCurrencyPrice(p.price_amount, p.currency);
   }
 
   const imgClasses = ['t-img-hangover', 't-img-immune', 't-img-energy', 't-img-beauty'];
