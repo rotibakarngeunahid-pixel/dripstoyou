@@ -4469,6 +4469,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   font-size: 1.05rem;
   line-height: 1.68;
   max-width: 480px;
+  text-align: justify;
 }
 .td-hero-meta {
   display: flex;
@@ -4613,6 +4614,9 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   line-height: 1.75;
   font-size: 1rem;
   white-space: pre-wrap;
+  text-align: justify;
+  hyphens: auto;
+  max-width: 720px;
 }
 .td-about-img-wrap {
   position: relative;
@@ -4854,6 +4858,9 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   .td-step-num { width: 44px; height: 44px; font-size: .8rem; }
   .td-faq-q { padding: 16px 18px; font-size: .9rem; }
   .td-faq-a p { padding: 0 18px 16px; }
+  /* Justify looks bad on narrow screens — revert to left */
+  .td-hero-sub,
+  .td-about-text { text-align: left; }
 }
 
 /* Drawer admin nav: always visible as full-height side panel on desktop */
@@ -5654,6 +5661,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
 .tp-desc {
   font-size: 13px; color: var(--text-muted);
   line-height: 1.6; margin-bottom: 10px;
+  text-align: justify;
 }
 
 /* Duration */
@@ -6079,4 +6087,22 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
 @media (min-width: 768px) {
   .footer-trust-row { gap: 8px; }
   .footer-trust-item { font-size: 12px; }
+}
+
+/* ─────────────────────────────────────────────
+   SKELETON DARK — for shimmer on dark backgrounds
+───────────────────────────────────────────── */
+.skeleton-dark {
+  background: linear-gradient(90deg, rgba(255,255,255,.09) 25%, rgba(255,255,255,.18) 50%, rgba(255,255,255,.09) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 8px;
+  display: block;
+}
+
+/* ─────────────────────────────────────────────
+   TREATMENTS PAGE — mobile text-align reset
+───────────────────────────────────────────── */
+@media (max-width: 639px) {
+  .tp-desc { text-align: left; }
 }
