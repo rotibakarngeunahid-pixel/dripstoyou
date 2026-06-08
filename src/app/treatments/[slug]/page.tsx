@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import TreatmentDetailContent from '@/components/public/TreatmentDetailContent';
+import ScrollRevealInit from '@/components/public/ScrollRevealInit';
 import { getWaNumber } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic';
@@ -72,6 +73,7 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
       <Header />
       <TreatmentDetailContent product={product} waNumber={waNumber} />
       <SiteFooter />
+      <ScrollRevealInit />
     </>
   );
 }
