@@ -1,11 +1,18 @@
 -- Admin overhaul migration for existing Drips To You databases.
+-- Safe to run multiple times — all statements are idempotent.
 
-ALTER TABLE `products`
-  ADD COLUMN `currency` VARCHAR(10) NOT NULL DEFAULT 'IDR' AFTER `price_amount`;
+-- ── products.currency ────────────────────────────────────────────────────────
+SET @col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'currency');
+SET @sql = IF(@col = 0,
+    "ALTER TABLE `products` ADD COLUMN `currency` VARCHAR(10) NOT NULL DEFAULT 'IDR' AFTER `price_amount`",
+    "SELECT 'products.currency already exists'");
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
-ALTER TABLE `products`
-  MODIFY COLUMN `price_amount` DECIMAL(12,2) NOT NULL;
+-- ── products.price_amount type (safe to re-run on DECIMAL) ───────────────────
+ALTER TABLE `products` MODIFY COLUMN `price_amount` DECIMAL(12,2) NOT NULL;
 
+-- ── currency_settings table ───────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS `currency_settings` (
   `code` VARCHAR(10) NOT NULL,
   `symbol` VARCHAR(8) NOT NULL,
@@ -28,14 +35,14 @@ ON DUPLICATE KEY UPDATE
   `name` = VALUES(`name`),
   `decimal_places` = VALUES(`decimal_places`);
 
+-- ── site_settings.default_currency ───────────────────────────────────────────
 INSERT INTO `site_settings` (`key`, `value_encrypted_or_json`, `updated_by_admin_id`, `updated_at`)
 VALUES ('default_currency', 'IDR', NULL, NOW())
 ON DUPLICATE KEY UPDATE
   `value_encrypted_or_json` = VALUES(`value_encrypted_or_json`),
   `updated_at` = VALUES(`updated_at`);
 
--- Create faqs table if it does not exist yet (for databases set up before FAQ feature was added).
--- If the table already exists this is a no-op.
+-- ── faqs table (create base version if missing) ───────────────────────────────
 CREATE TABLE IF NOT EXISTS `faqs` (
   `id` VARCHAR(191) NOT NULL,
   `question` VARCHAR(500) NOT NULL,
@@ -45,9 +52,18 @@ CREATE TABLE IF NOT EXISTS `faqs` (
   PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- Add translation columns to faqs.
--- NOTE: MySQL 8 does not support ADD COLUMN IF NOT EXISTS.
--- If these columns already exist you will see "Duplicate column name" errors — that is safe to ignore.
-ALTER TABLE `faqs`
-  ADD COLUMN `source_lang` VARCHAR(10) NOT NULL DEFAULT 'auto',
-  ADD COLUMN `translations_json` JSON NULL;
+-- ── faqs.source_lang ─────────────────────────────────────────────────────────
+SET @col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'faqs' AND COLUMN_NAME = 'source_lang');
+SET @sql = IF(@col = 0,
+    "ALTER TABLE `faqs` ADD COLUMN `source_lang` VARCHAR(10) NOT NULL DEFAULT 'auto'",
+    "SELECT 'faqs.source_lang already exists'");
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- ── faqs.translations_json ────────────────────────────────────────────────────
+SET @col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'faqs' AND COLUMN_NAME = 'translations_json');
+SET @sql = IF(@col = 0,
+    'ALTER TABLE `faqs` ADD COLUMN `translations_json` JSON NULL',
+    "SELECT 'faqs.translations_json already exists'");
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
