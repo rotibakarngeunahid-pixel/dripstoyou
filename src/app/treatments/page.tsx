@@ -29,6 +29,7 @@ interface Product {
   label: string | null;
   show_on_homepage: boolean;
   benefits: Benefit[];
+  prices?: Record<string, number>;
 }
 
 async function getProducts(): Promise<Product[]> {

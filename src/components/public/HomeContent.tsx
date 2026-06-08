@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/language';
-import { formatPrice as formatCurrencyPrice, CURRENCY_OPTIONS, normalizeCurrency } from '@/lib/currency';
+import { formatPrice as formatCurrencyPrice } from '@/lib/currency';
 
 export interface HomepageProduct {
   id: string;
@@ -18,8 +17,6 @@ export interface HomepageProduct {
   label: string | null;
   show_on_homepage: boolean;
   homepage_order: number;
-  duration_minutes?: number | null;
-  prices?: Record<string, number>;
 }
 
 export interface ServiceAreaData {
@@ -37,6 +34,7 @@ interface Props {
   serviceAreas?: ServiceAreaData[];
 }
 
+/* ── Brand image URLs ── */
 const IK = 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image';
 const BRAND = {
   logo:         `${IK}/drips-to-you-bali-icon.webp`,
@@ -68,48 +66,11 @@ const BOLT_SVG = (
   </svg>
 );
 
-const CLOCK_SVG = (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
-  </svg>
-);
-
-const DROP_SVG = (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-  </svg>
-);
-
 function arrivalLabel(minutes: number | null, lang: 'en' | 'id'): string {
   if (!minutes) return lang === 'en' ? 'Confirm with our team' : 'Konfirmasi dengan tim';
   const lo = Math.max(10, minutes - 10);
   const hi = minutes + 10;
   return `${lo}–${hi} min`;
-}
-
-const SUPPORTED_CURRENCIES = ['IDR', 'USD', 'AUD', 'EUR'] as const;
-
-function getAvailableCurrencies(product: HomepageProduct): string[] {
-  if (product.prices && Object.keys(product.prices).length > 0) {
-    return SUPPORTED_CURRENCIES.filter(c => product.prices![c] !== undefined);
-  }
-  return [normalizeCurrency(product.currency)];
-}
-
-function getPrimaryPrice(product: HomepageProduct, currency: string): string {
-  if (product.prices?.[currency] !== undefined) {
-    return formatCurrencyPrice(product.prices[currency], currency);
-  }
-  return product.price_label ?? formatCurrencyPrice(product.price_amount, product.currency);
-}
-
-function getSecondaryPrices(product: HomepageProduct, selectedCurrency: string): string {
-  if (!product.prices) return '';
-  return SUPPORTED_CURRENCIES
-    .filter(c => c !== selectedCurrency && product.prices![c] !== undefined)
-    .map(c => formatCurrencyPrice(product.prices![c], c))
-    .join(' · ');
 }
 
 export default function HomeContent({ waNumber, homepageProducts, serviceAreas }: Props) {
@@ -132,9 +93,9 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
     <main>
       <HeroSection t={t} waUrl={waUrl} waBookingMsg={waBookingMsg} />
       <TreatmentsSection t={t} products={displayProducts} />
-      <HowToBookSection t={t} />
       <ExperienceGallerySection t={t} />
       <WhyChooseUsSection t={t} />
+      <HowToBookSection t={t} />
       <ServiceAreasSection t={t} areas={displayAreas} />
       <CtaSection t={t} waUrl={waUrl} waBookingMsg={waBookingMsg} />
     </main>
@@ -145,52 +106,9 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
    HERO
 ───────────────────────────────────────────── */
 function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLanguage>['t']; waUrl: (s: string) => string; waBookingMsg: string }) {
-  const trustBadges = [
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          <polyline points="9 12 11 14 15 10"/>
-        </svg>
-      ),
-      title: t.benefits.licensed,
-      desc: t.benefits.licensedDesc,
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-          <polyline points="9 22 9 12 15 12 15 22"/>
-        </svg>
-      ),
-      title: t.benefits.mobile,
-      desc: t.benefits.mobileDesc,
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
-        </svg>
-      ),
-      title: t.benefits.fast,
-      desc: t.benefits.fastDesc,
-    },
-    {
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="2" y1="12" x2="22" y2="12"/>
-          <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-        </svg>
-      ),
-      title: t.benefits.premium,
-      desc: t.benefits.premiumDesc,
-    },
-  ];
-
   return (
     <section className="hero landing-hero" id="hero" aria-label="Drips To You Bali">
+      {/* Text content — left column */}
       <div className="hero-content landing-hero-content">
         <h1 className="hero-title landing-hero-title">
           {t.hero.line1}<br />
@@ -203,35 +121,24 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
         <p className="hero-sub landing-hero-sub">{t.hero.sub}</p>
 
         <div className="hero-cta landing-hero-cta">
-          <Link
-            href="/booking"
+          <a
+            href={waUrl(waBookingMsg)}
             className="btn-wa-hero landing-hero-primary"
-            prefetch
-            id="hero-cta-book"
+            target="_blank"
+            rel="noopener noreferrer"
+            id="hero-cta-wa"
           >
+            {WA_SVG}
             {t.hero.bookWa}
-            {ARROW_SVG}
-          </Link>
+          </a>
           <Link href="/treatments" className="btn-ghost-hero landing-hero-secondary" prefetch id="hero-cta-treatments">
             {t.hero.seeAll}
+            {ARROW_SVG}
           </Link>
-        </div>
-
-        {/* Trust badges strip */}
-        <div className="hero-trust-badges">
-          {trustBadges.map((badge, i) => (
-            <div key={i} className="hero-trust-badge">
-              <div className="hero-trust-icon">{badge.icon}</div>
-              <div>
-                <div className="hero-trust-title">{badge.title}</div>
-                <div className="hero-trust-desc">{badge.desc}</div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
 
-      {/* Photo — right side */}
+      {/* Photo — right side, no blur/filter */}
       <div className="hero-photo-wrap landing-hero-media" aria-hidden="true">
         <Image
           src={BRAND.photo1}
@@ -252,25 +159,6 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
           className="hero-photo landing-hero-photo landing-hero-photo--mobile"
         />
         <div className="hero-photo-overlay landing-hero-overlay" />
-
-        {/* Floating multi-currency card */}
-        <div className="hero-mc-float">
-          <div className="hero-mc-header">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-            </svg>
-            <span className="hero-mc-title">Multi-Currency Pricing</span>
-          </div>
-          <p className="hero-mc-desc">Choose your preferred currency per treatment.</p>
-          <div className="hero-mc-currencies">
-            <span className="hero-mc-currency">IDR</span>
-            <span className="hero-mc-currency">$</span>
-            <span className="hero-mc-currency">A$</span>
-            <span className="hero-mc-currency">€</span>
-          </div>
-        </div>
       </div>
     </section>
   );
@@ -281,176 +169,58 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
    TREATMENTS
 ───────────────────────────────────────────── */
 function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>['t']; products: HomepageProduct[] }) {
-  const { lang } = useLanguage();
-  const [cardCurrencies, setCardCurrencies] = useState<Record<string, string>>({});
-
   if (products.length === 0) return null;
 
-  function getCardCurrency(product: HomepageProduct): string {
-    const available = getAvailableCurrencies(product);
-    const saved = cardCurrencies[product.id];
-    if (saved && available.includes(saved)) return saved;
-    return available[0] ?? normalizeCurrency(product.currency);
+  function formatPrice(p: HomepageProduct) {
+    return p.price_label ?? formatCurrencyPrice(p.price_amount, p.currency);
   }
 
-  function setCardCurrency(productId: string, currency: string) {
-    setCardCurrencies(prev => ({ ...prev, [productId]: currency }));
-  }
+  const imgClasses = ['t-img-hangover', 't-img-immune', 't-img-energy', 't-img-beauty'];
 
   return (
     <section className="sec treatments-sec" id="treatments">
       <div className="sec-inner">
-        {/* Section header */}
-        <div className="treatments-hdr-row reveal">
-          <div>
-            <div className="sec-eyebrow">{t.treatments.eyebrow}</div>
-            <h2 className="sec-title">{t.treatments.title} <em>{t.treatments.titleEm}</em></h2>
-            <p className="sec-desc">{t.treatments.desc}</p>
-          </div>
-          <div className="treatments-currency-note">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <span>{lang === 'en' ? 'Prices update automatically.' : 'Harga diperbarui otomatis.'}</span>
-          </div>
+        <div className="sec-hdr reveal">
+          <div className="sec-eyebrow">{t.treatments.eyebrow}</div>
+          <h2 className="sec-title">{t.treatments.title} <em>{t.treatments.titleEm}</em></h2>
+          <p className="sec-desc">{t.treatments.desc}</p>
         </div>
 
         <div className="treatments-grid">
-          {products.slice(0, 6).map((p, i) => {
-            const available = getAvailableCurrencies(p);
-            const selectedCurrency = getCardCurrency(p);
-            const primaryPrice = getPrimaryPrice(p, selectedCurrency);
-            const secondaryPrices = getSecondaryPrices(p, selectedCurrency);
-            const hasMultiCurrency = available.length > 1;
-
-            return (
-              <div key={p.id} className="t-card reveal" style={{ transitionDelay: `${i * 0.07}s` }}>
-                <div className="t-card-img">
-                  {p.image_url ? (
-                    <Image
-                      className="card-photo"
-                      src={p.image_url}
-                      alt={`${p.name} IV Therapy Bali`}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="t-card-img-placeholder" />
-                  )}
-                  {p.label && (
-                    <span className={`t-badge${p.label === 'Baru' || p.label === 'New' ? ' new' : ''}`}>
-                      {p.label}
-                    </span>
-                  )}
-                </div>
-
-                <div className="t-body">
-                  <div className="t-name-row">
-                    <span className="t-drop-icon">{DROP_SVG}</span>
-                    <div className="t-name">{p.name}</div>
-                  </div>
-
-                  {p.short_description && <div className="t-detail">{p.short_description}</div>}
-
-                  {p.duration_minutes && (
-                    <div className="t-duration">
-                      {CLOCK_SVG}
-                      <span>{p.duration_minutes} min</span>
-                    </div>
-                  )}
-
-                  {hasMultiCurrency && (
-                    <div className="t-currency-row">
-                      <span className="t-currency-label">
-                        {lang === 'en' ? 'Currency' : 'Mata Uang'}
-                      </span>
-                      <div className="t-currency-tabs">
-                        {available.map(code => (
-                          <button
-                            key={code}
-                            className={`t-currency-tab${selectedCurrency === code ? ' active' : ''}`}
-                            onClick={() => setCardCurrency(p.id, code)}
-                            type="button"
-                            aria-pressed={selectedCurrency === code}
-                          >
-                            {code}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="t-price">{primaryPrice}</div>
-                  {secondaryPrices && (
-                    <div className="t-price-secondary">{secondaryPrices}</div>
-                  )}
-
-                  <div className="t-actions">
-                    <Link href={`/treatments/${p.slug}`} className="btn-see-more" prefetch>
-                      {t.treatments.seeMore}
-                    </Link>
-                    <Link href={`/booking?treatment=${p.slug}`} className="btn-book" prefetch>
-                      {t.treatments.bookNow}
-                    </Link>
-                  </div>
+          {products.slice(0, 4).map((p, i) => (
+            <div key={p.id} className="t-card reveal" style={{ transitionDelay: `${i * 0.08}s` }}>
+              <div className={`t-card-img ${imgClasses[i % imgClasses.length]}`}>
+                {p.image_url && (
+                  <Image
+                    className="card-photo"
+                    src={p.image_url}
+                    alt={`${p.name} IV Therapy Bali`}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
+                    unoptimized
+                  />
+                )}
+                {p.label && (
+                  <span className={`t-badge${p.label === 'Baru' || p.label === 'New' ? ' new' : ''}`}>
+                    {p.label}
+                  </span>
+                )}
+              </div>
+              <div className="t-body">
+                <div className="t-name">{p.name}</div>
+                {p.short_description && <div className="t-detail">{p.short_description}</div>}
+                <div className="t-price">{formatPrice(p)} <span>{t.treatments.perSession}</span></div>
+                <div className="t-actions">
+                  <Link href={`/treatments/${p.slug}`} className="btn-see-more" prefetch>
+                    {t.treatments.seeMore}
+                  </Link>
+                  <Link href={`/booking?treatment=${p.slug}`} className="btn-book" prefetch>
+                    {t.treatments.bookNow}
+                  </Link>
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Footer note */}
-        <div className="treatments-footer-note reveal">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          <span>
-            {lang === 'en'
-              ? 'Taxes may vary by location. Local pricing in Indonesian Rupiah.'
-              : 'Pajak dapat bervariasi berdasarkan lokasi. Harga lokal dalam Rupiah Indonesia.'}
-          </span>
-        </div>
-
-        {/* Info boxes */}
-        <div className="treatments-info-boxes reveal">
-          <div className="treatments-info-box">
-            <div className="treatments-info-box-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
             </div>
-            <div>
-              <div className="treatments-info-box-title">
-                {lang === 'en' ? 'Local pricing in Indonesian Rupiah' : 'Harga lokal dalam Rupiah Indonesia'}
-              </div>
-              <div className="treatments-info-box-desc">
-                {lang === 'en' ? 'Best value for residents and locals.' : 'Nilai terbaik untuk warga dan penduduk lokal.'}
-              </div>
-            </div>
-          </div>
-          <div className="treatments-info-box">
-            <div className="treatments-info-box-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="2" y1="12" x2="22" y2="12"/>
-                <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
-              </svg>
-            </div>
-            <div>
-              <div className="treatments-info-box-title">
-                {lang === 'en' ? 'International guest-friendly pricing' : 'Harga ramah tamu internasional'}
-              </div>
-              <div className="treatments-info-box-desc">
-                {lang === 'en' ? 'Transparent, auto-converted for travelers.' : 'Transparan, dikonversi otomatis untuk wisatawan.'}
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className="treatments-foot reveal">
@@ -465,76 +235,11 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
 }
 
 /* ─────────────────────────────────────────────
-   HOW TO BOOK — WELLNESS MADE SIMPLE
-───────────────────────────────────────────── */
-const HOW_ICONS = [
-  /* Calendar */
-  <svg key="h0" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-    <line x1="16" y1="2" x2="16" y2="6"/>
-    <line x1="8" y1="2" x2="8" y2="6"/>
-    <line x1="3" y1="10" x2="21" y2="10"/>
-  </svg>,
-  /* Home */
-  <svg key="h1" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-    <polyline points="9 22 9 12 15 12 15 22"/>
-  </svg>,
-  /* IV drop */
-  <svg key="h2" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-  </svg>,
-  /* Heart */
-  <svg key="h3" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>
-  </svg>,
-];
-
-function HowToBookSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
-  return (
-    <section className="sec how-sec" id="how-to-book">
-      <div className="sec-inner">
-        <div className="how-split">
-          {/* Left: text */}
-          <div className="how-split-left reveal">
-            <div className="sec-eyebrow">{t.howToBook.eyebrow}</div>
-            <h2 className="sec-title" style={{ marginTop: 12 }}>
-              {t.howToBook.title} <em>{t.howToBook.titleEm}</em>
-            </h2>
-            <p className="sec-desc" style={{ marginTop: 16 }}>{t.howToBook.sub}</p>
-            <div style={{ marginTop: 32 }}>
-              <Link href="/booking" className="btn-view-all" prefetch>
-                {t.cta.bookNow}
-                {ARROW_SVG}
-              </Link>
-            </div>
-          </div>
-
-          {/* Right: 2×2 step grid */}
-          <div className="how-steps-grid">
-            {t.howToBook.steps.map((s, i) => (
-              <div key={i} className="how-step-card reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
-                <div className="how-step-top">
-                  <div className="how-step-num">{i + 1}</div>
-                  <div className="how-step-icon">{HOW_ICONS[i]}</div>
-                </div>
-                <div className="how-step-title">{s.title}</div>
-                <p className="how-step-desc">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ─────────────────────────────────────────────
    EXPERIENCE GALLERY
 ───────────────────────────────────────────── */
 function ExperienceGallerySection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
   const images = [BRAND.photo2, BRAND.photo3, BRAND.photo4, BRAND.photo5];
-
+  
   return (
     <section className="gallery-sec" id="gallery">
       <div className="sec-inner">
@@ -559,23 +264,33 @@ function ExperienceGallerySection({ t }: { t: ReturnType<typeof useLanguage>['t'
    WHY CHOOSE US
 ───────────────────────────────────────────── */
 const WHY_ICONS = [
-  <svg key="why-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-    <polyline points="9 22 9 12 15 12 15 22" />
-  </svg>,
-  <svg key="why-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </svg>,
-  <svg key="why-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-  </svg>,
-  <svg key="why-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <circle cx="12" cy="8" r="4" />
-    <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-  </svg>,
-  <svg key="why-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-  </svg>,
+  (
+    <svg key="why-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  ),
+  (
+    <svg key="why-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+  ),
+  (
+    <svg key="why-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  ),
+  (
+    <svg key="why-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+    </svg>
+  ),
+  (
+    <svg key="why-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  ),
 ];
 
 function WhyChooseUsSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
@@ -587,7 +302,9 @@ function WhyChooseUsSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
           <h2 className="sec-title" id="why-title">
             {t.whyChooseUs.title} <em>{t.whyChooseUs.titleEm}</em>
           </h2>
-          <p className="sec-desc">{t.whyChooseUs.desc}</p>
+          <p className="sec-desc">
+            {t.whyChooseUs.desc}
+          </p>
         </div>
 
         <div className="why-img-banner reveal" style={{ position: 'relative', width: '100%', aspectRatio: '16/9', maxHeight: '560px', minHeight: '220px', borderRadius: '20px', overflow: 'hidden', marginBottom: '48px', boxShadow: 'var(--shadow-card)' }}>
@@ -602,6 +319,40 @@ function WhyChooseUsSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
               <p className="why-card-desc">{item.desc}</p>
             </div>
           ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   HOW TO BOOK
+───────────────────────────────────────────── */
+function HowToBookSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
+  return (
+    <section className="sec how-sec" id="how-to-book">
+      <div className="sec-inner">
+        <div className="sec-hdr centered reveal">
+          <div className="sec-eyebrow">{t.howToBook.eyebrow}</div>
+          <h2 className="sec-title">{t.howToBook.title} <em>{t.howToBook.titleEm}</em></h2>
+          <p className="sec-desc">{t.howToBook.sub}</p>
+        </div>
+        <div className="steps-row">
+          {t.howToBook.steps.map((s, i) => (
+            <div key={i} className="step-item reveal" style={{ transitionDelay: `${i * 0.12}s` }}>
+              <div className="step-num">{i + 1}</div>
+              <div className="step-content">
+                <div className="step-title">{s.title}</div>
+                <p className="step-desc">{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ textAlign: 'center', marginTop: 40 }} className="reveal">
+          <Link href="/booking" className="btn-view-all" prefetch>
+            {t.cta.bookNow}
+            {ARROW_SVG}
+          </Link>
         </div>
       </div>
     </section>
@@ -703,6 +454,9 @@ function ServiceAreasSection({ t, areas }: { t: ReturnType<typeof useLanguage>['
   );
 }
 
+/* ─────────────────────────────────────────────
+   TESTIMONIALS
+───────────────────────────────────────────── */
 /* ─────────────────────────────────────────────
    CTA
 ───────────────────────────────────────────── */
