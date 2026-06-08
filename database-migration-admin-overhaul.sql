@@ -52,6 +52,14 @@ CREATE TABLE IF NOT EXISTS `faqs` (
   PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- ── products.prices_json ─────────────────────────────────────────────────────
+SET @col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'prices_json');
+SET @sql = IF(@col = 0,
+    'ALTER TABLE `products` ADD COLUMN `prices_json` JSON NULL AFTER `price_label`',
+    "SELECT 'products.prices_json already exists'");
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- ── faqs.source_lang ─────────────────────────────────────────────────────────
 SET @col = (SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'faqs' AND COLUMN_NAME = 'source_lang');

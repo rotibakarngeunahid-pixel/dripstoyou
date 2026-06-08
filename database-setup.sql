@@ -73,6 +73,7 @@ CREATE TABLE `products` (
     `price_amount` DECIMAL(12,2) NOT NULL,
     `currency` VARCHAR(10) NOT NULL DEFAULT 'IDR',
     `price_label` VARCHAR(100) NULL,
+    `prices_json` JSON NULL,
     `duration_minutes` INTEGER NULL,
     `image_url` VARCHAR(500) NULL,
     `label` VARCHAR(50) NULL,

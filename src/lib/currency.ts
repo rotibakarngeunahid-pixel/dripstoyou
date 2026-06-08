@@ -40,3 +40,12 @@ export function formatPrice(
     maximumFractionDigits: option.decimalPlaces,
   }).format(amount);
 }
+
+export type PricesMap = Record<string, number>;
+
+export function formatMultiPrice(prices: PricesMap): string {
+  return Object.entries(prices)
+    .filter(([, v]) => v > 0)
+    .map(([code, amount]) => formatPrice(amount, code))
+    .join(' / ');
+}

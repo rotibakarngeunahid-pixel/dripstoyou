@@ -13,6 +13,7 @@ $method = getMethod();
 $id     = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
 $db     = getDb();
 ensureCurrencySchema($db);
+ensureProductPricesJsonSchema($db);
 
 // ── GET ────────────────────────────────────────────────────────────────────────
 if ($method === 'GET') {
@@ -28,18 +29,24 @@ if ($method === 'GET') {
 
         $b = $db->prepare('SELECT id, benefit_text, sort_order FROM product_benefits WHERE product_id = ? ORDER BY sort_order ASC');
         $b->execute([$id]);
-        $product['benefits'] = $b->fetchAll();
-        $product['price_amount']   = (float)$product['price_amount'];
-        $product['currency']       = normalizeCurrencyCode($product['currency'] ?? 'IDR');
+        $product['benefits']        = $b->fetchAll();
+        $product['price_amount']    = (float)$product['price_amount'];
+        $product['currency']        = normalizeCurrencyCode($product['currency'] ?? 'IDR');
         $product['show_on_homepage'] = (bool)$product['show_on_homepage'];
         $product['is_active']       = (bool)$product['is_active'];
+        $product['prices']          = decodePricesJson(
+            $product['prices_json'] ?? null,
+            $product['price_amount'],
+            $product['currency']
+        );
+        unset($product['prices_json']);
 
         jsonSuccess($product);
     }
 
     $stmt = $db->query(
         'SELECT p.id, p.name, p.slug, p.short_description, p.price_amount, p.currency, p.price_label,
-                p.duration_minutes, p.image_url, p.label, p.is_active, p.show_on_homepage,
+                p.prices_json, p.duration_minutes, p.image_url, p.label, p.is_active, p.show_on_homepage,
                 p.homepage_order, p.created_at, p.updated_at,
                 c.name AS category_name,
                 (SELECT COUNT(*) FROM bookings WHERE product_id = p.id) AS booking_count
@@ -54,6 +61,12 @@ if ($method === 'GET') {
         $p['show_on_homepage'] = (bool)$p['show_on_homepage'];
         $p['is_active']        = (bool)$p['is_active'];
         $p['booking_count']    = (int)$p['booking_count'];
+        $p['prices']           = decodePricesJson(
+            $p['prices_json'] ?? null,
+            $p['price_amount'],
+            $p['currency']
+        );
+        unset($p['prices_json']);
     }
     unset($p);
     jsonSuccess($products);
@@ -62,15 +75,12 @@ if ($method === 'GET') {
 // ── POST (create) ──────────────────────────────────────────────────────────────
 if ($method === 'POST') {
     $body = getBodyJson();
-    requireFields($body, ['name', 'slug', 'priceAmount']);
+    requireFields($body, ['name', 'slug']);
 
     $name             = str_clean($body['name'] ?? '', 200);
     $slug             = str_clean($body['slug'] ?? '', 200);
     $shortDescription = str_clean($body['shortDescription'] ?? '', 500);
     $fullDescription  = str_clean($body['fullDescription'] ?? '', 20000);
-    $priceAmount      = max(0, (float)($body['priceAmount'] ?? 0));
-    $currency         = normalizeCurrencyCode($body['currency'] ?? getSiteSetting('default_currency', 'IDR'));
-    $priceLabel       = formatCurrencyAmount($priceAmount, $currency);
     $durationMinutes  = isset($body['durationMinutes']) ? max(1, (int)$body['durationMinutes']) : null;
     $imageUrl         = str_clean($body['imageUrl'] ?? '', 500);
     $label            = str_clean($body['label'] ?? '', 50);
@@ -80,9 +90,23 @@ if ($method === 'POST') {
     $categoryId       = isset($body['categoryId']) ? str_clean($body['categoryId'], 191) : null;
     $benefits         = isset($body['benefits']) && is_array($body['benefits']) ? $body['benefits'] : [];
 
+    // Resolve prices — new multi-currency format takes priority, falls back to old single-price format
+    $prices = normalizePricesInput($body['prices'] ?? null);
+    if (empty($prices)) {
+        $singleAmount = max(0, (float)($body['priceAmount'] ?? 0));
+        if ($singleAmount <= 0) jsonError('Minimal satu harga harus diisi', 422);
+        $singleCurrency = normalizeCurrencyCode($body['currency'] ?? getSiteSetting('default_currency', 'IDR'));
+        $prices = [$singleCurrency => $singleAmount];
+    }
+
+    $primary    = primaryPriceFromPrices($prices);
+    $priceAmount = $primary['amount'];
+    $currency    = $primary['currency'];
+    $pricesJson  = json_encode($prices, JSON_UNESCAPED_UNICODE);
+    $priceLabel  = formatPricesLabel($prices);
+
     if (!preg_match('/^[a-z0-9-]+$/', $slug)) jsonError('Slug hanya boleh huruf kecil, angka, dan tanda hubung', 422);
 
-    // Check slug uniqueness
     $chk = $db->prepare('SELECT id FROM products WHERE slug = ? LIMIT 1');
     $chk->execute([$slug]);
     if ($chk->fetch()) jsonError('Slug sudah dipakai', 409);
@@ -93,9 +117,9 @@ if ($method === 'POST') {
     $stmt = $db->prepare(
         'INSERT INTO products
          (id, category_id, name, slug, short_description, full_description,
-          price_amount, currency, price_label, duration_minutes, image_url, label,
+          price_amount, currency, price_label, prices_json, duration_minutes, image_url, label,
           is_active, show_on_homepage, homepage_order, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $stmt->execute([
         $productId,
@@ -106,6 +130,7 @@ if ($method === 'POST') {
         $priceAmount,
         $currency,
         $priceLabel ?: null,
+        $pricesJson,
         $durationMinutes,
         $imageUrl ?: null,
         $label ?: null,
@@ -129,7 +154,7 @@ if ($method === 'POST') {
 if ($method === 'PATCH') {
     if (!$id) jsonError('Product ID required', 400);
 
-    $chk = $db->prepare('SELECT id, price_amount, currency FROM products WHERE id = ? LIMIT 1');
+    $chk = $db->prepare('SELECT id, price_amount, currency, prices_json FROM products WHERE id = ? LIMIT 1');
     $chk->execute([$id]);
     $currentProduct = $chk->fetch();
     if (!$currentProduct) jsonError('Product not found', 404);
@@ -138,23 +163,58 @@ if ($method === 'PATCH') {
     $updates = [];
     $params  = [];
 
-    $allowed = ['name', 'short_description', 'full_description', 'price_amount', 'currency', 'price_label',
-                'duration_minutes', 'image_url', 'label', 'is_active', 'show_on_homepage',
-                'homepage_order', 'category_id'];
+    // Handle multi-currency prices update
+    if (array_key_exists('prices', $body)) {
+        $newPrices = normalizePricesInput($body['prices']);
+        if (!empty($newPrices)) {
+            $primary     = primaryPriceFromPrices($newPrices);
+            $updates[]   = '`price_amount` = ?';
+            $params[]    = $primary['amount'];
+            $updates[]   = '`currency` = ?';
+            $params[]    = $primary['currency'];
+            $updates[]   = '`prices_json` = ?';
+            $params[]    = json_encode($newPrices, JSON_UNESCAPED_UNICODE);
+            $updates[]   = '`price_label` = ?';
+            $params[]    = formatPricesLabel($newPrices);
+        }
+    } elseif (array_key_exists('priceAmount', $body) || array_key_exists('currency', $body)) {
+        // Legacy single-price update — keep backward compat
+        $currentPrices = decodePricesJson(
+            $currentProduct['prices_json'] ?? null,
+            (float)$currentProduct['price_amount'],
+            normalizeCurrencyCode($currentProduct['currency'] ?? 'IDR')
+        );
+        $nextAmount   = array_key_exists('priceAmount', $body)
+            ? max(0, (float)$body['priceAmount'])
+            : (float)$currentProduct['price_amount'];
+        $nextCurrency = array_key_exists('currency', $body)
+            ? normalizeCurrencyCode((string)$body['currency'])
+            : normalizeCurrencyCode($currentProduct['currency'] ?? 'IDR');
 
-    // Map camelCase → snake_case (priceLabel removed; auto-generated from priceAmount)
+        // Merge into existing prices map
+        $currentPrices[$nextCurrency] = $nextAmount;
+        $primary   = primaryPriceFromPrices($currentPrices);
+        $updates[] = '`price_amount` = ?';
+        $params[]  = $primary['amount'];
+        $updates[] = '`currency` = ?';
+        $params[]  = $primary['currency'];
+        $updates[] = '`prices_json` = ?';
+        $params[]  = json_encode($currentPrices, JSON_UNESCAPED_UNICODE);
+        $updates[] = '`price_label` = ?';
+        $params[]  = formatPricesLabel($currentPrices);
+    }
+
+    // Map remaining camelCase fields → snake_case
     $fieldMap = [
+        'name'             => 'name',
         'shortDescription' => 'short_description',
         'fullDescription'  => 'full_description',
-        'priceAmount'      => 'price_amount',
-        'currency'         => 'currency',
         'durationMinutes'  => 'duration_minutes',
         'imageUrl'         => 'image_url',
         'isActive'         => 'is_active',
         'showOnHomepage'   => 'show_on_homepage',
         'homepageOrder'    => 'homepage_order',
         'categoryId'       => 'category_id',
-        'name'             => 'name',
         'label'            => 'label',
     ];
 
@@ -163,26 +223,11 @@ if ($method === 'PATCH') {
         $val = $body[$camel];
         if (in_array($snake, ['is_active', 'show_on_homepage'], true)) {
             $val = $val ? 1 : 0;
-        } elseif ($snake === 'price_amount') {
-            $val = max(0, (float)$val);
         } elseif ($snake === 'homepage_order') {
             $val = (int)$val;
-        } elseif ($snake === 'currency') {
-            $val = normalizeCurrencyCode((string)$val);
         }
         $updates[] = "`$snake` = ?";
         $params[]  = $val;
-    }
-
-    if (array_key_exists('priceAmount', $body) || array_key_exists('currency', $body)) {
-        $nextAmount = array_key_exists('priceAmount', $body)
-            ? max(0, (float)$body['priceAmount'])
-            : (float)$currentProduct['price_amount'];
-        $nextCurrency = array_key_exists('currency', $body)
-            ? normalizeCurrencyCode((string)$body['currency'])
-            : normalizeCurrencyCode($currentProduct['currency'] ?? 'IDR');
-        $updates[] = '`price_label` = ?';
-        $params[]  = formatCurrencyAmount($nextAmount, $nextCurrency);
     }
 
     if (!empty($updates)) {
@@ -192,7 +237,6 @@ if ($method === 'PATCH') {
         $db->prepare('UPDATE products SET ' . implode(', ', $updates) . ' WHERE id = ?')->execute($params);
     }
 
-    // Update benefits if provided
     if (isset($body['benefits']) && is_array($body['benefits'])) {
         $db->prepare('DELETE FROM product_benefits WHERE product_id = ?')->execute([$id]);
         foreach ($body['benefits'] as $i => $bt) {

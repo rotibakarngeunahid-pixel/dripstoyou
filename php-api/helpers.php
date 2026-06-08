@@ -280,6 +280,57 @@ function normalizeCurrencyCode(?string $currency): string {
     return array_key_exists($code, currencyCatalog()) ? $code : 'IDR';
 }
 
+// ── Multi-Currency Price Helpers ──────────────────────────────────────────────
+
+function ensureProductPricesJsonSchema(PDO $db): void {
+    if (!columnExists($db, 'products', 'prices_json')) {
+        $db->exec("ALTER TABLE `products` ADD COLUMN `prices_json` JSON NULL AFTER `price_label`");
+    }
+}
+
+function normalizePricesInput(mixed $raw): array {
+    if (empty($raw) || !is_array($raw)) return [];
+    $result = [];
+    foreach ($raw as $key => $val) {
+        if (is_string($key)) {
+            // Object format: {"IDR": 50000, "USD": 29.99}
+            $code   = normalizeCurrencyCode($key);
+            $amount = max(0, (float)$val);
+            if ($amount > 0) $result[$code] = $amount;
+        } elseif (is_array($val) && isset($val['currency'])) {
+            // Array format: [{"currency":"IDR","amount":50000}, ...]
+            $code   = normalizeCurrencyCode((string)($val['currency'] ?? ''));
+            $amount = max(0, (float)($val['amount'] ?? 0));
+            if ($amount > 0) $result[$code] = $amount;
+        }
+    }
+    return $result;
+}
+
+function primaryPriceFromPrices(array $prices): array {
+    if (empty($prices)) return ['amount' => 0.0, 'currency' => 'IDR'];
+    if (isset($prices['IDR'])) return ['amount' => $prices['IDR'], 'currency' => 'IDR'];
+    $first = (string)array_key_first($prices);
+    return ['amount' => $prices[$first], 'currency' => $first];
+}
+
+function formatPricesLabel(array $prices): string {
+    $parts = [];
+    foreach ($prices as $currency => $amount) {
+        $parts[] = formatCurrencyAmount((float)$amount, (string)$currency);
+    }
+    return implode(' / ', $parts);
+}
+
+function decodePricesJson(?string $json, float $fallbackAmount, string $fallbackCurrency): array {
+    if ($json !== null) {
+        $decoded = json_decode($json, true);
+        if (is_array($decoded) && !empty($decoded)) return $decoded;
+    }
+    if ($fallbackAmount > 0) return [$fallbackCurrency => $fallbackAmount];
+    return [];
+}
+
 function tableExists(PDO $db, string $table): bool {
     $stmt = $db->prepare(
         'SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES

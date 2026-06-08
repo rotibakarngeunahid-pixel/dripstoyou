@@ -4,6 +4,8 @@ import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CURRENCY_OPTIONS, formatPrice, normalizeCurrency, type CurrencyCode } from '@/lib/currency';
 
+type PriceRow = { currency: CurrencyCode; amount: string };
+
 type Product = {
   id?: string;
   name?: string;
@@ -13,6 +15,7 @@ type Product = {
   price_amount?: number;
   currency?: string | null;
   price_label?: string | null;
+  prices?: Record<string, number>;
   duration_minutes?: number | null;
   image_url?: string | null;
   label?: string | null;
@@ -32,6 +35,21 @@ function slugify(value: string) {
     .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
+}
+
+function initPriceRows(product?: Product): PriceRow[] {
+  if (product?.prices && Object.keys(product.prices).length > 0) {
+    return Object.entries(product.prices)
+      .filter(([, v]) => (v ?? 0) > 0)
+      .map(([code, amount]) => ({
+        currency: normalizeCurrency(code),
+        amount: String(amount),
+      }));
+  }
+  if (product?.price_amount) {
+    return [{ currency: normalizeCurrency(product.currency), amount: String(product.price_amount) }];
+  }
+  return [{ currency: 'IDR', amount: '' }];
 }
 
 /* ─── Confirm Modal ─── */
@@ -228,30 +246,61 @@ export function ProductForm({ product }: { product?: Product }) {
   const router = useRouter();
   const isEdit = !!product?.id;
 
-  const [name,          setName]          = useState(product?.name ?? '');
-  const [shortDesc,     setShortDesc]     = useState(product?.short_description ?? '');
-  const [fullDesc,      setFullDesc]      = useState(product?.full_description ?? '');
-  const [price,         setPrice]         = useState(String(product?.price_amount ?? ''));
-  const [currency,      setCurrency]      = useState<CurrencyCode>(normalizeCurrency(product?.currency));
-  const [duration,      setDuration]      = useState(String(product?.duration_minutes ?? '45'));
-  const [imageUrl,      setImageUrl]      = useState(product?.image_url ?? '');
-  const [label,         setLabel]         = useState(product?.label ?? '');
-  const [isActive,      setIsActive]      = useState(product?.is_active ?? true);
-  const [showOnHomepage, setShowOnHomepage] = useState(product?.show_on_homepage ?? false);
-  const [homepageOrder, setHomepageOrder] = useState(String(product?.homepage_order ?? '0'));
-  const [benefits,      setBenefits]      = useState<string[]>(product?.benefits?.map((b) => b.benefit_text) ?? ['']);
-  const [saving,        setSaving]        = useState(false);
-  const [deleting,      setDeleting]      = useState(false);
-  const [error,         setError]         = useState('');
-  const [toast,         setToast]         = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-  const [confirm,       setConfirm]       = useState<{
+  const [name,            setName]            = useState(product?.name ?? '');
+  const [shortDesc,       setShortDesc]       = useState(product?.short_description ?? '');
+  const [fullDesc,        setFullDesc]        = useState(product?.full_description ?? '');
+  const [priceRows,       setPriceRows]       = useState<PriceRow[]>(() => initPriceRows(product));
+  const [duration,        setDuration]        = useState(String(product?.duration_minutes ?? '45'));
+  const [imageUrl,        setImageUrl]        = useState(product?.image_url ?? '');
+  const [label,           setLabel]           = useState(product?.label ?? '');
+  const [isActive,        setIsActive]        = useState(product?.is_active ?? true);
+  const [showOnHomepage,  setShowOnHomepage]  = useState(product?.show_on_homepage ?? false);
+  const [homepageOrder,   setHomepageOrder]   = useState(String(product?.homepage_order ?? '0'));
+  const [benefits,        setBenefits]        = useState<string[]>(product?.benefits?.map((b) => b.benefit_text) ?? ['']);
+  const [saving,          setSaving]          = useState(false);
+  const [deleting,        setDeleting]        = useState(false);
+  const [error,           setError]           = useState('');
+  const [toast,           setToast]           = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [confirm,         setConfirm]         = useState<{
     open: boolean; title: string; message: string;
     confirmLabel: string; danger?: boolean; loading?: boolean;
     onConfirm: () => void;
   }>({ open: false, title: '', message: '', confirmLabel: '', onConfirm: () => {} });
 
-  /* slug is generated server-side on create; kept on edit */
   const slugValue = isEdit ? (product?.slug ?? '') : slugify(name);
+
+  /* ─── Price row helpers ─── */
+  function availableCurrenciesForRow(idx: number) {
+    const used = new Set(priceRows.filter((_, i) => i !== idx).map(r => r.currency));
+    return CURRENCY_OPTIONS.filter(o => !used.has(o.code));
+  }
+
+  function updatePriceRow(idx: number, field: 'currency' | 'amount', value: string) {
+    setPriceRows(prev =>
+      prev.map((row, i) =>
+        i === idx
+          ? { ...row, [field]: field === 'currency' ? normalizeCurrency(value) : value }
+          : row,
+      ),
+    );
+  }
+
+  function removePriceRow(idx: number) {
+    if (priceRows.length === 1) return;
+    setPriceRows(prev => prev.filter((_, i) => i !== idx));
+  }
+
+  function addPriceRow() {
+    const used = new Set(priceRows.map(r => r.currency));
+    const next = CURRENCY_OPTIONS.find(o => !used.has(o.code));
+    if (!next) return;
+    setPriceRows(prev => [...prev, { currency: next.code, amount: '' }]);
+  }
+
+  const pricePreview = priceRows
+    .filter(r => parseFloat(r.amount) > 0)
+    .map(r => formatPrice(parseFloat(r.amount), r.currency))
+    .join(' / ');
 
   function showToast(msg: string, type: 'success' | 'error' = 'success') {
     setToast({ msg, type });
@@ -263,13 +312,23 @@ export function ProductForm({ product }: { product?: Product }) {
     setSaving(true);
     setError('');
 
+    const prices: Record<string, number> = {};
+    for (const row of priceRows) {
+      const amount = parseFloat(row.amount);
+      if (amount > 0) prices[row.currency] = amount;
+    }
+    if (Object.keys(prices).length === 0) {
+      setError('Minimal satu harga harus diisi.');
+      setSaving(false);
+      return;
+    }
+
     const payload = {
       name,
       slug: slugValue,
       shortDescription: shortDesc,
       fullDescription:  fullDesc,
-      priceAmount:      parseFloat(price),
-      currency,
+      prices,
       durationMinutes:  parseInt(duration, 10),
       imageUrl:         imageUrl || null,
       label:            label || null,
@@ -373,26 +432,62 @@ export function ProductForm({ product }: { product?: Product }) {
           <textarea className="control" value={fullDesc} onChange={(e) => setFullDesc(e.target.value)} rows={5} />
         </label>
 
-        {/* Price / Duration */}
+        {/* Multi-currency Price */}
         <div className="admin-form-grid">
           <div className="admin-field">
             <span className="admin-field-label">Harga *</span>
-            <div className="price-currency-row">
-              <input className="control" type="number" value={price} onChange={(e) => setPrice(e.target.value)} required min="0" step={currency === 'IDR' ? '1' : '0.01'} />
-              <select
-                className="control currency-select"
-                value={currency}
-                onChange={(e) => setCurrency(normalizeCurrency(e.target.value))}
-                aria-label="Mata uang"
+            {priceRows.map((row, idx) => (
+              <div
+                key={idx}
+                style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 120px auto', gap: 8, marginBottom: 8 }}
               >
-                {CURRENCY_OPTIONS.map((option) => (
-                  <option key={option.code} value={option.code}>
-                    {option.flag} {option.code}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <span className="admin-help">{formatPrice(Number(price || 0), currency)}</span>
+                <input
+                  className="control"
+                  type="number"
+                  value={row.amount}
+                  onChange={(e) => updatePriceRow(idx, 'amount', e.target.value)}
+                  min="0"
+                  step={row.currency === 'IDR' ? '1' : '0.01'}
+                  placeholder={`Jumlah (${row.currency})`}
+                  required={idx === 0}
+                />
+                <select
+                  className="control"
+                  value={row.currency}
+                  onChange={(e) => updatePriceRow(idx, 'currency', e.target.value)}
+                  aria-label={`Mata uang baris ${idx + 1}`}
+                >
+                  {availableCurrenciesForRow(idx).map((opt) => (
+                    <option key={opt.code} value={opt.code}>
+                      {opt.flag} {opt.code}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="button button-secondary"
+                  type="button"
+                  onClick={() => removePriceRow(idx)}
+                  disabled={priceRows.length === 1}
+                  aria-label={`Hapus baris harga ${idx + 1}`}
+                  style={{ minWidth: 72, padding: '0 12px' }}
+                >
+                  Hapus
+                </button>
+              </div>
+            ))}
+            {priceRows.length < CURRENCY_OPTIONS.length && (
+              <button
+                className="button button-secondary"
+                type="button"
+                onClick={addPriceRow}
+                style={{ marginBottom: pricePreview ? 6 : 0 }}
+              >
+                + Tambah Mata Uang
+              </button>
+            )}
+            {pricePreview && (
+              <span className="admin-help">{pricePreview}</span>
+            )}
           </div>
           <label className="admin-field">
             <span className="admin-field-label">Durasi (menit)</span>

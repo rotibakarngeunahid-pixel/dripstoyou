@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import { useLanguage } from '@/contexts/language';
-import { formatPrice as formatCurrencyPrice } from '@/lib/currency';
+import { formatPrice as formatCurrencyPrice, getCurrencyOption } from '@/lib/currency';
 
 /* ─── Types ─── */
 type ApiResponse<T> = { success?: boolean; message?: string; data?: T; error?: string };
@@ -17,6 +17,7 @@ type Product = {
   price_label: string | null;
   price_amount: number;
   currency: string | null;
+  prices?: Record<string, number>;
   short_description?: string | null;
   duration_minutes?: number | null;
   image_url?: string | null;
@@ -71,6 +72,7 @@ interface BK {
   people1: (n: number) => string;
   errNoTreatment: string; errLoad: string; errSubmit: string; errNetwork: string;
   detailLabels: string[];
+  currencyLabel: string;
 }
 
 const BK_TEXT: Record<'en' | 'id', BK> = {
@@ -153,6 +155,7 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     errSubmit: 'Failed to create booking. Please try via WhatsApp.',
     errNetwork: 'Network error. Please try again or contact us via WhatsApp.',
     detailLabels: ['Treatment', 'Date', 'Time', 'Area', 'Name', 'Total'],
+    currencyLabel: 'Currency',
   },
   id: {
     stepLabels: ['Treatment', 'Jadwal', 'Detail'],
@@ -233,6 +236,7 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     errSubmit: 'Booking gagal dikirim. Coba hubungi kami via WhatsApp.',
     errNetwork: 'Koneksi bermasalah. Coba lagi atau hubungi kami via WhatsApp.',
     detailLabels: ['Treatment', 'Tanggal', 'Waktu', 'Area', 'Nama', 'Total'],
+    currencyLabel: 'Mata Uang',
   },
 };
 
@@ -257,8 +261,24 @@ const fmtDate = (s: string, lang: 'en' | 'id' = 'en') => {
 function formatPrice(p: Product) {
   return p.price_label ?? fmtMoney(p.price_amount, p.currency);
 }
+function getPriceForCurrency(p: Product, currency: string): number {
+  if (p.prices && currency && p.prices[currency] !== undefined) {
+    return p.prices[currency] as number;
+  }
+  return p.price_amount;
+}
+function getEffectiveCurrency(p: Product, currency: string): string {
+  return (p.prices && currency && p.prices[currency] !== undefined) ? currency : (p.currency ?? 'IDR');
+}
 function initForm(): FormState {
   return { date: '', time: '', people: 1, locType: 'VILLA', areaId: '', address: '', name: '', phone: '', notes: '' };
+}
+function defaultCurrencyForProduct(p: Product): string {
+  if (p.prices) {
+    const keys = Object.keys(p.prices);
+    return keys.includes('IDR') ? 'IDR' : (keys[0] ?? p.currency ?? 'IDR');
+  }
+  return p.currency ?? 'IDR';
 }
 
 /* ─── Icons ─── */
@@ -379,7 +399,7 @@ function StepBar({ step, bk }: { step: number; bk: BK }) {
 
 /* ─── Sidebar ─── */
 function Sidebar({
-  bk, lang, product, productGrad, date, time, areaName, people, locType,
+  bk, lang, product, productGrad, date, time, areaName, people, locType, bookingCurrency,
 }: {
   bk: BK;
   lang: 'en' | 'id';
@@ -390,6 +410,7 @@ function Sidebar({
   areaName: string;
   people: number;
   locType: string;
+  bookingCurrency: string;
 }) {
   const loc = bk.locTypes.find(l => l.v === locType);
   const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000';
@@ -400,6 +421,9 @@ function Sidebar({
     { ic: <IcHome />,   k: bk.sidebarLoc,    v: loc?.l || null },
     { ic: <IcPeople />, k: bk.sidebarPeople, v: bk.people1(people) },
   ].filter(r => r.v);
+
+  const unitPrice     = product ? getPriceForCurrency(product, bookingCurrency) : 0;
+  const dispCurrency  = product ? getEffectiveCurrency(product, bookingCurrency) : 'IDR';
 
   return (
     <aside className="bk-sidebar bk-desktop-only">
@@ -437,8 +461,8 @@ function Sidebar({
         {product && (
           <div className="bk-sum-footer">
             <div className="bk-sum-total-k">{bk.sidebarTotal}</div>
-            <div className="bk-sum-total-v">{fmtMoney(product.price_amount * people, product.currency)}</div>
-            {people > 1 && <div className="bk-sum-note">{people} × {fmtMoney(product.price_amount, product.currency)}</div>}
+            <div className="bk-sum-total-v">{fmtMoney(unitPrice * people, dispCurrency)}</div>
+            {people > 1 && <div className="bk-sum-note">{people} × {fmtMoney(unitPrice, dispCurrency)}</div>}
             <div className="bk-sum-note" style={{ marginTop: 6 }}>{bk.sidebarNote}</div>
           </div>
         )}
@@ -500,7 +524,7 @@ function ProductCap({
 
 /* ─── Step 1: Treatment ─── */
 function Step1({
-  bk, products, loading, selectedId, onSelect, onNext,
+  bk, products, loading, selectedId, onSelect, onNext, bookingCurrency, onCurrencyChange,
 }: {
   bk: BK;
   products: Product[];
@@ -508,7 +532,12 @@ function Step1({
   selectedId: string;
   onSelect: (id: string) => void;
   onNext: () => void;
+  bookingCurrency: string;
+  onCurrencyChange: (c: string) => void;
 }) {
+  const selectedProduct = products.find(p => p.id === selectedId);
+  const availableCurrencies = selectedProduct?.prices ? Object.keys(selectedProduct.prices) : [];
+
   return (
     <div className="bk-fade-in">
       <div className="bk-card">
@@ -549,6 +578,30 @@ function Step1({
         </div>
         {!loading && products.length === 0 && (
           <p className="field-help" style={{ marginTop: 16 }}>{bk.step1Empty}</p>
+        )}
+
+        {/* Currency selector — shown when a product with multiple currencies is selected */}
+        {selectedId && availableCurrencies.length > 1 && (
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--pale-aqua)' }}>
+            <div className="bk-field-label" style={{ marginBottom: 10, fontSize: 13, color: 'var(--teal)', fontWeight: 600 }}>
+              {bk.currencyLabel}
+            </div>
+            <div className="bk-loc-wrap">
+              {availableCurrencies.map(c => {
+                const opt = getCurrencyOption(c);
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    className={`bk-loc-btn${bookingCurrency === c ? ' act' : ''}`}
+                    onClick={() => onCurrencyChange(c)}
+                  >
+                    {opt.flag} {opt.code}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
       <div className="bk-form-actions" style={{ marginTop: 14 }}>
@@ -719,6 +772,7 @@ function Step2({
 /* ─── Step 3: Details + Submit ─── */
 function Step3({
   bk, lang, form, setForm, product, productGrad, areaName, submitting, error, onBack, onSubmit,
+  bookingCurrency,
 }: {
   bk: BK;
   lang: 'en' | 'id';
@@ -731,10 +785,14 @@ function Step3({
   error: string;
   onBack: () => void;
   onSubmit: (e: React.FormEvent) => void;
+  bookingCurrency: string;
 }) {
   const [agreed, setAgreed] = useState(false);
   const canSubmit = form.name.trim().length > 1 && form.phone.trim().length >= 7 && agreed;
   const loc = bk.locTypes.find(l => l.v === form.locType);
+
+  const unitPrice    = product ? getPriceForCurrency(product, bookingCurrency) : 0;
+  const dispCurrency = product ? getEffectiveCurrency(product, bookingCurrency) : 'IDR';
 
   return (
     <form className="bk-fade-in" onSubmit={onSubmit}>
@@ -781,7 +839,7 @@ function Step3({
           <div className="bk-mob-sum-swatch" style={{ background: productGrad }} />
           <div className="bk-mob-sum-eyebrow">{bk.summaryEyebrow}</div>
           <div className="bk-mob-sum-name">{product.name}</div>
-          <div className="bk-mob-sum-price">{fmtMoney(product.price_amount * form.people, product.currency)}</div>
+          <div className="bk-mob-sum-price">{fmtMoney(unitPrice * form.people, dispCurrency)}</div>
           <div className="bk-mob-sum-divider" />
           {form.date && <div className="bk-mob-sum-row">📅 {fmtDate(form.date, lang)} · {form.time} WITA</div>}
           {areaName && <div className="bk-mob-sum-row">📍 {areaName}{loc ? ` · ${loc.l}` : ''}</div>}
@@ -823,7 +881,7 @@ function Step3({
 
 /* ─── Success Screen ─── */
 function SuccessScreen({
-  bk, lang, bookingCode, product, form, areaName, onReset,
+  bk, lang, bookingCode, product, form, areaName, onReset, bookingCurrency,
 }: {
   bk: BK;
   lang: 'en' | 'id';
@@ -832,6 +890,7 @@ function SuccessScreen({
   form: FormState;
   areaName: string;
   onReset: () => void;
+  bookingCurrency: string;
 }) {
   const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000';
   const waText = encodeURIComponent([
@@ -844,13 +903,16 @@ function SuccessScreen({
     `${bk.waAreaLabel}: ${areaName}`,
   ].join('\n'));
 
+  const unitPrice    = product ? getPriceForCurrency(product, bookingCurrency) : 0;
+  const dispCurrency = product ? getEffectiveCurrency(product, bookingCurrency) : 'IDR';
+
   const details: [string, string][] = [
     [bk.detailLabels[0], product?.name ?? '—'],
     [bk.detailLabels[1], fmtDate(form.date, lang) || '—'],
     [bk.detailLabels[2], form.time ? form.time + ' WITA' : '—'],
     [bk.detailLabels[3], areaName || '—'],
     [bk.detailLabels[4], form.name],
-    [bk.detailLabels[5], product ? fmtMoney(product.price_amount * form.people, product.currency) : '—'],
+    [bk.detailLabels[5], product ? fmtMoney(unitPrice * form.people, dispCurrency) : '—'],
   ];
 
   return (
@@ -918,9 +980,10 @@ export default function BookingPage() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotError, setSlotError]       = useState('');
 
-  const [step, setStep]           = useState(1);
-  const [productId, setProductId] = useState('');
-  const [form, setForm]           = useState<FormState>(initForm);
+  const [step, setStep]                 = useState(1);
+  const [productId, setProductId]       = useState('');
+  const [bookingCurrency, setBookingCurrency] = useState('IDR');
+  const [form, setForm]                 = useState<FormState>(initForm);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]           = useState('');
@@ -941,7 +1004,10 @@ export default function BookingPage() {
         const requested = new URLSearchParams(window.location.search).get('treatment');
         if (requested) {
           const match = pJson.data.find(p => p.slug === requested || p.id === requested);
-          if (match) setProductId(match.id);
+          if (match) {
+            setProductId(match.id);
+            setBookingCurrency(defaultCurrencyForProduct(match));
+          }
         }
       }
       if (Array.isArray(aJson.data)) setAreas(aJson.data);
@@ -954,6 +1020,12 @@ export default function BookingPage() {
     return () => { active = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function handleProductSelect(id: string) {
+    setProductId(id);
+    const p = products.find(pr => pr.id === id);
+    if (p) setBookingCurrency(defaultCurrencyForProduct(p));
+  }
 
   async function loadSlots(date: string) {
     const reqId = ++slotReqRef.current;
@@ -1024,6 +1096,7 @@ export default function BookingPage() {
     setSuccess(null);
     setStep(1);
     setProductId('');
+    setBookingCurrency('IDR');
     setForm(initForm());
     setSlots([]);
     setSlotError('');
@@ -1049,6 +1122,7 @@ export default function BookingPage() {
             form={form}
             areaName={areaName}
             onReset={reset}
+            bookingCurrency={bookingCurrency}
           />
         </div>
         <SiteFooter />
@@ -1092,8 +1166,10 @@ export default function BookingPage() {
                 products={products}
                 loading={loadingInitial}
                 selectedId={productId}
-                onSelect={id => setProductId(id)}
+                onSelect={handleProductSelect}
                 onNext={() => setStep(2)}
+                bookingCurrency={bookingCurrency}
+                onCurrencyChange={setBookingCurrency}
               />
             )}
             {step === 2 && (
@@ -1123,6 +1199,7 @@ export default function BookingPage() {
                 error={error}
                 onBack={() => setStep(2)}
                 onSubmit={handleSubmit}
+                bookingCurrency={bookingCurrency}
               />
             )}
           </main>
@@ -1137,6 +1214,7 @@ export default function BookingPage() {
             areaName={areaName}
             people={form.people}
             locType={form.locType}
+            bookingCurrency={bookingCurrency}
           />
         </div>
       </div>
