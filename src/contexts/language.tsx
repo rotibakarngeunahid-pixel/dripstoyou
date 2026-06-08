@@ -95,9 +95,9 @@ export const translations: Record<Lang, Translations> = {
     },
     hero: {
       pill: 'Tersedia di Area Layanan Aktif',
-      line1: 'Hidrasi &', line2: 'Pemulihan', lineEm: 'Diantar ke Kamu',
-      sub: 'Tim medis bersertifikat datang langsung ke villa, hotel, atau Airbnb Anda di area layanan aktif. Nyaman, aman, dan disesuaikan dengan kebutuhan Anda.',
-      bookWa: 'Konsultasi via WhatsApp', seeAll: 'Lihat Treatment',
+      line1: 'IV Therapy,', line2: 'Diantar ke Mana Saja', lineEm: 'di Bali',
+      sub: 'Treatment IV medis profesional untuk memulihkan, mengisi ulang, dan meremajakan — diantar ke villa, hotel, atau Airbnb Anda di mana saja di Bali.',
+      bookWa: 'Pesan IV Therapy Anda', seeAll: 'Lihat Treatment',
     },
     benefits: {
       fast: 'Respons Cepat', fastDesc: 'Estimasi kedatangan mengikuti area layanan dan ketersediaan tim',
@@ -118,12 +118,13 @@ export const translations: Record<Lang, Translations> = {
       ],
     },
     howToBook: {
-      eyebrow: 'Cara Kerja', title: 'Booking', titleEm: 'dalam 3 Langkah Mudah',
-      sub: 'Prosesnya sangat mudah — cukup pilih treatment, isi form, lalu tim kami akan mengonfirmasi area, jadwal, dan detail layanan.',
+      eyebrow: 'Cara Kerja', title: 'Wellness', titleEm: 'Jadi Mudah',
+      sub: 'IV therapy profesional, diantar langsung ke Anda dalam beberapa langkah mudah.',
       steps: [
-        { title: 'Pilih Treatment', desc: 'Jelajahi pilihan IV therapy kami dan tentukan treatment yang paling sesuai dengan kondisi serta kebutuhan Anda saat ini.' },
-        { title: 'Isi Form Booking', desc: 'Isi form booking online dengan nama, nomor WhatsApp, tanggal, waktu, dan alamat lengkap lokasi Anda di Bali.' },
-        { title: 'Tim Datang ke Anda', desc: 'Tim medis profesional kami tiba sesuai jadwal yang dikonfirmasi dengan seluruh perlengkapan yang dibutuhkan.' },
+        { title: 'Booking Janji', desc: 'Pilih treatment dan waktu yang Anda inginkan.' },
+        { title: 'Kami Datang ke Anda', desc: 'Tim medis kami tiba langsung di lokasi Anda.' },
+        { title: 'Santai & Pulihkan', desc: 'Terima IV therapy dan rasakan perbedaannya.' },
+        { title: 'Rasakan Manfaatnya', desc: 'Rehidrasi, pulih, dan lanjutkan hari Anda.' },
       ],
     },
     areas: {
@@ -155,7 +156,7 @@ export const translations: Record<Lang, Translations> = {
       bookNow: 'Pesan Sekarang', bookWa: 'Konsultasi via WhatsApp', seeAll: 'Lihat Semua Treatment',
     },
     footer: {
-      brandDesc: 'Layanan mobile IV therapy premium yang hadir langsung ke villa, hotel, atau Airbnb Anda di area layanan aktif kami.',
+      brandDesc: 'Layanan mobile IV therapy premium yang hadir langsung ke villa, hotel, atau Airbnb Anda di mana saja di Bali. Kesehatan Anda, prioritas kami.',
       colTreatments: 'Treatment', colInfo: 'Informasi', colContact: 'Kontak',
       seeAll: 'Lihat Semua →', about: 'Tentang Kami', howToBook: 'Cara Booking',
       faq: 'FAQ', hours: '08:00 – 22:00 WITA',
@@ -261,9 +262,9 @@ export const translations: Record<Lang, Translations> = {
     },
     hero: {
       pill: 'Available in Active Service Areas',
-      line1: 'Hydration &', line2: 'Recovery', lineEm: 'Delivered to You',
-      sub: 'A certified medical team comes directly to your villa, hotel, or Airbnb within active service areas. Comfortable, safe, and tailored to your needs.',
-      bookWa: 'Consult via WhatsApp', seeAll: 'View Treatments',
+      line1: 'IV Therapy,', line2: 'Delivered Anywhere', lineEm: 'in Bali',
+      sub: 'Professional medical IV treatments designed to restore, recharge, and rejuvenate — delivered to your villa, hotel, or Airbnb, anywhere in Bali.',
+      bookWa: 'Book Your IV Therapy', seeAll: 'View Treatments',
     },
     benefits: {
       fast: 'Fast Response', fastDesc: 'Arrival estimates follow the service area and team availability',
@@ -284,12 +285,13 @@ export const translations: Record<Lang, Translations> = {
       ],
     },
     howToBook: {
-      eyebrow: 'How It Works', title: 'Book in', titleEm: '3 Simple Steps',
-      sub: 'The process is straightforward — choose your treatment, complete the form, and our team will confirm the area, schedule, and service details.',
+      eyebrow: 'How It Works', title: 'Wellness', titleEm: 'Made Simple',
+      sub: 'Professional IV therapy, delivered to you in just a few simple steps.',
       steps: [
-        { title: 'Choose Treatment', desc: 'Browse our IV therapy options and select the treatment best suited for your current condition and what you need right now.' },
-        { title: 'Fill Booking Form', desc: 'Complete the online booking form with your name, WhatsApp number, preferred date, time, and your Bali address.' },
-        { title: 'Team Comes to You', desc: 'Our certified medical team arrives at the confirmed time with the equipment needed for your service.' },
+        { title: 'Book Your Appointment', desc: 'Choose your treatment and preferred time.' },
+        { title: 'We Come To You', desc: 'Our medical team arrives at your location.' },
+        { title: 'Relax & Rejuvenate', desc: 'Receive your IV therapy and feel the difference.' },
+        { title: 'Feel Your Best', desc: 'Rehydrate, restore, and get on with your day.' },
       ],
     },
     areas: {
@@ -321,7 +323,7 @@ export const translations: Record<Lang, Translations> = {
       bookNow: 'Book Now', bookWa: 'Consult via WhatsApp', seeAll: 'See All Treatments',
     },
     footer: {
-      brandDesc: 'Premium mobile IV therapy delivered to your villa, hotel, or Airbnb within our active service areas.',
+      brandDesc: 'Premium mobile IV therapy delivered to your villa, hotel, or Airbnb anywhere in Bali. Your wellness, our priority.',
       colTreatments: 'Treatments', colInfo: 'Information', colContact: 'Contact',
       seeAll: 'See All →', about: 'About Us', howToBook: 'How to Book',
       faq: 'FAQ', hours: '08:00 – 22:00 WITA',

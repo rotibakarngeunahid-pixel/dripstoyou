@@ -116,6 +116,7 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
 
   const instagram = socialLinks.find((link) => link.platform === 'INSTAGRAM');
   const tiktok = socialLinks.find((link) => link.platform === 'TIKTOK');
+  const facebook = socialLinks.find((link) => link.platform === 'FACEBOOK');
   const configuredEmail = socialLinks.find((link) => link.platform === 'EMAIL');
   const email = configuredEmail?.value || siteEmail;
 
@@ -209,31 +210,45 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
 
           <div className="footer-bottom">
             <p className="footer-copy">
-              © {new Date().getFullYear()} Drips To You - Bali. {t.footer.copyright}
+              © {new Date().getFullYear()} Drips To You – Bali. {t.footer.copyright}
             </p>
-            <div className="footer-social">
-              {instagram && <a href={instagram.normalizedUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
-                <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                  <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
-                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                </svg>
-              </a>}
-              {tiktok && <a href={tiktok.normalizedUrl} target="_blank" rel="noopener noreferrer" aria-label="TikTok">
-                <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M9 12a4 4 0 104 4V4a5 5 0 005 5" />
-                </svg>
-              </a>}
-              <a
-                href={`https://wa.me/${activeWa}`}
-                aria-label="WhatsApp"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" aria-hidden="true">
-                  <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.57 1.38 5.06L2 22l5.09-1.34A9.93 9.93 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" />
-                </svg>
-              </a>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <div className="footer-social">
+                {instagram && <a href={instagram.normalizedUrl} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                  <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" />
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                  </svg>
+                </a>}
+                {facebook && <a href={facebook.normalizedUrl} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                  <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
+                  </svg>
+                </a>}
+                {tiktok && <a href={tiktok.normalizedUrl} target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                  <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M9 12a4 4 0 104 4V4a5 5 0 005 5" />
+                  </svg>
+                </a>}
+                <a
+                  href={`https://wa.me/${activeWa}`}
+                  aria-label="WhatsApp"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" aria-hidden="true">
+                    <path d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.57 1.38 5.06L2 22l5.09-1.34A9.93 9.93 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2z" />
+                  </svg>
+                </a>
+              </div>
+              <div className="footer-trust-row">
+                <span className="footer-trust-item">Licensed</span>
+                <span className="footer-trust-dot" aria-hidden="true" />
+                <span className="footer-trust-item">Professional</span>
+                <span className="footer-trust-dot" aria-hidden="true" />
+                <span className="footer-trust-item">Trusted</span>
+              </div>
             </div>
           </div>
         </div>
