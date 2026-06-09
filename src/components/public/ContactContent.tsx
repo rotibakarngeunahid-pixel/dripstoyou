@@ -42,9 +42,9 @@ export default function ContactContent({ waNumber }: Props) {
         </div>
       </section>
 
-      <section className="page-section narrow">
+      <section className="page-section">
         {/* ── Two main CTA cards (equal height, button at bottom) ── */}
-        <div className="responsive-grid" style={{ marginBottom: 20 }}>
+        <div className="contact-cards-row">
 
           {/* WhatsApp card */}
           <article className="surface-card contact-cta-card">
