@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
-const DAY_NAMES = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+import { useAdminLang } from '@/app/admin/AdminLayoutClient';
+import { ADMIN_T } from '@/lib/admin-i18n';
 
 type ApiResponse<T> = {
   success?: boolean;
@@ -44,6 +44,9 @@ function fromApi(day: ApiDaySetting): DaySetting {
 }
 
 export default function SchedulePage() {
+  const { lang } = useAdminLang();
+  const t = ADMIN_T[lang];
+
   const [schedule, setSchedule] = useState<DaySetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,9 +61,10 @@ export default function SchedulePage() {
         setLoading(false);
       })
       .catch(() => {
-        setError('Gagal memuat jadwal.');
+        setError(t.gagalMemuatJadwal);
         setLoading(false);
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function update(day: number, field: keyof DaySetting, value: boolean | string | number) {
@@ -81,7 +85,7 @@ export default function SchedulePage() {
       });
       const json = (await res.json()) as ApiResponse<ApiDaySetting[]>;
       if (!res.ok) {
-        setError(json.message ?? json.error ?? 'Gagal menyimpan');
+        setError(json.message ?? json.error ?? t.gagalMenyimpan);
         return;
       }
       if (Array.isArray(json.data)) setSchedule(json.data.map(fromApi));
@@ -113,18 +117,18 @@ export default function SchedulePage() {
     <div className="admin-page">
       <div className="admin-page-head">
         <div>
-          <h1 className="admin-title">Jadwal Operasional</h1>
-          <p className="admin-subtitle">Atur jam buka, slot booking, dan batas minimal pre-booking.</p>
+          <h1 className="admin-title">{t.jadwalTitle}</h1>
+          <p className="admin-subtitle">{t.jadwalSubtitle}</p>
         </div>
         <button className={`button button-primary${saving ? ' loading' : ''}`} onClick={save} disabled={saving} type="button">
-          {saving ? 'Menyimpan' : 'Simpan Jadwal'}
+          {saving ? t.menyimpan : t.simpanJadwal}
         </button>
       </div>
 
       {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
       {success && (
         <div className="alert" style={{ marginBottom: 16, background: '#ecfdf3', border: '1px solid #b7e4c7', color: '#167a3f' }}>
-          Jadwal berhasil disimpan.
+          {t.jadwalBerhasil}
         </div>
       )}
 
@@ -133,7 +137,7 @@ export default function SchedulePage() {
           <table className="data-table" style={{ minWidth: 900 }}>
             <thead>
               <tr>
-                {['Hari', 'Buka', 'Jam Buka', 'Jam Tutup', 'Slot', 'Max/Slot', 'Min Pre-booking'].map((heading) => (
+                {[t.hari, t.buka, t.jamBuka, t.jamTutup, t.slotDurasi, t.maxPerSlot, t.minPreBooking].map((heading) => (
                   <th key={heading}>{heading}</th>
                 ))}
               </tr>
@@ -141,7 +145,9 @@ export default function SchedulePage() {
             <tbody>
               {schedule.map((day) => (
                 <tr key={day.dayOfWeek}>
-                  <td style={{ color: 'var(--teal)', fontWeight: 800 }}>{DAY_NAMES[day.dayOfWeek]}</td>
+                  <td style={{ color: 'var(--teal)', fontWeight: 800 }}>
+                    {t[`day${day.dayOfWeek}` as keyof typeof t] ?? String(day.dayOfWeek)}
+                  </td>
                   <td>
                     <input
                       type="checkbox"
@@ -208,7 +214,7 @@ export default function SchedulePage() {
       </section>
 
       <p className="admin-help" style={{ marginTop: 12 }}>
-        Min Pre-booking = menit minimum sebelum waktu booking. Contoh: 120 berarti minimal pesan 2 jam sebelumnya.
+        {t.minPreBookingHelp}
       </p>
     </div>
   );

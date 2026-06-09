@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ConfirmModal } from '@/components/admin/ConfirmModal';
+import { useAdminLang } from '@/app/admin/AdminLayoutClient';
+import { ADMIN_T } from '@/lib/admin-i18n';
 
 const SAMPLE_DATA: Record<string, string> = {
   customer_name:  'Sarah Johnson',
@@ -15,11 +17,7 @@ const SAMPLE_DATA: Record<string, string> = {
   booking_id:     'DTY-2026-001',
 };
 
-type ApiData = {
-  template: string;
-  defaultTemplate: string;
-  allowedPlaceholders: string[];
-};
+type ApiData = { template: string; defaultTemplate: string; allowedPlaceholders: string[] };
 type ApiResponse<T> = { data?: T; error?: string; success?: boolean; message?: string };
 
 function applyTemplate(template: string, data: Record<string, string>) {
@@ -35,6 +33,9 @@ function normalizeWa(input: string): string {
 }
 
 export default function WaTemplatePage() {
+  const { lang } = useAdminLang();
+  const t = ADMIN_T[lang];
+
   const [template,     setTemplate]     = useState('');
   const [defaultTpl,   setDefaultTpl]   = useState('');
   const [placeholders, setPlaceholders] = useState<string[]>([]);
@@ -81,30 +82,21 @@ export default function WaTemplatePage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
-    setError('');
-    setSuccess('');
+    setSaving(true); setError(''); setSuccess('');
     try {
-      const res  = await fetch('/api/admin/wa-template', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ template }),
-      });
+      const res  = await fetch('/api/admin/wa-template', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ template }) });
       const json = (await res.json()) as ApiResponse<null>;
-      if (!res.ok) { setError(json.error ?? 'Gagal menyimpan'); return; }
-      setSuccess(json.message ?? 'Template berhasil disimpan.');
+      if (!res.ok) { setError(json.error ?? t.gagalMenyimpan); return; }
+      setSuccess(json.message ?? t.berhasilDisimpan);
       setTimeout(() => setSuccess(''), 4000);
     } catch {
-      setError('Network error');
+      setError(t.koneksiFailed);
     } finally {
       setSaving(false);
     }
   }
 
-  function handleReset() {
-    setConfirmReset(false);
-    setTemplate(defaultTpl);
-  }
+  function handleReset() { setConfirmReset(false); setTemplate(defaultTpl); }
 
   function handleTestOpen() {
     const waNumber = testWaNumber || normalizeWa(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000');
@@ -127,17 +119,17 @@ export default function WaTemplatePage() {
     <div className="admin-page" style={{ maxWidth: 900 }}>
       <ConfirmModal
         open={confirmReset}
-        title="Reset Template"
-        message="Template akan dikembalikan ke default. Perubahan yang belum disimpan akan hilang."
-        confirmLabel="Reset Default"
+        title={t.resetTemplateTitle}
+        message={t.resetTemplateMsg}
+        confirmLabel={t.resetDefaultBtn}
         onConfirm={handleReset}
         onCancel={() => setConfirmReset(false)}
       />
 
       <div className="admin-page-head">
         <div>
-          <h1 className="admin-title">WhatsApp Template</h1>
-          <p className="admin-subtitle">Atur format pesan WhatsApp yang dikirim ke pelanggan saat booking.</p>
+          <h1 className="admin-title">{t.waTemplateTitle}</h1>
+          <p className="admin-subtitle">{t.waTemplateSubtitle}</p>
         </div>
       </div>
 
@@ -148,28 +140,22 @@ export default function WaTemplatePage() {
         <div className="wa-template-layout">
           {/* ── Left: editor ── */}
           <section className="form-card">
-            <h2 className="form-card-title">Template Pesan</h2>
+            <h2 className="form-card-title">{t.templatePesan}</h2>
 
             <div className="admin-field">
-              <span className="admin-field-label">Placeholder Tersedia</span>
+              <span className="admin-field-label">{t.placeholderTersedia}</span>
               <div className="wa-placeholder-chips">
                 {placeholders.map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    className="wa-chip"
-                    onClick={() => insertPlaceholder(p)}
-                    title={`Sisipkan {${p}}`}
-                  >
+                  <button key={p} type="button" className="wa-chip" onClick={() => insertPlaceholder(p)} title={`Insert {${p}}`}>
                     {`{${p}}`}
                   </button>
                 ))}
               </div>
-              <span className="admin-help">Klik placeholder untuk menyisipkannya ke posisi kursor di textarea.</span>
+              <span className="admin-help">{t.klikPlaceholder}</span>
             </div>
 
             <label className="admin-field" style={{ marginTop: 16 }}>
-              <span className="admin-field-label">Isi Template</span>
+              <span className="admin-field-label">{t.isiTemplate}</span>
               <textarea
                 ref={textareaRef}
                 className="control wa-template-textarea"
@@ -183,21 +169,21 @@ export default function WaTemplatePage() {
 
             <div className="admin-form-actions" style={{ marginTop: 20 }}>
               <button className={`button button-primary${saving ? ' loading' : ''}`} type="submit" disabled={saving}>
-                {saving ? 'Menyimpan…' : 'Simpan Template'}
+                {saving ? t.menyimpanTemplate : t.simpanTemplate}
               </button>
               <button type="button" className="button button-secondary" onClick={() => setConfirmReset(true)} disabled={saving}>
-                Reset Default
+                {t.resetDefault}
               </button>
               <button type="button" className="button button-secondary" onClick={handleTestOpen} disabled={saving}>
-                Test Buka WhatsApp
+                {t.testBukaWA}
               </button>
             </div>
           </section>
 
           {/* ── Right: preview ── */}
           <section className="form-card wa-preview-card">
-            <h2 className="form-card-title">Preview Pesan</h2>
-            <p className="admin-help" style={{ marginBottom: 12 }}>Menggunakan data sampel. Placeholder yang tidak dikenal akan tampil apa adanya.</p>
+            <h2 className="form-card-title">{t.previewPesan}</h2>
+            <p className="admin-help" style={{ marginBottom: 12 }}>{t.previewHelp}</p>
             <div className="wa-preview-bubble">
               <div className="wa-preview-text">{preview}</div>
             </div>

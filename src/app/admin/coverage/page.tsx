@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useAdminLang } from '@/app/admin/AdminLayoutClient';
+import { ADMIN_T } from '@/lib/admin-i18n';
 
 type Area = {
   id: string;
@@ -29,9 +31,9 @@ function toSlug(name: string) {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 }
 
-function formatFee(amount: number | null) {
+function formatFee(amount: number | null, freeLabel: string) {
   if (amount === null || amount === undefined) return null;
-  if (amount === 0) return 'Gratis';
+  if (amount === 0) return freeLabel;
   return `Rp ${amount.toLocaleString('id-ID')}`;
 }
 
@@ -66,7 +68,7 @@ function ConfirmModal({
             style={{ minHeight: 40, padding: '8px 18px', fontSize: 13 }}
             onClick={onCancel} type="button" disabled={loading}
           >
-            Batal
+            Cancel
           </button>
           <button
             className="button"
@@ -78,7 +80,7 @@ function ConfirmModal({
             }}
             onClick={onConfirm} type="button" disabled={loading}
           >
-            {loading ? 'Memproses...' : confirmLabel}
+            {loading ? '...' : confirmLabel}
           </button>
         </div>
       </div>
@@ -103,34 +105,29 @@ function Toast({ msg, type }: { msg: string; type: 'success' | 'error' }) {
 
 /* ─── Area Card ─── */
 function AreaCard({
-  area, onEdit, onToggle, onDelete, deleting, toggling,
+  area, t, onEdit, onToggle, onDelete, deleting, toggling,
 }: {
   area: Area;
+  t: Record<string, string>;
   onEdit: (a: Area) => void;
   onToggle: (a: Area) => void;
   onDelete: (id: string) => void;
   deleting: string | null;
   toggling: string | null;
 }) {
-  const fee = formatFee(area.extraFeeAmount);
+  const fee = formatFee(area.extraFeeAmount, t.gratisLabel);
 
   return (
     <div style={{
       background: 'white',
       border: `1.5px solid ${area.isActive ? 'rgba(32,82,81,0.12)' : 'rgba(0,0,0,0.08)'}`,
-      borderRadius: 18,
-      padding: 20,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 14,
-      boxShadow: area.isActive
-        ? '0 4px 20px rgba(32,82,81,0.07)'
-        : '0 2px 8px rgba(0,0,0,0.04)',
+      borderRadius: 18, padding: 20,
+      display: 'flex', flexDirection: 'column', gap: 14,
+      boxShadow: area.isActive ? '0 4px 20px rgba(32,82,81,0.07)' : '0 2px 8px rgba(0,0,0,0.04)',
       opacity: area.isActive ? 1 : 0.72,
       transition: 'box-shadow .2s, opacity .2s',
       position: 'relative',
     }}>
-      {/* Sort order badge */}
       <span style={{
         position: 'absolute', top: 14, right: 14,
         background: 'var(--champagne)', color: 'var(--teal)',
@@ -140,34 +137,28 @@ function AreaCard({
         #{area.sortOrder}
       </span>
 
-      {/* Header */}
       <div style={{ paddingRight: 36 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          {/* Status dot */}
           <span style={{
             width: 8, height: 8, borderRadius: '50%',
-            background: area.isActive ? '#22c55e' : '#d1d5db',
-            flexShrink: 0,
+            background: area.isActive ? '#22c55e' : '#d1d5db', flexShrink: 0,
           }} />
           <h3 style={{
             fontFamily: 'var(--font-playfair,Georgia,serif)',
             fontSize: 18, fontWeight: 700,
-            color: area.isActive ? 'var(--teal)' : '#888',
-            lineHeight: 1.2,
+            color: area.isActive ? 'var(--teal)' : '#888', lineHeight: 1.2,
           }}>
             {area.name}
           </h3>
         </div>
         <code style={{
-          fontSize: 11, color: '#9a9a9a',
-          background: '#f5f5f5', padding: '2px 8px',
-          borderRadius: 6, display: 'inline-block',
+          fontSize: 11, color: '#9a9a9a', background: '#f5f5f5',
+          padding: '2px 8px', borderRadius: 6, display: 'inline-block',
         }}>
           {area.slug}
         </code>
       </div>
 
-      {/* Info pills */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
         {area.estimatedArrivalMinutes !== null && (
           <span style={{
@@ -178,17 +169,17 @@ function AreaCard({
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
             </svg>
-            {area.estimatedArrivalMinutes} menit
+            {area.estimatedArrivalMinutes} {t.menitLabel}
           </span>
         )}
         {fee && (
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
-            background: fee === 'Gratis' ? '#f0fdf4' : '#fffbeb',
-            color: fee === 'Gratis' ? '#166534' : '#92400e',
+            background: fee === t.gratisLabel ? '#f0fdf4' : '#fffbeb',
+            color: fee === t.gratisLabel ? '#166534' : '#92400e',
             fontSize: 12, fontWeight: 600, padding: '5px 11px', borderRadius: 999,
           }}>
-            {fee === 'Gratis' ? '✓ Gratis' : `+ ${fee}`}
+            {fee === t.gratisLabel ? `✓ ${t.gratisLabel}` : `+ ${fee}`}
           </span>
         )}
         <span style={{
@@ -198,29 +189,23 @@ function AreaCard({
           fontSize: 11, fontWeight: 700, padding: '4px 10px',
           borderRadius: 999, letterSpacing: 0.5,
         }}>
-          {area.isActive ? 'Aktif' : 'Nonaktif'}
+          {area.isActive ? t.statusAktif : t.statusNonaktif}
         </span>
       </div>
 
-      {/* Note */}
       {area.note && (
         <p style={{ fontSize: 12, color: '#888', lineHeight: 1.5, margin: 0 }}>
           {area.note}
         </p>
       )}
 
-      {/* Actions */}
-      <div style={{
-        borderTop: '1px solid #f0ede8',
-        paddingTop: 14, display: 'flex', gap: 7, flexWrap: 'wrap',
-      }}>
+      <div style={{ borderTop: '1px solid #f0ede8', paddingTop: 14, display: 'flex', gap: 7, flexWrap: 'wrap' }}>
         <button
           className="button button-secondary"
           style={{ padding: '7px 14px', fontSize: 12, minHeight: 34, flex: '1 1 auto' }}
-          onClick={() => onEdit(area)}
-          type="button"
+          onClick={() => onEdit(area)} type="button"
         >
-          Edit
+          {t.edit}
         </button>
         <button
           className="button"
@@ -231,24 +216,17 @@ function AreaCard({
             border: `1px solid ${area.isActive ? '#fed7aa' : 'rgba(32,82,81,0.2)'}`,
           }}
           onClick={() => onToggle(area)}
-          disabled={toggling === area.id}
-          type="button"
+          disabled={toggling === area.id} type="button"
         >
-          {toggling === area.id ? '...' : area.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+          {toggling === area.id ? '...' : area.isActive ? t.nonaktifkan : t.aktifkan}
         </button>
         <button
           className="button"
-          style={{
-            padding: '7px 14px', fontSize: 12, minHeight: 34,
-            background: '#fef2f2', color: '#dc2626',
-            border: '1px solid #fecaca',
-          }}
+          style={{ padding: '7px 14px', fontSize: 12, minHeight: 34, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}
           onClick={() => onDelete(area.id)}
-          disabled={deleting === area.id}
-          type="button"
-          title="Hapus permanen"
+          disabled={deleting === area.id} type="button"
         >
-          {deleting === area.id ? '...' : 'Hapus'}
+          {deleting === area.id ? '...' : t.hapus}
         </button>
       </div>
     </div>
@@ -257,6 +235,9 @@ function AreaCard({
 
 /* ─── Main Page ─── */
 export default function AdminCoveragePage() {
+  const { lang } = useAdminLang();
+  const t = ADMIN_T[lang];
+
   const [areas,    setAreas]    = useState<Area[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [saving,   setSaving]   = useState(false);
@@ -284,17 +265,17 @@ export default function AdminCoveragePage() {
     try {
       const res  = await fetch('/api/admin/coverage', { cache: 'no-store' });
       const json = (await res.json()) as ApiResponse<Area[]>;
-      if (!res.ok) { setAreas([]); setPageErr(json.message ?? json.error ?? 'Gagal memuat area.'); return; }
+      if (!res.ok) { setAreas([]); setPageErr(json.message ?? json.error ?? t.gagalMemuat); return; }
       setAreas(json.data ?? []);
     } catch {
-      setAreas([]); setPageErr('Koneksi ke backend area layanan gagal.');
+      setAreas([]); setPageErr(t.koneksiAreaFailed);
     } finally {
       setLoading(false);
     }
   }
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function openCreate() {
     setForm(EMPTY); setEditId(null); setFormErr(''); setShowForm(true);
@@ -302,13 +283,10 @@ export default function AdminCoveragePage() {
 
   function openEdit(area: Area) {
     setForm({
-      name: area.name,
-      slug: area.slug,
-      isActive: area.isActive,
+      name: area.name, slug: area.slug, isActive: area.isActive,
       estimatedArrivalMinutes: area.estimatedArrivalMinutes ?? '',
       extraFeeAmount: area.extraFeeAmount ?? '',
-      note: area.note ?? '',
-      sortOrder: area.sortOrder,
+      note: area.note ?? '', sortOrder: area.sortOrder,
     });
     setEditId(area.id); setFormErr(''); setShowForm(true);
   }
@@ -321,8 +299,8 @@ export default function AdminCoveragePage() {
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name.trim() || !form.slug.trim()) { setFormErr('Nama dan slug wajib diisi.'); return; }
-    if (!/^[a-z0-9-]+$/.test(form.slug)) { setFormErr('Slug hanya boleh huruf kecil, angka, dan minus.'); return; }
+    if (!form.name.trim() || !form.slug.trim()) { setFormErr(t.namaSlugRequired); return; }
+    if (!/^[a-z0-9-]+$/.test(form.slug)) { setFormErr(t.slugFormatError); return; }
     setSaving(true); setFormErr('');
     const body = {
       name: form.name.trim(), slug: form.slug.trim(), isActive: form.isActive,
@@ -335,11 +313,11 @@ export default function AdminCoveragePage() {
       const url    = editId ? `/api/admin/coverage/${editId}` : '/api/admin/coverage';
       const res    = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const json   = (await res.json()) as ApiResponse<Area>;
-      if (!res.ok) { setFormErr(json.message ?? json.error ?? 'Gagal menyimpan.'); return; }
-      showToast(editId ? 'Area berhasil diperbarui.' : 'Area berhasil ditambahkan.');
+      if (!res.ok) { setFormErr(json.message ?? json.error ?? t.gagalMenyimpanArea); return; }
+      showToast(editId ? t.areaDiperbarui : t.areaDitambah);
       setShowForm(false); setEditId(null); await load();
     } catch {
-      setFormErr('Koneksi ke backend area layanan gagal.');
+      setFormErr(t.koneksiAreaFailed);
     } finally {
       setSaving(false);
     }
@@ -353,15 +331,15 @@ export default function AdminCoveragePage() {
         body: JSON.stringify({ isActive: !area.isActive }),
       });
       if (res.ok) {
-        showToast(area.isActive ? 'Area dinonaktifkan.' : 'Area diaktifkan.');
+        showToast(area.isActive ? t.areaNonaktifkan : t.areaAktifkan);
         setAreas(prev => prev.map(a => a.id === area.id ? { ...a, isActive: !area.isActive } : a));
         return true;
       } else {
-        showToast('Gagal mengubah status area.', 'error');
+        showToast(t.gagalMemuat, 'error');
         return false;
       }
     } catch {
-      showToast('Koneksi gagal. Coba lagi.', 'error');
+      showToast(t.koneksiFailed, 'error');
       return false;
     } finally {
       setToggling(null);
@@ -371,12 +349,15 @@ export default function AdminCoveragePage() {
   function askDeactivate(id: string) {
     const area = areas.find(a => a.id === id);
     if (!area) return;
-    if (!area.isActive) { void handleToggle(area); return; } // activate directly
+    if (!area.isActive) { void handleToggle(area); return; }
+    const msg = lang === 'id'
+      ? `Area "${area.name}" akan disembunyikan dari publik. Anda bisa mengaktifkannya kembali kapan saja.`
+      : `Area "${area.name}" will be hidden from the public. You can re-enable it at any time.`;
     setConfirm({
       open: true,
-      title: 'Nonaktifkan Area',
-      message: `Area "${area.name}" akan disembunyikan dari publik. Anda bisa mengaktifkannya kembali kapan saja.`,
-      confirmLabel: 'Nonaktifkan',
+      title: t.nonaktifkanAreaTitle,
+      message: msg,
+      confirmLabel: t.nonaktifkan,
       onConfirm: async () => {
         setConfirm(c => ({ ...c, loading: true }));
         const ok = await handleToggle(area);
@@ -388,27 +369,29 @@ export default function AdminCoveragePage() {
   function askDelete(id: string) {
     const area = areas.find(a => a.id === id);
     if (!area) return;
+    const msg = lang === 'id'
+      ? `Area "${area.name}" akan dihapus secara permanen. Semua booking yang terhubung akan kehilangan referensi area ini. Tindakan ini tidak dapat dibatalkan.`
+      : `Area "${area.name}" will be permanently deleted. All linked bookings will lose their area reference. This cannot be undone.`;
     setConfirm({
-      open: true,
-      danger: true,
-      title: 'Hapus Area',
-      message: `Area "${area.name}" akan dihapus secara permanen. Semua booking yang terhubung akan kehilangan referensi area ini. Tindakan ini tidak dapat dibatalkan.`,
-      confirmLabel: 'Hapus',
+      open: true, danger: true,
+      title: t.hapusAreaTitle,
+      message: msg,
+      confirmLabel: t.hapus,
       onConfirm: async () => {
         setConfirm(c => ({ ...c, loading: true }));
         setDeleting(id);
         try {
           const res = await fetch(`/api/admin/coverage/${id}`, { method: 'DELETE' });
           if (res.ok) {
-            showToast('Area berhasil dihapus.');
+            showToast(t.areaHapus);
             setAreas(prev => prev.filter(a => a.id !== id));
             setConfirm(c => ({ ...c, open: false, loading: false }));
           } else {
             const json = (await res.json()) as ApiResponse<null>;
-            showToast(json.message ?? json.error ?? 'Gagal menghapus area.', 'error');
+            showToast(json.message ?? json.error ?? t.gagalMemuat, 'error');
           }
         } catch {
-          showToast('Koneksi gagal. Coba lagi.', 'error');
+          showToast(t.koneksiFailed, 'error');
         } finally {
           setDeleting(null);
           setConfirm(c => ({ ...c, loading: false }));
@@ -422,10 +405,8 @@ export default function AdminCoveragePage() {
 
   return (
     <div className="admin-page">
-      {/* Toast */}
       {toast && <Toast msg={toast.msg} type={toast.type} />}
 
-      {/* Confirm modal */}
       <ConfirmModal
         open={confirm.open}
         title={confirm.title}
@@ -437,38 +418,32 @@ export default function AdminCoveragePage() {
         onCancel={() => setConfirm(c => ({ ...c, open: false }))}
       />
 
-      {/* Page header */}
       <div className="admin-page-head">
         <div>
-          <h1 className="admin-title">Kelola Area Layanan</h1>
-          <p className="admin-subtitle">
-            Area yang bisa dilayani oleh DRIP TO YOU — klik kartu untuk mengedit.
-          </p>
+          <h1 className="admin-title">{t.coverageTitle}</h1>
+          <p className="admin-subtitle">{t.coverageSubtitle}</p>
         </div>
         <button className="button button-primary" type="button" onClick={openCreate}>
-          + Tambah Area
+          {t.tambahArea}
         </button>
       </div>
 
-      {/* Stats strip */}
       {!loading && areas.length > 0 && (
         <div style={{ display: 'flex', gap: 14, marginBottom: 28, flexWrap: 'wrap' }}>
           {[
-            { label: 'Total Area',   value: areas.length,   color: 'var(--teal)',  bg: 'var(--pale-aqua)' },
-            { label: 'Aktif',        value: activeCount,    color: '#166534',      bg: '#dcfce7' },
-            { label: 'Nonaktif',     value: inactiveCount,  color: '#6b7280',      bg: '#f3f4f6' },
+            { label: t.totalArea,    value: areas.length,   color: 'var(--teal)',  bg: 'var(--pale-aqua)' },
+            { label: t.statusAktif,  value: activeCount,    color: '#166534',      bg: '#dcfce7' },
+            { label: t.statusNonaktif, value: inactiveCount, color: '#6b7280',     bg: '#f3f4f6' },
           ].map(s => (
             <div key={s.label} style={{
               display: 'flex', alignItems: 'center', gap: 12,
               background: 'white', border: '1px solid rgba(0,0,0,0.07)',
               borderRadius: 14, padding: '14px 20px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-              minWidth: 140,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)', minWidth: 140,
             }}>
               <span style={{
-                width: 42, height: 42, borderRadius: 12,
-                background: s.bg, display: 'flex',
-                alignItems: 'center', justifyContent: 'center',
+                width: 42, height: 42, borderRadius: 12, background: s.bg,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontFamily: 'var(--font-playfair,Georgia,serif)',
                 fontSize: 20, fontWeight: 700, color: s.color,
               }}>
@@ -480,18 +455,16 @@ export default function AdminCoveragePage() {
         </div>
       )}
 
-      {/* Page-level error */}
       {pageErr && <div className="alert alert-error" style={{ marginBottom: 20 }}>{pageErr}</div>}
 
-      {/* Inline form */}
       {showForm && (
         <div className="form-card" style={{ marginBottom: 28, borderLeft: '4px solid var(--teal)' }}>
-          <h2 className="form-card-title">{editId ? 'Edit Area' : 'Tambah Area Baru'}</h2>
+          <h2 className="form-card-title">{editId ? t.editAreaTitle : t.tambahAreaBaru}</h2>
           {formErr && <div className="alert alert-error" style={{ marginBottom: 14 }}>{formErr}</div>}
           <form onSubmit={handleSave}>
             <div className="admin-form-grid">
               <label className="admin-field">
-                <span className="admin-field-label">Nama Area *</span>
+                <span className="admin-field-label">{t.namaAreaLabel}</span>
                 <input
                   className="control" value={form.name}
                   onChange={e => handleNameChange(e.target.value)}
@@ -499,16 +472,16 @@ export default function AdminCoveragePage() {
                 />
               </label>
               <label className="admin-field">
-                <span className="admin-field-label">Slug *</span>
+                <span className="admin-field-label">{t.slugLabel}</span>
                 <input
                   className="control" value={form.slug}
                   onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
                   placeholder="seminyak" required
                 />
-                <span style={{ fontSize: 11, color: '#888' }}>Huruf kecil, angka, minus</span>
+                <span style={{ fontSize: 11, color: '#888' }}>{t.slugHelp}</span>
               </label>
               <label className="admin-field">
-                <span className="admin-field-label">Estimasi Tiba (menit)</span>
+                <span className="admin-field-label">{t.estimasiTiba}</span>
                 <input
                   className="control" type="number" min={1}
                   value={form.estimatedArrivalMinutes}
@@ -517,7 +490,7 @@ export default function AdminCoveragePage() {
                 />
               </label>
               <label className="admin-field">
-                <span className="admin-field-label">Biaya Tambahan (Rp)</span>
+                <span className="admin-field-label">{t.biayaTambahan}</span>
                 <input
                   className="control" type="number" min={0} step={1000}
                   value={form.extraFeeAmount}
@@ -526,7 +499,7 @@ export default function AdminCoveragePage() {
                 />
               </label>
               <label className="admin-field">
-                <span className="admin-field-label">Urutan</span>
+                <span className="admin-field-label">{t.urutan ?? 'Urutan'}</span>
                 <input
                   className="control" type="number" min={0}
                   value={form.sortOrder}
@@ -535,69 +508,48 @@ export default function AdminCoveragePage() {
               </label>
             </div>
             <label className="admin-field" style={{ marginTop: 14 }}>
-              <span className="admin-field-label">Catatan (opsional)</span>
+              <span className="admin-field-label">{t.catatanOpsionalLabel}</span>
               <input
                 className="control" value={form.note}
                 onChange={e => setForm(f => ({ ...f, note: e.target.value }))}
-                placeholder="Contoh: Hanya area dalam (bukan pinggiran)"
+                placeholder={t.catatanAreaPlaceholder}
               />
             </label>
-            <label style={{
-              display: 'flex', alignItems: 'center', gap: 10,
-              marginTop: 16, cursor: 'pointer', userSelect: 'none',
-            }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 16, cursor: 'pointer', userSelect: 'none' }}>
               <input
                 type="checkbox" checked={form.isActive}
                 onChange={e => setForm(f => ({ ...f, isActive: e.target.checked }))}
                 style={{ width: 16, height: 16, accentColor: 'var(--teal)' }}
               />
-              <span style={{ fontSize: 14, color: 'var(--text)' }}>Tampilkan di halaman publik</span>
+              <span style={{ fontSize: 14, color: 'var(--text)' }}>{t.tampilPublik}</span>
             </label>
             <div className="admin-form-actions" style={{ marginTop: 20 }}>
-              <button
-                className={`button button-primary${saving ? ' loading' : ''}`}
-                type="submit" disabled={saving}
-              >
-                {saving ? 'Menyimpan...' : editId ? 'Simpan Perubahan' : 'Tambah Area'}
+              <button className={`button button-primary${saving ? ' loading' : ''}`} type="submit" disabled={saving}>
+                {saving ? t.menyimpan : editId ? t.simpanPerubahan : t.tambahAreaBtn}
               </button>
-              <button
-                className="button button-secondary"
-                type="button" onClick={cancelForm} disabled={saving}
-              >
-                Batal
+              <button className="button button-secondary" type="button" onClick={cancelForm} disabled={saving}>
+                {t.batal}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Content */}
       {loading ? (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: 18,
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 }}>
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="skeleton" style={{ height: 200, borderRadius: 18 }} />
           ))}
         </div>
       ) : areas.length === 0 ? (
         <div className="surface-card" style={{ textAlign: 'center', padding: 48 }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: 15 }}>
-            Belum ada area layanan. Klik &ldquo;+ Tambah Area&rdquo; untuk menambahkan.
-          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: 15 }}>{t.belumAdaArea}</p>
         </div>
       ) : (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-          gap: 18,
-        }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 18 }}>
           {areas.map(area => (
             <AreaCard
-              key={area.id}
-              area={area}
+              key={area.id} area={area} t={t}
               onEdit={openEdit}
               onToggle={a => askDeactivate(a.id)}
               onDelete={askDelete}

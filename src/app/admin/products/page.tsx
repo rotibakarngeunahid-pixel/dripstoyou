@@ -1,7 +1,6 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { formatPrice as formatCurrencyPrice } from '@/lib/currency';
+import ProductListClient from './ProductListClient';
 
 interface Product {
   id: string;
@@ -35,72 +34,11 @@ async function getProducts(token: string): Promise<Product[]> {
   }
 }
 
-function formatPrice(product: Product) {
-  return product.price_label ?? formatCurrencyPrice(product.price_amount, product.currency);
-}
-
 export default async function ProductsPage() {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
 
   const products = await getProducts(session.adminToken);
 
-  return (
-    <div className="admin-page">
-      <div className="admin-page-head">
-        <div>
-          <h1 className="admin-title">Produk / Treatment</h1>
-          <p className="admin-subtitle">{products.length} produk</p>
-        </div>
-        <Link href="/admin/products/new" className="button button-primary">
-          Tambah Produk
-        </Link>
-      </div>
-
-      <div className="admin-list">
-        {products.map((product) => (
-          <article className="admin-list-item surface-card" key={product.id}>
-            <div>
-              <div className="admin-list-title-row">
-                <h2 className="admin-list-title">{product.name}</h2>
-                {product.label && (
-                  <span className="status-pill" style={{ color: 'var(--gold)', background: 'rgba(184,131,62,.12)' }}>
-                    {product.label}
-                  </span>
-                )}
-                <span
-                  className="status-pill"
-                  style={{
-                    color: product.is_active ? '#1b8f4d' : '#c0392b',
-                    background: product.is_active ? 'rgba(27,143,77,.12)' : 'rgba(192,57,43,.12)',
-                  }}
-                >
-                  {product.is_active ? 'Aktif' : 'Non-aktif'}
-                </span>
-              </div>
-              <p className="admin-list-desc">{product.short_description}</p>
-              <div className="admin-list-meta">
-                <span>{formatPrice(product)}</span>
-                {product.duration_minutes && <span>{product.duration_minutes} menit</span>}
-                <span>{product.booking_count} booking</span>
-                {product.show_on_homepage && <span style={{ color: 'var(--ocean)' }}>Homepage #{product.homepage_order}</span>}
-              </div>
-            </div>
-            <Link href={`/admin/products/${product.id}/edit`} className="button button-secondary">
-              Edit
-            </Link>
-          </article>
-        ))}
-
-        {products.length === 0 && (
-          <div className="empty-state surface-card">
-            Belum ada produk.{' '}
-            <Link href="/admin/products/new" style={{ color: 'var(--ocean)', fontWeight: 800 }}>
-              Tambah produk pertama
-            </Link>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+  return <ProductListClient products={products} />;
 }

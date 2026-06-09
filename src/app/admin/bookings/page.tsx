@@ -2,16 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useAdminLang } from '@/app/admin/AdminLayoutClient';
+import { ADMIN_T } from '@/lib/admin-i18n';
 
 type BookingStatus = 'BARU' | 'KONFIRMASI' | 'DIPROSES' | 'SELESAI' | 'DIBATALKAN';
-
-const STATUS_LABELS: Record<BookingStatus, string> = {
-  BARU: 'Baru',
-  KONFIRMASI: 'Konfirmasi',
-  DIPROSES: 'Diproses',
-  SELESAI: 'Selesai',
-  DIBATALKAN: 'Dibatalkan',
-};
 
 const STATUS_COLORS: Record<BookingStatus, string> = {
   BARU: 'status-pending',
@@ -47,6 +41,9 @@ function formatDate(value: string, withYear = true) {
 }
 
 export default function BookingsPage() {
+  const { lang } = useAdminLang();
+  const t = ADMIN_T[lang];
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -67,16 +64,15 @@ export default function BookingsPage() {
         setLastUpdated(new Date());
         setSecondsAgo(0);
       } else {
-        setError(json.error ?? 'Gagal memuat booking.');
+        setError(json.error ?? t.gagalMemuatBooking);
       }
     } catch {
-      setError('Koneksi ke backend gagal.');
+      setError(t.koneksiBookingFailed);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t.gagalMemuatBooking, t.koneksiBookingFailed]);
 
-  // Initial fetch + 10-second polling
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchBookings();
@@ -84,7 +80,6 @@ export default function BookingsPage() {
     return () => clearInterval(poll);
   }, [fetchBookings]);
 
-  // "Last updated X seconds ago" counter
   useEffect(() => {
     if (!lastUpdated) return;
     const tick = setInterval(() => {
@@ -93,13 +88,20 @@ export default function BookingsPage() {
     return () => clearInterval(tick);
   }, [lastUpdated]);
 
+  const statusLabel = (s: BookingStatus) => t[`status${s}` as keyof typeof t] ?? s;
+
+  const tableHeaders = [
+    t.kode, t.pelanggan, t.noHP, t.treatment, t.tanggal,
+    t.waktu, t.orang, t.area, t.status, t.dibuat, t.aksi,
+  ];
+
   if (loading) {
     return (
       <div className="admin-page wide">
         <div className="admin-page-head">
           <div>
-            <h1 className="admin-title">Bookings</h1>
-            <p className="admin-subtitle">Memuat…</p>
+            <h1 className="admin-title">{t.bookingsTitle}</h1>
+            <p className="admin-subtitle">{t.memuatData}</p>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -115,12 +117,12 @@ export default function BookingsPage() {
     <div className="admin-page wide">
       <div className="admin-page-head">
         <div>
-          <h1 className="admin-title">Bookings</h1>
+          <h1 className="admin-title">{t.bookingsTitle}</h1>
           <p className="admin-subtitle">
-            {bookings.length} booking ditampilkan
+            {bookings.length} {t.bookingsDitampilkan}
             {lastUpdated && (
               <span style={{ marginLeft: 12, fontSize: 11, color: '#aaa' }}>
-                · diperbarui {secondsAgo}d lalu
+                · {t.diperbarui} {secondsAgo}{t.detikLalu}
               </span>
             )}
           </p>
@@ -132,10 +134,10 @@ export default function BookingsPage() {
             onClick={() => { void fetchBookings(); }}
             style={{ fontSize: 13 }}
           >
-            ↻ Refresh
+            {t.refresh}
           </button>
           <Link href="/api/admin/bookings/export" className="button button-secondary">
-            Export CSV
+            {t.exportCSV}
           </Link>
         </div>
       </div>
@@ -147,7 +149,7 @@ export default function BookingsPage() {
           <table className="data-table" style={{ minWidth: 1080 }}>
             <thead>
               <tr>
-                {['Kode', 'Pelanggan', 'No. HP', 'Treatment', 'Tanggal', 'Waktu', 'Orang', 'Area', 'Status', 'Dibuat', 'Aksi'].map((heading) => (
+                {tableHeaders.map((heading) => (
                   <th key={heading}>{heading}</th>
                 ))}
               </tr>
@@ -160,24 +162,24 @@ export default function BookingsPage() {
                     <td className="mono" style={{ color: 'var(--teal)', fontWeight: 800 }}>
                       {booking.booking_code}
                     </td>
-                    <td data-label="Pelanggan">{booking.customer_name}</td>
-                    <td data-label="No. HP" className="mono muted-small" style={{ whiteSpace: 'nowrap' }}>
+                    <td>{booking.customer_name}</td>
+                    <td className="mono muted-small" style={{ whiteSpace: 'nowrap' }}>
                       {booking.customer_phone ?? `...${booking.customer_phone_last4}`}
                     </td>
-                    <td data-label="Treatment">{booking.product_name}</td>
-                    <td data-label="Tanggal" className="muted-small">{formatDate(booking.booking_date)}</td>
-                    <td data-label="Waktu" className="muted-small">{booking.booking_time}</td>
-                    <td data-label="Orang" className="muted-small">{booking.people_count}</td>
-                    <td data-label="Area" className="muted-small">{booking.service_area_name ?? booking.location_type}</td>
-                    <td data-label="Status">
+                    <td>{booking.product_name}</td>
+                    <td className="muted-small">{formatDate(booking.booking_date)}</td>
+                    <td className="muted-small">{booking.booking_time}</td>
+                    <td className="muted-small">{booking.people_count}</td>
+                    <td className="muted-small">{booking.service_area_name ?? booking.location_type}</td>
+                    <td>
                       <span className={`status-pill ${statusClass}`}>
-                        {STATUS_LABELS[booking.status] ?? booking.status}
+                        {statusLabel(booking.status)}
                       </span>
                     </td>
-                    <td data-label="Dibuat" className="muted-small">{formatDate(booking.created_at, false)}</td>
+                    <td className="muted-small">{formatDate(booking.created_at, false)}</td>
                     <td>
                       <Link href={`/admin/bookings/${booking.id}`} className="button button-secondary" style={{ padding: '4px 12px', fontSize: 13 }}>
-                        Detail
+                        {t.detail}
                       </Link>
                     </td>
                   </tr>
@@ -185,7 +187,7 @@ export default function BookingsPage() {
               })}
               {bookings.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="empty-state">Belum ada booking</td>
+                  <td colSpan={11} className="empty-state">{t.belumAdaBooking}</td>
                 </tr>
               )}
             </tbody>
