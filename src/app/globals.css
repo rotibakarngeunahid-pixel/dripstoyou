@@ -3664,6 +3664,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
 }
 .bk-gps-btn:hover:not(:disabled) { background: #c4dede; border-color: var(--soft-aqua); }
 .bk-gps-btn:disabled { opacity: .6; cursor: default; }
+.bk-gps-btn.bk-gps-success { background: #e8f5e9; border-color: #81c784; color: #2e7d32; }
 
 /* Location section */
 .bk-loc-fields { display: flex; flex-direction: column; gap: 18px; }

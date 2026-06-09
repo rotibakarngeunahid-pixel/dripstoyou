@@ -75,7 +75,8 @@ interface BK {
   currencyLabel: string;
   errDate: string; errTime: string; errArea: string; errAddress: string; errAddressShort: string;
   errName: string; errPhone: string;
-  gpsBtn: string; gpsDetecting: string; gpsDenied: string; gpsFailed: string;
+  gpsBtn: string; gpsDetecting: string; gpsSuccess: string;
+  gpsDenied: string; gpsUnavailable: string; gpsTimeout: string; gpsFailed: string;
 }
 
 const BK_TEXT: Record<'en' | 'id', BK> = {
@@ -168,7 +169,10 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     errPhone: 'Please enter a valid WhatsApp number.',
     gpsBtn: '📍 Use my current location',
     gpsDetecting: 'Detecting location…',
+    gpsSuccess: '✓ Location detected',
     gpsDenied: 'Location access was denied. Please type your address manually.',
+    gpsUnavailable: 'Unable to detect your location. Please type your address manually.',
+    gpsTimeout: 'Location request timed out. Please type your address manually.',
     gpsFailed: 'Could not detect location. Please type your address manually.',
   },
   id: {
@@ -260,7 +264,10 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     errPhone: 'Masukkan nomor WhatsApp yang valid.',
     gpsBtn: '📍 Gunakan lokasi saya',
     gpsDetecting: 'Mendeteksi lokasi…',
+    gpsSuccess: '✓ Lokasi terdeteksi',
     gpsDenied: 'Akses lokasi ditolak. Silakan ketik alamat Anda secara manual.',
+    gpsUnavailable: 'Lokasi tidak tersedia. Silakan ketik alamat Anda secara manual.',
+    gpsTimeout: 'Permintaan lokasi habis waktu. Silakan ketik alamat Anda secara manual.',
     gpsFailed: 'Lokasi tidak dapat dideteksi. Silakan ketik alamat Anda secara manual.',
   },
 };
@@ -640,14 +647,40 @@ function Step1({
 
 /* ─── GPS Location Button ─── */
 function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => void }) {
-  const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
-  const [msg, setMsg] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const errorRef = useRef<HTMLSpanElement>(null);
+  const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  async function detect() {
-    if (!navigator.geolocation) {
-      setState('error'); setMsg(bk.gpsFailed); return;
+  function showError(msg: string) {
+    if (errorRef.current) {
+      errorRef.current.textContent = msg;
+      errorRef.current.style.display = 'block';
     }
-    setState('loading');
+  }
+
+  function clearError() {
+    if (errorRef.current) {
+      errorRef.current.textContent = '';
+      errorRef.current.style.display = 'none';
+    }
+  }
+
+  function detect() {
+    // Clear any previous error/success immediately on click
+    clearError();
+    if (successTimer.current) clearTimeout(successTimer.current);
+    setSuccess(false);
+
+    if (!navigator.geolocation) {
+      showError(bk.gpsFailed);
+      return;
+    }
+
+    setLoading(true);
+
+    // Do NOT wrap getCurrentPosition in try/catch — it is always async,
+    // it never throws; errors arrive only via the error callback.
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
@@ -659,19 +692,28 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
           const data = await res.json() as { display_name?: string };
           if (data.display_name) {
             onAddress(data.display_name.slice(0, 300));
-            setState('idle');
+            setLoading(false);
+            setSuccess(true);
+            successTimer.current = setTimeout(() => setSuccess(false), 3000);
           } else {
-            setState('error'); setMsg(bk.gpsFailed);
+            setLoading(false);
+            showError(bk.gpsFailed);
           }
         } catch {
-          setState('error'); setMsg(bk.gpsFailed);
+          setLoading(false);
+          showError(bk.gpsFailed);
         }
       },
       (err) => {
-        setState('error');
-        setMsg(err.code === err.PERMISSION_DENIED ? bk.gpsDenied : bk.gpsFailed);
+        setLoading(false);
+        // Error shown ONLY here — after user has interacted with the permission dialog
+        let msg = bk.gpsFailed;
+        if (err.code === err.PERMISSION_DENIED) msg = bk.gpsDenied;
+        else if (err.code === err.POSITION_UNAVAILABLE) msg = bk.gpsUnavailable;
+        else if (err.code === err.TIMEOUT) msg = bk.gpsTimeout;
+        showError(msg);
       },
-      { timeout: 10000, maximumAge: 60000 },
+      { timeout: 10000, maximumAge: 0 },
     );
   }
 
@@ -679,15 +721,18 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
     <div style={{ marginTop: 8 }}>
       <button
         type="button"
-        className="bk-gps-btn"
+        className={`bk-gps-btn${success ? ' bk-gps-success' : ''}`}
         onClick={detect}
-        disabled={state === 'loading'}
+        disabled={loading}
       >
-        {state === 'loading' ? bk.gpsDetecting : bk.gpsBtn}
+        {loading ? bk.gpsDetecting : success ? bk.gpsSuccess : bk.gpsBtn}
       </button>
-      {state === 'error' && msg && (
-        <span className="bk-field-error" style={{ marginTop: 4 }}>{msg}</span>
-      )}
+      {/* Error written directly to DOM inside error callback — never before */}
+      <span
+        ref={errorRef}
+        className="bk-field-error"
+        style={{ display: 'none', marginTop: 4 }}
+      />
     </div>
   );
 }
