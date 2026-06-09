@@ -3,6 +3,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Coins, Mail, MessageCircle, Settings2 } from 'lucide-react';
 import { CURRENCY_OPTIONS, normalizeCurrency, type CurrencyCode } from '@/lib/currency';
+import { useAdminLang } from '@/app/admin/AdminLayoutClient';
+import { ADMIN_T } from '@/lib/admin-i18n';
+import {
+  DAY_KEYS,
+  type DayKey,
+  type OperatingHoursSchedule,
+  getDefaultSchedule,
+  parseOperatingHours,
+} from '@/lib/operatingHours';
 
 type CurrencySetting = {
   code: CurrencyCode;
@@ -24,6 +33,9 @@ type ApiResponse<T> = {
   error?: string;
 };
 
+// day1=Mon…day6=Sat, day0=Sun — matches DAY_KEYS order Mon→Sun
+const DAY_TRANS_KEYS = ['day1', 'day2', 'day3', 'day4', 'day5', 'day6', 'day0'] as const;
+
 function defaultCurrencySettings(): CurrencySetting[] {
   return CURRENCY_OPTIONS.map((option) => ({
     code: option.code,
@@ -36,8 +48,12 @@ function defaultCurrencySettings(): CurrencySetting[] {
 }
 
 export default function SettingsPage() {
+  const { lang } = useAdminLang();
+  const t = ADMIN_T[lang];
+
   const [settings, setSettings] = useState<SettingsData>({});
   const [currencySettings, setCurrencySettings] = useState<CurrencySetting[]>(defaultCurrencySettings);
+  const [operatingHours, setOperatingHours] = useState<OperatingHoursSchedule>(getDefaultSchedule);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -52,12 +68,14 @@ export default function SettingsPage() {
         if (Array.isArray(data.currencySettings)) {
           setCurrencySettings(data.currencySettings);
         }
+        setOperatingHours(parseOperatingHours(data.business_hours as string | undefined));
         setLoading(false);
       })
       .catch(() => {
-        setError('Gagal memuat pengaturan.');
+        setError(t.gagalMemuatPengaturan);
         setLoading(false);
       });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const defaultCurrency = normalizeCurrency(settings.default_currency as string | undefined);
@@ -76,6 +94,23 @@ export default function SettingsPage() {
     )));
   }
 
+  function updateDay(key: DayKey, patch: Partial<OperatingHoursSchedule[DayKey]>) {
+    setOperatingHours((prev) => ({ ...prev, [key]: { ...prev[key], ...patch } }));
+  }
+
+  function applyToAll() {
+    const monday = { ...operatingHours.monday };
+    setOperatingHours((prev) => {
+      const next = { ...prev };
+      for (const key of DAY_KEYS) next[key] = { ...monday };
+      return next;
+    });
+  }
+
+  function resetToDefault() {
+    setOperatingHours(getDefaultSchedule());
+  }
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -92,7 +127,7 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           whatsapp_number: settings.whatsapp_number,
-          business_hours: settings.business_hours,
+          business_hours: JSON.stringify(operatingHours),
           response_time_minutes: settings.response_time_minutes,
           site_name: settings.site_name,
           site_email: settings.site_email,
@@ -102,7 +137,7 @@ export default function SettingsPage() {
       });
       const json = (await res.json()) as ApiResponse<null>;
       if (!res.ok) {
-        setError(json.message ?? json.error ?? 'Gagal menyimpan');
+        setError(json.message ?? json.error ?? t.gagalMenyimpan);
         return;
       }
       updateField('default_currency', nextDefault);
@@ -133,24 +168,25 @@ export default function SettingsPage() {
     <div className="admin-page settings-page" style={{ maxWidth: 980 }}>
       <div className="admin-page-head">
         <div>
-          <h1 className="admin-title">Pengaturan Situs</h1>
-          <p className="admin-subtitle">Kontak, jam operasional, identitas website, dan mata uang.</p>
+          <h1 className="admin-title">{t.settingsTitle}</h1>
+          <p className="admin-subtitle">{t.settingsSubtitle}</p>
         </div>
       </div>
 
       {error && <div className="alert alert-error" style={{ marginBottom: 16 }}>{error}</div>}
       {success && (
         <div className="alert alert-success" style={{ marginBottom: 16 }}>
-          Pengaturan berhasil disimpan.
+          {t.ohBerhasil}
         </div>
       )}
 
       <form className="admin-form settings-form" onSubmit={save}>
+        {/* Kontak */}
         <section className="form-card">
-          <h2 className="form-card-title"><MessageCircle size={18} /> Kontak & WhatsApp</h2>
+          <h2 className="form-card-title"><MessageCircle size={18} /> {t.kontakWhatsApp}</h2>
           <div className="admin-form-grid">
             <label className="admin-field">
-              <span className="admin-field-label">Nomor WhatsApp</span>
+              <span className="admin-field-label">{t.nomorWA}</span>
               <input
                 className="control"
                 value={(settings.whatsapp_number as string | undefined) ?? ''}
@@ -158,10 +194,10 @@ export default function SettingsPage() {
                 placeholder="6281234567890"
                 pattern="\d{10,15}"
               />
-              <span className="admin-help">Tanpa tanda + atau spasi. Contoh: 6281234567890</span>
+              <span className="admin-help">{t.waHelp}</span>
             </label>
             <label className="admin-field">
-              <span className="admin-field-label">Email Bisnis</span>
+              <span className="admin-field-label">{t.emailBisnis}</span>
               <input
                 className="control"
                 type="email"
@@ -173,20 +209,71 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {/* Operasional — weekly schedule */}
         <section className="form-card">
-          <h2 className="form-card-title"><Settings2 size={18} /> Operasional</h2>
-          <div className="admin-form-grid">
+          <h2 className="form-card-title"><Settings2 size={18} /> {t.operasional}</h2>
+
+          <div className="oh-schedule">
+            <div className="oh-schedule-actions">
+              <button type="button" className="button button-secondary oh-action-btn" onClick={applyToAll}>
+                {t.ohTerapkanSemua}
+              </button>
+              <button type="button" className="button oh-action-btn oh-reset-btn" onClick={resetToDefault}>
+                {t.resetDefault}
+              </button>
+            </div>
+
+            {DAY_KEYS.map((key, i) => {
+              const day = operatingHours[key];
+              return (
+                <div className="oh-row" key={key}>
+                  <span className="oh-day">{t[DAY_TRANS_KEYS[i]]}</span>
+
+                  <button
+                    type="button"
+                    className={`oh-toggle${day.isOpen ? ' oh-toggle-open' : ''}`}
+                    onClick={() => updateDay(key, { isOpen: !day.isOpen })}
+                    aria-pressed={day.isOpen}
+                  >
+                    {day.isOpen ? t.buka : t.ohTutup}
+                  </button>
+
+                  <div className="oh-times">
+                    <input
+                      type="time"
+                      className="control oh-time"
+                      value={day.open}
+                      onChange={(e) => updateDay(key, { open: e.target.value })}
+                      disabled={!day.isOpen || day.is24h}
+                    />
+                    <span className="oh-sep">{t.ohSampai}</span>
+                    <input
+                      type="time"
+                      className="control oh-time"
+                      value={day.close}
+                      onChange={(e) => updateDay(key, { close: e.target.value })}
+                      disabled={!day.isOpen || day.is24h}
+                    />
+                  </div>
+
+                  <label className="oh-24h-label">
+                    <input
+                      type="checkbox"
+                      checked={day.is24h}
+                      onChange={(e) => updateDay(key, { is24h: e.target.checked })}
+                      disabled={!day.isOpen}
+                    />
+                    <span>{t.oh24Jam}</span>
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Response time */}
+          <div className="admin-form-grid" style={{ marginTop: 24 }}>
             <label className="admin-field">
-              <span className="admin-field-label">Jam Operasional</span>
-              <input
-                className="control"
-                value={(settings.business_hours as string | undefined) ?? ''}
-                onChange={(e) => updateField('business_hours', e.target.value)}
-                placeholder="08:00-22:00"
-              />
-            </label>
-            <label className="admin-field">
-              <span className="admin-field-label">Waktu Respons (menit)</span>
+              <span className="admin-field-label">{t.waktuResponsMenit}</span>
               <input
                 className="control"
                 type="number"
@@ -199,10 +286,11 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {/* Info Situs */}
         <section className="form-card">
-          <h2 className="form-card-title"><Mail size={18} /> Info Situs</h2>
+          <h2 className="form-card-title"><Mail size={18} /> {t.infoSitus}</h2>
           <label className="admin-field">
-            <span className="admin-field-label">Nama Situs</span>
+            <span className="admin-field-label">{t.namaSitus}</span>
             <input
               className="control"
               value={(settings.site_name as string | undefined) ?? ''}
@@ -212,10 +300,11 @@ export default function SettingsPage() {
           </label>
         </section>
 
+        {/* Mata Uang */}
         <section className="form-card">
-          <h2 className="form-card-title"><Coins size={18} /> Pengaturan Mata Uang</h2>
+          <h2 className="form-card-title"><Coins size={18} /> {t.pengaturanMataUang}</h2>
           <label className="admin-field">
-            <span className="admin-field-label">Default Currency</span>
+            <span className="admin-field-label">{t.defaultCurrency}</span>
             <select
               className="control"
               value={defaultCurrency}
@@ -251,7 +340,7 @@ export default function SettingsPage() {
                   </label>
                   <div className="currency-setting-name">{item.name}</div>
                   <label className="admin-field">
-                    <span className="admin-field-label">Kurs Manual ke IDR</span>
+                    <span className="admin-field-label">{t.kursManualIDR}</span>
                     <input
                       className="control"
                       type="number"
@@ -261,7 +350,7 @@ export default function SettingsPage() {
                       onChange={(event) => updateCurrency(item.code, {
                         manualRateToIdr: event.target.value === '' ? null : Number(event.target.value),
                       })}
-                      placeholder={item.code === 'IDR' ? '1' : 'Opsional'}
+                      placeholder={item.code === 'IDR' ? '1' : t.opsional}
                     />
                   </label>
                 </div>
@@ -272,7 +361,7 @@ export default function SettingsPage() {
 
         <div className="admin-form-actions">
           <button className={`button button-primary${saving ? ' loading' : ''}`} type="submit" disabled={saving}>
-            {saving ? 'Menyimpan' : 'Simpan Pengaturan'}
+            {saving ? t.menyimpan : t.simpanPengaturan}
           </button>
         </div>
       </form>

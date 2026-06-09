@@ -1,16 +1,35 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/language';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
+import { parseOperatingHours, formatOperatingHours } from '@/lib/operatingHours';
 
 interface Props {
   waNumber: string;
 }
 
 export default function ContactContent({ waNumber }: Props) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const [businessHoursRaw, setBusinessHoursRaw] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/public/settings', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((json) => {
+        if (!active) return;
+        const raw = json?.data?.businessHours;
+        if (typeof raw === 'string') setBusinessHoursRaw(raw);
+      })
+      .catch(() => { /* keep fallback translations */ });
+    return () => { active = false; };
+  }, []);
   const waUrl = buildWhatsAppUrl(waNumber, t.footer.waFloatMessage);
+  const formattedHours = businessHoursRaw !== null
+    ? `${formatOperatingHours(parseOperatingHours(businessHoursRaw), lang === 'id' ? 'id' : 'en')} WITA`
+    : t.contactPage.hoursDailyTime;
 
   return (
     <main className="page-shell">
@@ -147,7 +166,7 @@ export default function ContactContent({ waNumber }: Props) {
               </div>
               <div>
                 <strong>{t.contactPage.hoursDaily}</strong>
-                <span>{t.contactPage.hoursDailyTime}</span>
+                <span>{formattedHours}</span>
               </div>
             </div>
             <div className="contact-hours-item">

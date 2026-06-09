@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/contexts/language';
+import { parseOperatingHours, formatOperatingHours } from '@/lib/operatingHours';
 
 const WA_SVG = (
   <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -40,7 +41,7 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
   const [activeWa, setActiveWa] = useState(waNumber);
   const [activeDisplay, setActiveDisplay] = useState(displayNumber);
   const [siteEmail, setSiteEmail] = useState('');
-  const [businessHours, setBusinessHours] = useState('');
+  const [businessHoursRaw, setBusinessHoursRaw] = useState<string | null>(null);
   const [products, setProducts] = useState<ProductLink[]>([]);
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
 
@@ -62,7 +63,7 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
       setActiveWa(nextWa);
       setActiveDisplay(formatPhone(nextWa));
       setSiteEmail(typeof settingsJson.data?.siteEmail === 'string' ? settingsJson.data.siteEmail : '');
-      setBusinessHours(typeof settingsJson.data?.businessHours === 'string' ? settingsJson.data.businessHours : '');
+      setBusinessHoursRaw(typeof settingsJson.data?.businessHours === 'string' ? settingsJson.data.businessHours : null);
       setProducts(Array.isArray(productsJson.data) ? productsJson.data.slice(0, 4) : []);
       setSocialLinks(Array.isArray(socialJson.data) ? socialJson.data : []);
     }).catch(() => {
@@ -121,6 +122,7 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
   const email = configuredEmail?.value || siteEmail;
 
   const isId = lang === 'id';
+  const formattedHours = formatOperatingHours(parseOperatingHours(businessHoursRaw), isId ? 'id' : 'en');
 
   return (
     <>
@@ -200,7 +202,7 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                   </svg>
-                  {businessHours ? `${businessHours.replace('-', ' - ')} WITA` : t.footer.hours}
+                  {businessHoursRaw !== null ? `${formattedHours} WITA` : t.footer.hours}
                 </div>
               </div>
             </div>

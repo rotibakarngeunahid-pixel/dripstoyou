@@ -3,10 +3,13 @@ import ScrollRevealInit from '@/components/public/ScrollRevealInit';
 import HomeContent from '@/components/public/HomeContent';
 import SiteFooter from '@/components/public/SiteFooter';
 import type { HomepageProduct, ServiceAreaData } from '@/components/public/HomeContent';
+import { parseOperatingHours, toSchemaOpeningHours } from '@/lib/operatingHours';
 
 export const dynamic = 'force-dynamic';
 
-async function getPublicSettings(): Promise<{ whatsappNumber?: string } | null> {
+type PublicSettings = { whatsappNumber?: string; businessHours?: string };
+
+async function getPublicSettings(): Promise<PublicSettings | null> {
   const phpBase = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (!phpBase) return null;
   try {
@@ -70,7 +73,7 @@ async function getServiceAreas(): Promise<ServiceAreaData[]> {
   }
 }
 
-const JSON_LD = {
+const JSON_LD_BASE = {
   '@context': 'https://schema.org',
   '@type': 'MedicalBusiness',
   name: 'Drips To You - Bali',
@@ -88,7 +91,6 @@ const JSON_LD = {
     latitude: -8.4095,
     longitude: 115.1889,
   },
-  openingHours: 'Mo-Su 08:00-22:00',
   priceRange: '$$',
   areaServed: { '@type': 'Place', name: 'Bali, Indonesia' },
   sameAs: ['https://instagram.com/dripstoyou'],
@@ -108,11 +110,17 @@ export default async function HomePage() {
     process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ??
     '6281200000000';
 
+  const openingHours = toSchemaOpeningHours(
+    parseOperatingHours(settings?.businessHours ?? null),
+  );
+
+  const jsonLd = { ...JSON_LD_BASE, openingHours };
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <Header />
       <ScrollRevealInit />
