@@ -372,6 +372,9 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
     lihat: 'Lihat',
     kelola: 'Kelola',
     hapusData: 'Hapus',
+    resetKeDefault: 'Reset ke default role',
+    superAdminFullAccess: 'Super Admin selalu mendapat akses penuh ke semua modul.',
+    izinDefaultNote: 'Menggunakan izin default role (belum dikustomisasi).',
   },
 
   en: {
@@ -745,5 +748,8 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
     lihat: 'View',
     kelola: 'Manage',
     hapusData: 'Delete',
+    resetKeDefault: 'Reset to role defaults',
+    superAdminFullAccess: 'Super Admin always has full access to all modules.',
+    izinDefaultNote: 'Using role default permissions (not yet customized).',
   },
 };

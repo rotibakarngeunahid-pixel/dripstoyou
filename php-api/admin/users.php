@@ -16,10 +16,16 @@ if ($admin['role'] !== 'SUPER_ADMIN') {
     jsonError('Forbidden: SUPER_ADMIN only', 403);
 }
 
+function parsePermissions($json): ?array {
+    if (empty($json)) return null;
+    $decoded = json_decode($json, true);
+    return is_array($decoded) ? $decoded : null;
+}
+
 // ── GET — list all admins ──────────────────────────────────────────────────────
 if ($method === 'GET') {
     $stmt = $db->prepare(
-        'SELECT id, name, email, role, is_active, last_login_at, created_at
+        'SELECT id, name, email, role, is_active, permissions_json, last_login_at, created_at
            FROM admins
           ORDER BY created_at ASC'
     );
@@ -33,6 +39,7 @@ if ($method === 'GET') {
             'email'         => $row['email'],
             'role'          => $row['role'],
             'isActive'      => (bool)$row['is_active'],
+            'permissions'   => parsePermissions($row['permissions_json']),
             'lastLoginAt'   => $row['last_login_at'],
             'createdAt'     => $row['created_at'],
         ];
@@ -51,6 +58,8 @@ if ($method === 'POST') {
     $password = (string)($body['password'] ?? '');
     $role     = str_clean($body['role'], 32);
     $isActive = isset($body['isActive']) ? (bool)$body['isActive'] : true;
+    $permJson = isset($body['permissions']) && is_array($body['permissions'])
+                ? json_encode($body['permissions']) : null;
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) jsonError('Email tidak valid', 422);
     if (!in_array($role, $VALID_ROLES, true)) jsonError('Role tidak valid', 422);
@@ -67,10 +76,10 @@ if ($method === 'POST') {
     $now      = date('Y-m-d H:i:s');
 
     $stmt = $db->prepare(
-        'INSERT INTO admins (id, name, email, password_hash, role, is_active, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT INTO admins (id, name, email, password_hash, role, is_active, permissions_json, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
-    $stmt->execute([$newId, $name, $email, $passHash, $role, $isActive ? 1 : 0, $now, $now]);
+    $stmt->execute([$newId, $name, $email, $passHash, $role, $isActive ? 1 : 0, $permJson, $now, $now]);
 
     auditLog('CREATE_ADMIN', $admin['admin_id'], 'Admin', $newId, [
         'name'  => $name,
@@ -79,11 +88,12 @@ if ($method === 'POST') {
     ]);
 
     jsonSuccess([
-        'id'       => $newId,
-        'name'     => $name,
-        'email'    => $email,
-        'role'     => $role,
-        'isActive' => $isActive,
+        'id'          => $newId,
+        'name'        => $name,
+        'email'       => $email,
+        'role'        => $role,
+        'isActive'    => $isActive,
+        'permissions' => parsePermissions($permJson),
     ], 'Admin berhasil dibuat', 201);
 }
 
@@ -94,7 +104,7 @@ if ($method === 'PUT') {
     $body = getBodyJson();
 
     // Fetch existing admin
-    $fetch = $db->prepare('SELECT id, name, email, role, is_active FROM admins WHERE id = ? LIMIT 1');
+    $fetch = $db->prepare('SELECT id, name, email, role, is_active, permissions_json FROM admins WHERE id = ? LIMIT 1');
     $fetch->execute([$id]);
     $target = $fetch->fetch();
     if (!$target) jsonError('Admin tidak ditemukan', 404);
@@ -113,6 +123,8 @@ if ($method === 'PUT') {
     $email    = isset($body['email'])    ? strtolower(trim(str_clean($body['email'], 191))) : $target['email'];
     $role     = isset($body['role'])     ? str_clean($body['role'], 32)      : $target['role'];
     $isActive = isset($body['isActive']) ? (bool)$body['isActive']           : (bool)$target['is_active'];
+    $permJson = isset($body['permissions']) && is_array($body['permissions'])
+                ? json_encode($body['permissions']) : $target['permissions_json'];
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) jsonError('Email tidak valid', 422);
     if (!in_array($role, $VALID_ROLES, true)) jsonError('Role tidak valid', 422);
@@ -125,8 +137,8 @@ if ($method === 'PUT') {
         if ($check->fetch()) jsonError('Email sudah digunakan', 409);
     }
 
-    $sets  = 'name = ?, email = ?, role = ?, is_active = ?, updated_at = ?';
-    $binds = [$name, $email, $role, $isActive ? 1 : 0, date('Y-m-d H:i:s')];
+    $sets  = 'name = ?, email = ?, role = ?, is_active = ?, permissions_json = ?, updated_at = ?';
+    $binds = [$name, $email, $role, $isActive ? 1 : 0, $permJson, date('Y-m-d H:i:s')];
 
     // Optional password change
     if (!empty($body['password'])) {
@@ -148,11 +160,12 @@ if ($method === 'PUT') {
     ]);
 
     jsonSuccess([
-        'id'       => $id,
-        'name'     => $name,
-        'email'    => $email,
-        'role'     => $role,
-        'isActive' => $isActive,
+        'id'          => $id,
+        'name'        => $name,
+        'email'       => $email,
+        'role'        => $role,
+        'isActive'    => $isActive,
+        'permissions' => parsePermissions($permJson),
     ], 'Admin berhasil diperbarui');
 }
 
