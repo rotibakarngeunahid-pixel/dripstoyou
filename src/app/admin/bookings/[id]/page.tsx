@@ -146,8 +146,8 @@ export default function BookingDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F3F0E7] p-6 lg:p-10 flex flex-col items-center">
-        <div className="w-full max-w-[1180px] animate-pulse">
+      <div className="admin-page">
+        <div className="animate-pulse">
           <div className="h-8 bg-gray-200 rounded w-32 mb-8"></div>
           <div className="h-12 bg-gray-200 rounded w-64 mb-10"></div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -167,8 +167,8 @@ export default function BookingDetailPage() {
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-[#F3F0E7] p-6 lg:p-10 flex flex-col items-center">
-        <div className="w-full max-w-[1180px]">
+      <div className="admin-page">
+        <div>
            <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100">{error || 'Booking tidak ditemukan'}</div>
         </div>
       </div>
@@ -181,7 +181,7 @@ export default function BookingDetailPage() {
   const shortDate = new Date(booking.booking_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-[#F3F0E7] py-8 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+    <div className="admin-page">
       <ConfirmModal
         open={confirmStatus}
         title="Ubah Status Booking"
@@ -194,7 +194,7 @@ export default function BookingDetailPage() {
         onCancel={() => setConfirmStatus(false)}
       />
 
-      <div className="w-full max-w-[1180px]">
+      <div className="max-w-[1180px] mx-auto w-full">
         {/* Header Section */}
         <div className="mb-8">
           <button
@@ -311,7 +311,7 @@ export default function BookingDetailPage() {
             <h2 className="text-xl font-bold text-[#205251]">Update Status</h2>
           </div>
           
-          <div className="flex flex-wrap lg:flex-nowrap gap-3 mb-6">
+          <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
             {STATUS_OPTIONS.map((status) => {
               const isActive = newStatus === status.value;
               return (
@@ -320,7 +320,7 @@ export default function BookingDetailPage() {
                   onClick={() => setNewStatus(status.value)}
                   disabled={saving}
                   type="button"
-                  className={`flex-1 min-w-[140px] py-3.5 px-4 rounded-xl text-[14px] font-semibold transition-all flex items-center justify-center gap-2 border ${
+                  className={`flex-1 min-w-[100px] sm:min-w-[120px] py-3 px-2 sm:px-4 rounded-xl text-[12px] sm:text-[14px] font-semibold transition-all flex items-center justify-center gap-1.5 sm:gap-2 border ${
                     isActive 
                       ? 'bg-[#205251] border-[#205251] text-white shadow-[0_4px_12px_rgba(32,82,81,0.2)]' 
                       : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
