@@ -6722,46 +6722,52 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
 .bd-alert-error  { background: #fff0ed; color: #b33223; border: 1px solid #f2b8ae; }
 .bd-alert-success{ background: #ecfdf3; color: #167a3f; border: 1px solid #b7e4c7; }
 
+/* ── Timeline — dot as grid column, no absolute positioning ── */
 .bd-timeline {
   position: relative;
-  padding-left: 26px;
 }
+/* Vertical connecting line drawn on the container */
 .bd-timeline::before {
   content: '';
   position: absolute;
-  left: 5px;
-  top: 8px;
-  bottom: 8px;
+  left: 6px;
+  top: 14px;
+  bottom: 14px;
   width: 2px;
   background: #edeae3;
   border-radius: 2px;
+  pointer-events: none;
 }
+/* Each row: dot col | time col | chips col | admin col */
 .bd-timeline-item {
-  position: relative;
   display: grid;
-  grid-template-columns: 170px 1fr auto;
+  grid-template-columns: 14px 160px 1fr auto;
   align-items: center;
-  gap: 14px;
-  padding: 0 0 22px;
+  gap: 0 16px;
+  padding: 10px 0;
+  position: relative;
 }
-.bd-timeline-item:last-child { padding-bottom: 0; }
+.bd-timeline-item:first-child { padding-top: 0; }
+.bd-timeline-item:last-child  { padding-bottom: 0; }
+/* The dot — inline, perfectly centred on the vertical line */
 .bd-timeline-dot {
-  position: absolute;
-  left: -23px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 13px;
-  height: 13px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--teal);
   border: 3px solid white;
   box-shadow: 0 0 0 2px var(--teal);
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  justify-self: center;
 }
 .bd-timeline-time {
   font-size: .78rem;
   font-weight: 700;
   color: var(--text-muted);
   line-height: 1.4;
+  white-space: nowrap;
 }
 .bd-timeline-chips {
   display: flex;
@@ -6781,7 +6787,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
 }
 .bd-chip-old { background: #f5f3ee; color: var(--text-muted); border: 1px solid var(--grey); }
 .bd-chip-new { background: var(--pale-aqua); color: var(--teal); border: 1px solid rgba(32,82,81,.18); }
-.bd-chip-arrow { color: var(--text-muted); flex-shrink: 0; display: flex; }
+.bd-chip-arrow { color: var(--text-muted); flex-shrink: 0; display: flex; align-items: center; }
 .bd-timeline-note {
   font-size: .8rem;
   font-style: italic;
@@ -6809,9 +6815,22 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
 @media (max-width: 1100px) {
   .bd-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+@media (max-width: 900px) {
+  /* Timeline: collapse time+chips into 2-row layout, keep dot on left */
+  .bd-timeline-item {
+    grid-template-columns: 14px 1fr auto;
+    grid-template-rows: auto auto;
+    row-gap: 6px;
+    align-items: start;
+    padding: 10px 0;
+  }
+  .bd-timeline-dot  { grid-row: 1 / 3; align-self: center; margin-top: 0; }
+  .bd-timeline-time { grid-column: 2; grid-row: 1; }
+  .bd-timeline-chips{ grid-column: 2; grid-row: 2; }
+  .bd-timeline-admin{ grid-column: 3; grid-row: 1 / 3; align-self: center; }
+}
 @media (max-width: 860px) {
   .bd-main-grid { grid-template-columns: 1fr; }
-  .bd-timeline-item { grid-template-columns: 1fr; gap: 8px; align-items: start; }
 }
 @media (max-width: 640px) {
   .bd-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -6820,4 +6839,15 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   .bd-info-row { grid-template-columns: 18px 90px 12px 1fr; gap: 4px; }
   .bd-save-btn { width: 100%; justify-content: center; }
   .bd-status-btn { flex: 1 1 calc(50% - 5px); }
+  /* Timeline mobile: stack everything */
+  .bd-timeline::before { left: 6px; top: 18px; bottom: 18px; }
+  .bd-timeline-item {
+    grid-template-columns: 14px 1fr;
+    grid-template-rows: auto auto auto;
+    row-gap: 6px;
+  }
+  .bd-timeline-dot   { grid-column: 1; grid-row: 1 / 4; align-self: start; margin-top: 4px; }
+  .bd-timeline-time  { grid-column: 2; grid-row: 1; }
+  .bd-timeline-chips { grid-column: 2; grid-row: 2; }
+  .bd-timeline-admin { grid-column: 2; grid-row: 3; justify-self: start; margin-top: 2px; }
 }
