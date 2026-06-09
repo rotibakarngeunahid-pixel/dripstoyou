@@ -6274,11 +6274,16 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   font-weight: 500 !important; line-height: 1.45 !important;
 }
 
-/* ── Three info cards ── */
+/* ── Three info cards — flex stretch guarantees equal heights ── */
 .contact-info-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px; margin-top: 24px;
+  display: flex;
+  gap: 16px;
+  align-items: stretch;
+  margin-top: 24px;
+}
+.contact-info-grid > .contact-info-card {
+  flex: 1;
+  min-width: 0;
 }
 .contact-info-card { padding: 24px !important; }
 .contact-info-icon {
@@ -6306,12 +6311,11 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
     padding: 12px 0; border-left: none !important; border-bottom: 1px solid var(--grey);
   }
   .contact-hours-item:last-child { border-bottom: none; }
-  .contact-info-grid { grid-template-columns: 1fr; }
+  .contact-info-grid { flex-direction: column; }
 }
 /* ── Tablet 600–767px ── */
 @media (min-width: 600px) and (max-width: 767px) {
-  .contact-info-grid { grid-template-columns: 1fr 1fr; }
-  .contact-cta-illo  { width: 88px; }
+  .contact-cta-illo { width: 88px; }
 }
 /* ── Desktop ≥768px ── */
 @media (min-width: 768px) {
