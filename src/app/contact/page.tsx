@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import ContactContent from '@/components/public/ContactContent';
-import { getWaNumber } from '@/lib/whatsapp';
 
 export const metadata: Metadata = {
   title: 'Contact Us | Drips To You - Bali Mobile IV Therapy',
@@ -15,14 +14,34 @@ export const metadata: Metadata = {
   alternates: { canonical: 'https://dripstoyou.com/contact' },
 };
 
-export default function ContactPage() {
-  const waNumber = getWaNumber();
+async function getPublicSettings(): Promise<{ whatsappNumber?: string } | null> {
+  const phpBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!phpBase) return null;
+  try {
+    const res = await fetch(`${phpBase}/settings.php`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export default async function ContactPage() {
+  const settings = await getPublicSettings();
+  const waNumber =
+    (settings?.whatsappNumber as string | undefined) ??
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ??
+    '6281200000000';
 
   return (
     <>
       <Header />
       <ContactContent waNumber={waNumber} />
-      <SiteFooter />
+      <SiteFooter waNumber={waNumber} />
     </>
   );
 }

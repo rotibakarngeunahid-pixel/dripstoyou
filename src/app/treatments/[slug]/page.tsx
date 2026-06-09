@@ -4,7 +4,6 @@ import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import TreatmentDetailContent from '@/components/public/TreatmentDetailContent';
 import ScrollRevealInit from '@/components/public/ScrollRevealInit';
-import { getWaNumber } from '@/lib/whatsapp';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +32,22 @@ interface Product {
   label: string | null;
   benefits: Benefit[];
   faqs: Faq[];
+}
+
+async function getPublicSettings(): Promise<{ whatsappNumber?: string } | null> {
+  const phpBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!phpBase) return null;
+  try {
+    const res = await fetch(`${phpBase}/settings.php`, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(4000),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.data ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function getProduct(slug: string): Promise<Product | null> {
@@ -74,12 +89,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function TreatmentDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [product, waNumber] = await Promise.all([
+  const [product, settings] = await Promise.all([
     getProduct(slug),
-    Promise.resolve(getWaNumber()),
+    getPublicSettings(),
   ]);
 
   if (!product) notFound();
+
+  const waNumber =
+    (settings?.whatsappNumber as string | undefined) ??
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ??
+    '6281200000000';
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -104,7 +124,7 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
       />
       <Header />
       <TreatmentDetailContent product={product} waNumber={waNumber} />
-      <SiteFooter />
+      <SiteFooter waNumber={waNumber} />
       <ScrollRevealInit />
     </>
   );

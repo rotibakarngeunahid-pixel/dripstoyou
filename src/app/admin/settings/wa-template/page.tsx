@@ -43,20 +43,24 @@ export default function WaTemplatePage() {
   const [error,        setError]        = useState('');
   const [success,      setSuccess]      = useState('');
   const [confirmReset, setConfirmReset] = useState(false);
+  const [testWaNumber, setTestWaNumber] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    fetch('/api/admin/wa-template')
-      .then((r) => r.json() as Promise<ApiResponse<ApiData>>)
-      .then((json) => {
-        if (json.data) {
-          setTemplate(json.data.template);
-          setDefaultTpl(json.data.defaultTemplate);
-          setPlaceholders(json.data.allowedPlaceholders);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    Promise.all([
+      fetch('/api/admin/wa-template').then((r) => r.json() as Promise<ApiResponse<ApiData>>),
+      fetch('/api/public/settings', { cache: 'no-store' }).then((r) => r.json()),
+    ]).then(([tplJson, settingsJson]) => {
+      if (tplJson.data) {
+        setTemplate(tplJson.data.template);
+        setDefaultTpl(tplJson.data.defaultTemplate);
+        setPlaceholders(tplJson.data.allowedPlaceholders);
+      }
+      if (typeof settingsJson.data?.whatsappNumber === 'string') {
+        setTestWaNumber(normalizeWa(settingsJson.data.whatsappNumber));
+      }
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   function insertPlaceholder(key: string) {
@@ -103,7 +107,7 @@ export default function WaTemplatePage() {
   }
 
   function handleTestOpen() {
-    const waNumber = normalizeWa(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000');
+    const waNumber = testWaNumber || normalizeWa(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000');
     const msg      = applyTemplate(template, SAMPLE_DATA);
     window.open(`https://wa.me/${waNumber}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
   }

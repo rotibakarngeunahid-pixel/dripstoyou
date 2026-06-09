@@ -34,6 +34,14 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
   return `https://wa.me/${canonical}?text=${encodeURIComponent(message)}`;
 }
 
+export function buildWhatsAppLink(rawNumber: string, message = ''): string {
+  const canonical = normalizeWhatsAppNumber(rawNumber);
+  if (message) {
+    return `https://wa.me/${canonical}?text=${encodeURIComponent(message)}`;
+  }
+  return `https://wa.me/${canonical}`;
+}
+
 export function waBookingUrl(treatment: string, price?: string): string {
   const waNumber = getWaNumber();
   const text = price

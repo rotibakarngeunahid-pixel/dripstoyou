@@ -431,7 +431,7 @@ function StepBar({ step, bk }: { step: number; bk: BK }) {
 
 /* ─── Sidebar ─── */
 function Sidebar({
-  bk, lang, product, productGrad, date, time, areaName, people, locType, bookingCurrency,
+  bk, lang, product, productGrad, date, time, areaName, people, locType, bookingCurrency, waNumber,
 }: {
   bk: BK;
   lang: 'en' | 'id';
@@ -443,9 +443,9 @@ function Sidebar({
   people: number;
   locType: string;
   bookingCurrency: string;
+  waNumber: string;
 }) {
   const loc = bk.locTypes.find(l => l.v === locType);
-  const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000';
   const rows = [
     { ic: <IcCal />,    k: bk.sidebarDate,   v: date ? fmtDate(date, lang) : null },
     { ic: <IcClock />,  k: bk.sidebarTime,   v: time || null },
@@ -504,9 +504,13 @@ function Sidebar({
         <div className="bk-wa-nudge-ic"><IcWA /></div>
         <div className="bk-wa-nudge-txt">
           {bk.waQuestion}{' '}
-          <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer">
+          {waNumber ? (
+            <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer">
+              <strong>{bk.waLink}</strong>
+            </a>
+          ) : (
             <strong>{bk.waLink}</strong>
-          </a>{' '}
+          )}{' '}
           {bk.waCaption}
         </div>
       </div>
@@ -1071,7 +1075,7 @@ function Step3({
 
 /* ─── Success Screen ─── */
 function SuccessScreen({
-  bk, lang, bookingCode, product, form, areaName, onReset, bookingCurrency,
+  bk, lang, bookingCode, product, form, areaName, onReset, bookingCurrency, waNumber,
 }: {
   bk: BK;
   lang: 'en' | 'id';
@@ -1081,8 +1085,8 @@ function SuccessScreen({
   areaName: string;
   onReset: () => void;
   bookingCurrency: string;
+  waNumber: string;
 }) {
-  const waNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '6281200000000';
   const waText = encodeURIComponent([
     bk.waMsg,
     '',
@@ -1130,14 +1134,16 @@ function SuccessScreen({
           ))}
         </div>
 
-        <a
-          href={`https://wa.me/${waNumber}?text=${waText}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="bk-btn bk-btn-wa bk-btn-full"
-        >
-          <IcWA /> {bk.btnWa}
-        </a>
+        {waNumber && (
+          <a
+            href={`https://wa.me/${waNumber}?text=${waText}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bk-btn bk-btn-wa bk-btn-full"
+          >
+            <IcWA /> {bk.btnWa}
+          </a>
+        )}
         <Link
           href={`/cek-booking?code=${encodeURIComponent(bookingCode)}`}
           className="bk-btn bk-btn-ghost bk-btn-full"
@@ -1178,6 +1184,7 @@ export default function BookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError]           = useState('');
   const [success, setSuccess]       = useState<{ bookingCode: string } | null>(null);
+  const [waNumber, setWaNumber]     = useState(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? '');
 
   const slotReqRef = useRef(0);
 
@@ -1187,7 +1194,8 @@ export default function BookingPage() {
     Promise.all([
       fetch('/api/public/products').then(r => r.json() as Promise<ApiResponse<Product[]>>),
       fetch('/api/public/areas').then(r => r.json() as Promise<ApiResponse<Area[]>>),
-    ]).then(([pJson, aJson]) => {
+      fetch('/api/public/settings', { cache: 'no-store' }).then(r => r.json() as Promise<ApiResponse<{ whatsappNumber?: string }>>),
+    ]).then(([pJson, aJson, sJson]) => {
       if (!active) return;
       if (Array.isArray(pJson.data)) {
         setProducts(pJson.data);
@@ -1201,6 +1209,7 @@ export default function BookingPage() {
         }
       }
       if (Array.isArray(aJson.data)) setAreas(aJson.data);
+      if (typeof sJson.data?.whatsappNumber === 'string') setWaNumber(sJson.data.whatsappNumber);
     }).catch(() => {
       if (active) setError(bk.errLoad);
     }).finally(() => {
@@ -1313,6 +1322,7 @@ export default function BookingPage() {
             areaName={areaName}
             onReset={reset}
             bookingCurrency={bookingCurrency}
+            waNumber={waNumber}
           />
         </div>
         <SiteFooter />
@@ -1405,6 +1415,7 @@ export default function BookingPage() {
             people={form.people}
             locType={form.locType}
             bookingCurrency={bookingCurrency}
+            waNumber={waNumber}
           />
         </div>
       </div>
