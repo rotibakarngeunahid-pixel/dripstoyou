@@ -40,15 +40,15 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params;
   const body    = await req.text();
 
-  // Forward the original client IP so PHP can record it in the deletion log
+  // Use POST + _method=DELETE override because many shared-hosting Apache
+  // configs reject HTTP DELETE before PHP even runs.
   const clientIp = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? '';
+  const extraHeaders: Record<string, string> = {};
+  if (clientIp) extraHeaders['X-Forwarded-For'] = clientIp;
+
   const phpRes = await phpAdminFetch(
-    `bookings.php?id=${encodeURIComponent(id)}`,
-    {
-      method: 'DELETE',
-      body,
-      headers: clientIp ? { 'X-Forwarded-For': clientIp } : {},
-    },
+    `bookings.php?id=${encodeURIComponent(id)}&_method=DELETE`,
+    { method: 'POST', body, headers: extraHeaders },
     session.adminToken,
   );
   return NextResponse.json(await phpRes.json(), { status: phpRes.status });

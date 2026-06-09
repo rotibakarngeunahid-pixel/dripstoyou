@@ -1,13 +1,20 @@
 <?php
-// GET   /api/admin/bookings.php         — list all bookings
-// GET   /api/admin/bookings.php?id=xxx  — single booking with decrypted fields
-// PATCH /api/admin/bookings.php?id=xxx  — update status
+// GET    /api/admin/bookings.php                    — list all bookings
+// GET    /api/admin/bookings.php?id=xxx             — single booking with decrypted fields
+// PATCH  /api/admin/bookings.php?id=xxx             — update status
+// POST   /api/admin/bookings.php?id=xxx&_method=DELETE — hard delete (method override for hosts that block DELETE)
 
 require_once __DIR__ . '/../helpers.php';
 handleCors();
 
 $admin  = requireAuth();
-$method = getMethod();
+// Support X-HTTP-Method-Override header AND ?_method query param so hosts
+// that strip DELETE (shared hosting / some proxies) can still call this endpoint.
+$method = strtoupper(
+    $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']
+    ?? (isset($_GET['_method']) ? str_clean($_GET['_method'], 10) : null)
+    ?? getMethod()
+);
 $id     = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
 $db     = getDb();
 
