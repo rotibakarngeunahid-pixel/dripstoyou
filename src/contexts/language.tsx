@@ -79,6 +79,12 @@ export interface Translations {
     waTag: string; waTitle: string; waDesc: string; waBtn: string;
     bookingTag: string; bookingTitle: string; bookingDesc: string; bookingBtn: string;
     hoursTitle: string; hoursDesc: string;
+    hoursDaily: string; hoursDailyTime: string;
+    hoursAfter: string; hoursAfterDesc: string;
+    hoursLicensed: string;
+    responseTimeTitle: string; responseTimeDesc: string;
+    serviceAreaTitle: string; serviceAreaDesc: string;
+    urgentTitle: string; urgentDesc: string;
   };
   faqPage: {
     eyebrow: string; title: string; subtitle: string;
@@ -241,6 +247,17 @@ export const translations: Record<Lang, Translations> = {
       bookingBtn: 'Buka Form Booking',
       hoursTitle: 'Jam Layanan',
       hoursDesc: 'Jam layanan mengikuti jadwal aktif. Estimasi kedatangan bergantung pada area layanan dan ketersediaan tim.',
+      hoursDaily: 'Setiap Hari',
+      hoursDailyTime: '08.00 – 21.00 WITA',
+      hoursAfter: 'Di Luar Jam',
+      hoursAfterDesc: 'Atas permintaan',
+      hoursLicensed: 'Tenaga berlisensi. Perawatan premium, di mana saja.',
+      responseTimeTitle: 'Waktu Respons',
+      responseTimeDesc: 'Kami biasanya merespons dalam hitungan menit selama jam operasional.',
+      serviceAreaTitle: 'Area Layanan',
+      serviceAreaDesc: 'Melayani semua area utama di Bali dan sekitarnya.',
+      urgentTitle: 'Butuh bantuan segera?',
+      urgentDesc: 'Untuk permintaan mendesak, hubungi kami via WhatsApp untuk respons tercepat.',
     },
     faqPage: {
       eyebrow: 'FAQ',
@@ -407,6 +424,17 @@ export const translations: Record<Lang, Translations> = {
       bookingBtn: 'Open Booking Form',
       hoursTitle: 'Service Hours',
       hoursDesc: 'Service hours follow the active schedule. Estimated arrival depends on the service area and team availability.',
+      hoursDaily: 'Daily',
+      hoursDailyTime: '8:00 AM – 9:00 PM',
+      hoursAfter: 'After Hours',
+      hoursAfterDesc: 'By request',
+      hoursLicensed: 'Licensed professionals. Premium care, anywhere.',
+      responseTimeTitle: 'Response Time',
+      responseTimeDesc: 'We typically respond within minutes during operating hours.',
+      serviceAreaTitle: 'Service Area',
+      serviceAreaDesc: 'Proudly serving all major areas across Bali and surrounding regions.',
+      urgentTitle: 'Need urgent assistance?',
+      urgentDesc: 'For urgent requests, please reach out via WhatsApp for the fastest support.',
     },
     faqPage: {
       eyebrow: 'FAQ',

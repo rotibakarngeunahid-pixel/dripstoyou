@@ -6153,3 +6153,192 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
 @media (max-width: 639px) {
   .tp-desc { text-align: left; }
 }
+
+/* ─────────────────────────────────────────────
+   CONTACT PAGE
+───────────────────────────────────────────── */
+.contact-hero {
+  position: relative;
+  overflow: hidden;
+}
+.contact-hero-watermark {
+  position: absolute;
+  font-family: var(--font-playfair, Georgia, serif);
+  font-size: clamp(220px, 38vw, 420px);
+  font-weight: 700;
+  color: rgba(255,255,255,.04);
+  line-height: 1;
+  top: -20px;
+  left: 4%;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+/* CTA cards */
+.contact-cta-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  overflow: hidden;
+  padding: 28px;
+}
+.contact-cta-body {
+  flex: 1;
+  min-width: 0;
+}
+.contact-cta-illo {
+  flex-shrink: 0;
+  width: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+}
+.contact-tag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: .76rem;
+  font-weight: 700;
+  padding: 5px 13px;
+  margin-bottom: 14px;
+}
+.contact-tag-wa {
+  background: #e6f9ef;
+  color: #1a7a46;
+  border: 1px solid rgba(37,211,102,.22);
+}
+.contact-tag-booking {
+  background: #edf7f6;
+  color: var(--ocean);
+  border: 1px solid rgba(41,128,139,.2);
+}
+
+/* Service Hours card */
+.contact-hours-card {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 28px;
+}
+.contact-hours-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.contact-hours-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #edf7f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ocean);
+}
+.contact-hours-items {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--grey);
+}
+.contact-hours-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.contact-hours-item-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--off-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+.contact-hours-item strong {
+  display: block;
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--teal);
+  margin-bottom: 3px;
+}
+.contact-hours-item span {
+  font-size: .8rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+.contact-hours-licensed {
+  font-size: .82rem !important;
+  color: var(--text-muted) !important;
+  font-weight: 500 !important;
+  line-height: 1.55 !important;
+}
+
+/* Info cards row */
+.contact-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+.contact-info-card {
+  padding: 24px !important;
+}
+.contact-info-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #edf7f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ocean);
+  margin-bottom: 14px;
+}
+.contact-info-card h3 {
+  font-family: var(--font-playfair, Georgia, serif);
+  font-size: .98rem;
+  font-weight: 700;
+  color: var(--teal);
+  margin-bottom: 7px;
+  line-height: 1.3;
+}
+.contact-info-card p {
+  font-size: .83rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .contact-cta-illo { display: none; }
+  .contact-hours-items {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+@media (min-width: 768px) {
+  .contact-hours-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 28px;
+  }
+  .contact-hours-left {
+    flex: 0 0 auto;
+    max-width: 260px;
+  }
+  .contact-hours-items {
+    flex: 1;
+    border-top: none;
+    padding-top: 0;
+    border-left: 1px solid var(--grey);
+    padding-left: 28px;
+  }
+}
