@@ -18,6 +18,7 @@ import {
   PackagePlus,
   Settings,
   Share2,
+  Trash2,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -29,16 +30,17 @@ type AdminLang = 'id' | 'en';
 interface AdminLangCtx {
   lang: AdminLang;
   setLang: (l: AdminLang) => void;
+  adminRole: string | null;
 }
 
-const AdminLangContext = createContext<AdminLangCtx>({ lang: 'id', setLang: () => {} });
+const AdminLangContext = createContext<AdminLangCtx>({ lang: 'id', setLang: () => {}, adminRole: null });
 
 export function useAdminLang() {
   return useContext(AdminLangContext);
 }
 
 const ADMIN_LABELS: Record<AdminLang, {
-  mainMenu: string; dashboard: string; booking: string;
+  mainMenu: string; dashboard: string; booking: string; logPenghapusan: string;
   services: string; treatment: string; schedule: string; coverage: string;
   content: string; faq: string; socialLinks: string;
   settings: string; generalSettings: string; waTemplate: string;
@@ -48,7 +50,7 @@ const ADMIN_LABELS: Record<AdminLang, {
   closeMenu: string; openMenu: string;
 }> = {
   id: {
-    mainMenu: 'Menu Utama', dashboard: 'Dashboard', booking: 'Booking',
+    mainMenu: 'Menu Utama', dashboard: 'Dashboard', booking: 'Booking', logPenghapusan: 'Log Penghapusan',
     services: 'Layanan', treatment: 'Treatment', schedule: 'Jadwal', coverage: 'Area Layanan',
     content: 'Konten Website', faq: 'FAQ', socialLinks: 'Social Links',
     settings: 'Pengaturan', generalSettings: 'Pengaturan Umum', waTemplate: 'WhatsApp Template',
@@ -58,7 +60,7 @@ const ADMIN_LABELS: Record<AdminLang, {
     closeMenu: 'Tutup menu', openMenu: 'Buka menu',
   },
   en: {
-    mainMenu: 'Main Menu', dashboard: 'Dashboard', booking: 'Bookings',
+    mainMenu: 'Main Menu', dashboard: 'Dashboard', booking: 'Bookings', logPenghapusan: 'Deletion Log',
     services: 'Services', treatment: 'Treatments', schedule: 'Schedule', coverage: 'Service Areas',
     content: 'Website Content', faq: 'FAQ', socialLinks: 'Social Links',
     settings: 'Settings', generalSettings: 'General Settings', waTemplate: 'WhatsApp Template',
@@ -78,14 +80,18 @@ type AdminUser = {
   name: string;
 };
 
-function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang]): NavGroup[] {
+function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang], role?: string | null): NavGroup[] {
+  const mainItems: NavItem[] = [
+    { href: '/admin/dashboard', label: lbl.dashboard, icon: LayoutDashboard },
+    { href: '/admin/bookings',  label: lbl.booking,   icon: ClipboardList },
+  ];
+  if (role === 'SUPER_ADMIN') {
+    mainItems.push({ href: '/admin/booking-deletion-logs', label: lbl.logPenghapusan, icon: Trash2 });
+  }
   return [
     {
       label: lbl.mainMenu,
-      items: [
-        { href: '/admin/dashboard', label: lbl.dashboard, icon: LayoutDashboard },
-        { href: '/admin/bookings', label: lbl.booking, icon: ClipboardList },
-      ],
+      items: mainItems,
     },
     {
       label: lbl.services,
@@ -156,7 +162,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   }, []);
 
   const lbl = ADMIN_LABELS[adminLang];
-  const navGroups = buildNavGroups(lbl);
+  const navGroups = buildNavGroups(lbl, admin?.role);
 
   useEffect(() => {
     if (pathname === '/admin/login') {
@@ -255,7 +261,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   const name = admin?.name ?? 'Admin';
 
   return (
-    <AdminLangContext.Provider value={{ lang: adminLang, setLang: setAdminLang }}>
+    <AdminLangContext.Provider value={{ lang: adminLang, setLang: setAdminLang, adminRole: admin?.role ?? null }}>
       <div className="admin-layout">
         {sidebarOpen && (
           <button

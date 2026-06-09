@@ -471,6 +471,30 @@ function decodePricesJson(?string $json, float $fallbackAmount, string $fallback
     return [];
 }
 
+function ensureBookingDeletionLogsTable(PDO $db): void {
+    static $done = false;
+    if ($done) return;
+    $db->exec(
+        "CREATE TABLE IF NOT EXISTS `booking_deletion_logs` (
+            `id`                      VARCHAR(30)  NOT NULL,
+            `booking_id`              VARCHAR(30)  NOT NULL,
+            `booking_code`            VARCHAR(20)  NOT NULL,
+            `booking_snapshot`        LONGTEXT     NOT NULL,
+            `deleted_by_admin_id`     VARCHAR(30)  NOT NULL,
+            `deleted_by_admin_name`   VARCHAR(191) NOT NULL,
+            `deleted_by_admin_email`  VARCHAR(191) NOT NULL,
+            `reason`                  TEXT         NOT NULL,
+            `ip_address`              VARCHAR(100) NULL,
+            `deleted_at`              DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_deleted_at`  (`deleted_at`),
+            KEY `idx_booking_code` (`booking_code`),
+            KEY `idx_deleted_by`  (`deleted_by_admin_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+    );
+    $done = true;
+}
+
 function tableExists(PDO $db, string $table): bool {
     $stmt = $db->prepare(
         'SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES

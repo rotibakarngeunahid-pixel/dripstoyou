@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useAdminLang } from '@/app/admin/AdminLayoutClient';
 import { ADMIN_T } from '@/lib/admin-i18n';
+import { DeleteBookingModal, type DeleteModalBooking } from '@/components/admin/DeleteBookingModal';
 
 type BookingStatus = 'BARU' | 'KONFIRMASI' | 'DIPROSES' | 'SELESAI' | 'DIBATALKAN';
 
@@ -40,15 +41,34 @@ function formatDate(value: string, withYear = true) {
   });
 }
 
+type Toast = { message: string; type: 'success' | 'error' };
+
 export default function BookingsPage() {
-  const { lang } = useAdminLang();
+  const { lang, adminRole } = useAdminLang();
   const t = ADMIN_T[lang];
+  const isSuperAdmin = adminRole === 'SUPER_ADMIN';
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [secondsAgo, setSecondsAgo] = useState(0);
+
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<DeleteModalBooking | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  // Toast
+  const [toast, setToast] = useState<Toast | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function showToast(message: string, type: Toast['type']) {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast({ message, type });
+    toastTimer.current = setTimeout(() => setToast(null), 4000);
+  }
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -87,6 +107,57 @@ export default function BookingsPage() {
     }, 1000);
     return () => clearInterval(tick);
   }, [lastUpdated]);
+
+  function openDeleteModal(booking: Booking) {
+    setDeleteTarget({
+      id: booking.id,
+      booking_code: booking.booking_code,
+      customer_name: booking.customer_name,
+      product_name: booking.product_name,
+      booking_date: booking.booking_date,
+      booking_time: booking.booking_time,
+      status: booking.status,
+    });
+    setDeleteReason('');
+    setDeleteError('');
+  }
+
+  function closeDeleteModal() {
+    if (deleteLoading) return;
+    setDeleteTarget(null);
+    setDeleteReason('');
+    setDeleteError('');
+  }
+
+  async function handleConfirmDelete() {
+    if (!deleteTarget || !deleteReason.trim()) {
+      setDeleteError(t.alasanWajib);
+      return;
+    }
+    setDeleteLoading(true);
+    setDeleteError('');
+    try {
+      const res = await fetch(`/api/admin/bookings/${deleteTarget.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: deleteReason.trim() }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        const code = deleteTarget.booking_code;
+        setBookings((prev) => prev.filter((b) => b.id !== deleteTarget.id));
+        setDeleteTarget(null);
+        setDeleteReason('');
+        showToast(`${t.bookingBerhasilDihapus}: ${code}`, 'success');
+      } else {
+        setDeleteError(json.message ?? json.error ?? t.hapusBookingGagal);
+      }
+    } catch {
+      setDeleteError(t.hapusBookingGagal);
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
 
   const statusLabel = (s: BookingStatus) => t[`status${s}` as keyof typeof t] ?? s;
 
@@ -178,9 +249,33 @@ export default function BookingsPage() {
                     </td>
                     <td className="muted-small">{formatDate(booking.created_at, false)}</td>
                     <td>
-                      <Link href={`/admin/bookings/${booking.id}`} className="button button-secondary" style={{ padding: '4px 12px', fontSize: 13 }}>
-                        {t.detail}
-                      </Link>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <Link
+                          href={`/admin/bookings/${booking.id}`}
+                          className="button button-secondary"
+                          style={{ padding: '4px 12px', fontSize: 13 }}
+                        >
+                          {t.detail}
+                        </Link>
+                        {isSuperAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => openDeleteModal(booking)}
+                            style={{
+                              padding: '4px 10px', fontSize: 12, fontWeight: 600,
+                              background: 'transparent',
+                              color: '#dc2626',
+                              border: '1.5px solid #dc2626',
+                              borderRadius: 8,
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {t.hapus}
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -194,6 +289,38 @@ export default function BookingsPage() {
           </table>
         </div>
       </section>
+
+      {/* Delete confirmation modal */}
+      <DeleteBookingModal
+        open={deleteTarget !== null}
+        booking={deleteTarget}
+        loading={deleteLoading}
+        error={deleteError}
+        reason={deleteReason}
+        onReasonChange={setDeleteReason}
+        onConfirm={() => { void handleConfirmDelete(); }}
+        onCancel={closeDeleteModal}
+        t={t}
+      />
+
+      {/* Toast notification */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed', bottom: 28, right: 28, zIndex: 2000,
+            padding: '12px 20px', borderRadius: 12,
+            background: toast.type === 'success' ? '#16a34a' : '#dc2626',
+            color: 'white', fontSize: 14, fontWeight: 600,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+            maxWidth: 380, lineHeight: 1.4,
+            animation: 'fadeInUp 0.2s ease',
+          }}
+        >
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 }

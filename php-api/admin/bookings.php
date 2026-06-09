@@ -144,4 +144,84 @@ if ($method === 'PATCH') {
     jsonSuccess(['id' => $id, 'status' => $newStatus], 'Status diperbarui');
 }
 
+// ── DELETE (hard delete — SUPER_ADMIN only) ───────────────────────────────────
+if ($method === 'DELETE') {
+    if (!$id) jsonError('Booking ID required', 400);
+
+    if (($admin['role'] ?? '') !== 'SUPER_ADMIN') jsonError('Forbidden', 403);
+
+    $body   = getBodyJson();
+    $reason = str_clean($body['reason'] ?? '', 1000);
+    if (!$reason) jsonError('Alasan penghapusan wajib diisi', 422);
+
+    // Fetch full booking before delete
+    $stmt = $db->prepare(
+        'SELECT b.*, p.name AS product_name, p.price_label,
+                sa.name AS service_area_name
+         FROM   bookings b
+         JOIN   products p  ON p.id  = b.product_id
+         LEFT JOIN service_areas sa ON sa.id = b.service_area_id
+         WHERE  b.id = ?
+         LIMIT  1'
+    );
+    $stmt->execute([$id]);
+    $booking = $stmt->fetch();
+    if (!$booking) jsonError('Booking not found', 404);
+
+    $bookingCode = $booking['booking_code'];
+
+    // Build snapshot — decrypt PII so the log is permanently readable
+    $snapshot = $booking;
+    try { $snapshot['customer_phone_decrypted'] = decryptField($booking['customer_phone_encrypted']); }
+    catch (Exception $e) {}
+    try { $snapshot['address_decrypted'] = decryptField($booking['address_encrypted']); }
+    catch (Exception $e) {}
+    if (!empty($booking['notes_encrypted'])) {
+        try { $snapshot['notes_decrypted'] = decryptField($booking['notes_encrypted']); }
+        catch (Exception $e) {}
+    }
+    unset($snapshot['customer_phone_encrypted'], $snapshot['address_encrypted'], $snapshot['notes_encrypted']);
+
+    $bookingSnapshot = json_encode($snapshot, JSON_UNESCAPED_UNICODE);
+    $ip = getClientIp();
+
+    ensureBookingDeletionLogsTable($db);
+
+    $db->beginTransaction();
+    try {
+        // 1. Save deletion log FIRST — if this fails the transaction rolls back
+        $db->prepare(
+            'INSERT INTO booking_deletion_logs
+             (id, booking_id, booking_code, booking_snapshot,
+              deleted_by_admin_id, deleted_by_admin_name, deleted_by_admin_email,
+              reason, ip_address, deleted_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())'
+        )->execute([
+            generateId(), $id, $bookingCode, $bookingSnapshot,
+            $admin['admin_id'], $admin['name'], $admin['email'],
+            $reason, $ip,
+        ]);
+
+        // 2. Delete FK-dependant records first
+        $db->prepare('DELETE FROM booking_status_history WHERE booking_id = ?')->execute([$id]);
+
+        // 3. Hard delete the booking
+        $db->prepare('DELETE FROM bookings WHERE id = ?')->execute([$id]);
+
+        // 4. Audit log (inside transaction — committed together)
+        auditLog('DELETE_BOOKING', $admin['admin_id'], 'Booking', $id, [
+            'bookingCode' => $bookingCode,
+            'reason'      => $reason,
+        ]);
+
+        $db->commit();
+        jsonSuccess(['id' => $id, 'bookingCode' => $bookingCode], 'Booking berhasil dihapus');
+
+    } catch (Exception $e) {
+        $db->rollBack();
+        error_log('[DELETE_BOOKING] ' . $e->getMessage());
+        jsonError('Gagal menghapus booking.', 500);
+    }
+}
+
 jsonError('Method not allowed', 405);
