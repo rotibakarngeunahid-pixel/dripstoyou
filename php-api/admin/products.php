@@ -258,7 +258,15 @@ if ($method === 'DELETE') {
     $product = $chk->fetch();
     if (!$product) jsonError('Product not found', 404);
 
-    $db->prepare('DELETE FROM products WHERE id = ?')->execute([$id]);
+    try {
+        $db->prepare('DELETE FROM products WHERE id = ?')->execute([$id]);
+    } catch (PDOException $e) {
+        if ((string)$e->getCode() === '23000') {
+            jsonError('Produk tidak dapat dihapus karena masih memiliki data booking. Nonaktifkan produk atau hapus booking terkait terlebih dahulu.', 409);
+        }
+        error_log('DELETE product error: ' . $e->getMessage());
+        jsonError('Gagal menghapus produk. Silakan coba lagi.', 500);
+    }
     auditLog('DELETE_PRODUCT', $admin['admin_id'], 'Product', $id, ['name' => $product['name']]);
     jsonSuccess(null, 'Product dihapus');
 }

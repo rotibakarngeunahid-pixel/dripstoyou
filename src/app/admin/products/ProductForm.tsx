@@ -383,8 +383,13 @@ export function ProductForm({ product }: { product?: Product }) {
           const res = await fetch(`/api/admin/products/${product!.id}`, { method: 'DELETE' });
           setConfirm(c => ({ ...c, open: false, loading: false }));
           if (!res.ok) {
-            setError('Gagal menghapus produk. Coba lagi.');
-            showToast('Gagal menghapus produk.', 'error');
+            let errMsg = 'Gagal menghapus produk.';
+            try {
+              const data = (await res.json()) as ApiResponse;
+              errMsg = data.message ?? data.error ?? errMsg;
+            } catch { /* ignore parse errors */ }
+            setError(errMsg);
+            showToast(errMsg, 'error');
             return;
           }
           showToast('Produk berhasil dihapus.');
