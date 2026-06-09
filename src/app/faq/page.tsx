@@ -4,7 +4,7 @@ import SiteFooter from '@/components/public/SiteFooter';
 import FaqContent from '@/components/public/FaqContent';
 import { getWaNumber } from '@/lib/whatsapp';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 120;
 
 export const metadata: Metadata = {
   title: 'FAQ | Drips To You - Bali Mobile IV Therapy',
@@ -26,10 +26,11 @@ interface Faq {
 }
 
 async function getFaqs(): Promise<Faq[]> {
+  const phpBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  if (!phpBase) return [];
   try {
-    const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-    const res = await fetch(`${base}/api/public/faqs`, {
-      cache: 'no-store',
+    const res = await fetch(`${phpBase}/faqs.php`, {
+      next: { revalidate: 120 },
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return [];

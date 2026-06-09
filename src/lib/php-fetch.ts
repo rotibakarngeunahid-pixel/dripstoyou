@@ -9,6 +9,7 @@ export function phpApiUrl(path: string): string | null {
 export async function phpProxy(
   url: string,
   init?: RequestInit,
+  responseHeaders?: Record<string, string>,
 ): Promise<NextResponse> {
   try {
     const res = await fetch(url, { ...init, cache: 'no-store' });
@@ -18,7 +19,8 @@ export async function phpProxy(
     } catch {
       json = { error: `PHP API error (HTTP ${res.status})` };
     }
-    return NextResponse.json(json, { status: res.status });
+    const headers = res.status === 200 ? responseHeaders : undefined;
+    return NextResponse.json(json, { status: res.status, headers });
   } catch {
     return NextResponse.json({ error: 'Backend API unreachable' }, { status: 503 });
   }
@@ -27,10 +29,14 @@ export async function phpProxy(
 export async function phpProxyPath(
   path: string,
   init?: RequestInit,
+  cacheSeconds?: number,
 ): Promise<NextResponse> {
   const url = phpApiUrl(path);
   if (!url) {
     return NextResponse.json({ error: 'Backend API is not configured' }, { status: 503 });
   }
-  return phpProxy(url, init);
+  const responseHeaders = cacheSeconds
+    ? { 'Cache-Control': `public, max-age=${cacheSeconds}, stale-while-revalidate=${cacheSeconds * 5}` }
+    : undefined;
+  return phpProxy(url, init, responseHeaders);
 }

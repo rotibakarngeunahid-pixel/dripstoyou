@@ -19,7 +19,7 @@ async function getPublicSettings(): Promise<{ whatsappNumber?: string } | null> 
   if (!phpBase) return null;
   try {
     const res = await fetch(`${phpBase}/settings.php`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
       signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) return null;

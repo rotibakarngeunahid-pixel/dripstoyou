@@ -18,7 +18,7 @@ import {
   PackagePlus,
   Settings,
   Share2,
-  Trash2,
+  Users,
   X,
   type LucideIcon,
 } from 'lucide-react';
@@ -40,31 +40,31 @@ export function useAdminLang() {
 }
 
 const ADMIN_LABELS: Record<AdminLang, {
-  mainMenu: string; dashboard: string; booking: string; logPenghapusan: string;
+  mainMenu: string; dashboard: string; booking: string;
   services: string; treatment: string; schedule: string; coverage: string;
   content: string; faq: string; socialLinks: string;
   settings: string; generalSettings: string; waTemplate: string;
-  help: string; adminGuide: string;
+  help: string; adminGuide: string; adminUsers: string;
   verifying: string; livePanelLabel: string;
   langToggle: string; logout: string; loggingOut: string;
   closeMenu: string; openMenu: string;
 }> = {
   id: {
-    mainMenu: 'Menu Utama', dashboard: 'Dashboard', booking: 'Booking', logPenghapusan: 'Log Penghapusan',
+    mainMenu: 'Menu Utama', dashboard: 'Dashboard', booking: 'Booking',
     services: 'Layanan', treatment: 'Treatment', schedule: 'Jadwal', coverage: 'Area Layanan',
     content: 'Konten Website', faq: 'FAQ', socialLinks: 'Social Links',
     settings: 'Pengaturan', generalSettings: 'Pengaturan Umum', waTemplate: 'WhatsApp Template',
-    help: 'Bantuan', adminGuide: 'Panduan Admin',
+    help: 'Bantuan', adminGuide: 'Panduan Admin', adminUsers: 'Manajemen Admin',
     verifying: 'Memverifikasi sesi admin...', livePanelLabel: 'Live panel',
     langToggle: 'EN', logout: 'Logout', loggingOut: 'Keluar...',
     closeMenu: 'Tutup menu', openMenu: 'Buka menu',
   },
   en: {
-    mainMenu: 'Main Menu', dashboard: 'Dashboard', booking: 'Bookings', logPenghapusan: 'Deletion Log',
+    mainMenu: 'Main Menu', dashboard: 'Dashboard', booking: 'Bookings',
     services: 'Services', treatment: 'Treatments', schedule: 'Schedule', coverage: 'Service Areas',
     content: 'Website Content', faq: 'FAQ', socialLinks: 'Social Links',
     settings: 'Settings', generalSettings: 'General Settings', waTemplate: 'WhatsApp Template',
-    help: 'Help', adminGuide: 'Admin Guide',
+    help: 'Help', adminGuide: 'Admin Guide', adminUsers: 'Admin Management',
     verifying: 'Verifying admin session...', livePanelLabel: 'Live panel',
     langToggle: 'ID', logout: 'Logout', loggingOut: 'Logging out...',
     closeMenu: 'Close menu', openMenu: 'Open menu',
@@ -85,8 +85,12 @@ function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang], role?: string | nul
     { href: '/admin/dashboard', label: lbl.dashboard, icon: LayoutDashboard },
     { href: '/admin/bookings',  label: lbl.booking,   icon: ClipboardList },
   ];
+  const settingsItems: NavItem[] = [
+    { href: '/admin/settings',             label: lbl.generalSettings, icon: Settings },
+    { href: '/admin/settings/wa-template', label: lbl.waTemplate,      icon: MessageCircle },
+  ];
   if (role === 'SUPER_ADMIN') {
-    mainItems.push({ href: '/admin/booking-deletion-logs', label: lbl.logPenghapusan, icon: Trash2 });
+    settingsItems.push({ href: '/admin/users', label: lbl.adminUsers, icon: Users });
   }
   return [
     {
@@ -110,10 +114,7 @@ function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang], role?: string | nul
     },
     {
       label: lbl.settings,
-      items: [
-        { href: '/admin/settings', label: lbl.generalSettings, icon: Settings },
-        { href: '/admin/settings/wa-template', label: lbl.waTemplate, icon: MessageCircle },
-      ],
+      items: settingsItems,
     },
     {
       label: lbl.help,

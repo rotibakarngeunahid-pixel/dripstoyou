@@ -5,7 +5,7 @@ import SiteFooter from '@/components/public/SiteFooter';
 import TreatmentDetailContent from '@/components/public/TreatmentDetailContent';
 import ScrollRevealInit from '@/components/public/ScrollRevealInit';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 interface Benefit {
   id: string;
@@ -39,7 +39,7 @@ async function getPublicSettings(): Promise<{ whatsappNumber?: string } | null> 
   if (!phpBase) return null;
   try {
     const res = await fetch(`${phpBase}/settings.php`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
       signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) return null;
@@ -54,7 +54,7 @@ async function getProduct(slug: string): Promise<Product | null> {
   try {
     const res = await fetch(
       `${process.env.NEXT_PUBLIC_API_BASE_URL}/products.php?slug=${encodeURIComponent(slug)}&include_benefits=1&include_faqs=1`,
-      { cache: 'no-store', signal: AbortSignal.timeout(5000) },
+      { next: { revalidate: 60 }, signal: AbortSignal.timeout(5000) },
     );
     if (!res.ok) return null;
     const json = await res.json();

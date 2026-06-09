@@ -5,7 +5,7 @@ import SiteFooter from '@/components/public/SiteFooter';
 import type { HomepageProduct, ServiceAreaData } from '@/components/public/HomeContent';
 import { parseOperatingHours, toSchemaOpeningHours } from '@/lib/operatingHours';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 type PublicSettings = { whatsappNumber?: string; businessHours?: string };
 
@@ -14,7 +14,7 @@ async function getPublicSettings(): Promise<PublicSettings | null> {
   if (!phpBase) return null;
   try {
     const res = await fetch(`${phpBase}/settings.php`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
       signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) return null;
@@ -30,7 +30,7 @@ async function getHomepageProducts(): Promise<HomepageProduct[]> {
   if (!phpBase) return [];
   try {
     const res = await fetch(`${phpBase}/products.php`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return [];
@@ -49,7 +49,7 @@ async function getServiceAreas(): Promise<ServiceAreaData[]> {
   if (!phpBase) return [];
   try {
     const res = await fetch(`${phpBase}/areas.php`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
       signal: AbortSignal.timeout(4000),
     });
     if (!res.ok) return [];

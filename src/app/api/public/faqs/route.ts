@@ -3,5 +3,5 @@ import { phpProxyPath } from '@/lib/php-fetch';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  return phpProxyPath('faqs.php', { cache: 'no-store' });
+  return phpProxyPath('faqs.php', {}, 120);
 }

@@ -3,7 +3,7 @@ import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import TreatmentsContent from '@/components/public/TreatmentsContent';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'IV Therapy Treatments in Bali | Drips To You',
@@ -45,7 +45,7 @@ async function getProducts(): Promise<Product[]> {
   try {
     const res = await fetch(
       `${apiBase}/products.php?include_benefits=1`,
-      { cache: 'no-store', signal: AbortSignal.timeout(5000) },
+      { next: { revalidate: 60 }, signal: AbortSignal.timeout(5000) },
     );
     if (!res.ok) return [];
     const json = await res.json();

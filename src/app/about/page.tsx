@@ -4,7 +4,7 @@ import SiteFooter from '@/components/public/SiteFooter';
 import AboutContent from '@/components/public/AboutContent';
 import { getWaNumber } from '@/lib/whatsapp';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: 'About Us | Drips To You - Bali Mobile IV Therapy',
@@ -24,7 +24,7 @@ async function getAreas(): Promise<Area[]> {
   if (!base) return [];
   try {
     const res = await fetch(`${base}/areas.php`, {
-      cache: 'no-store',
+      next: { revalidate: 60 },
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return [];

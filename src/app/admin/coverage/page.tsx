@@ -55,13 +55,13 @@ function ConfirmModal({
     }}>
       <div style={{
         background: 'white', borderRadius: 20, padding: 32,
-        maxWidth: 420, width: '100%',
+        maxWidth: 460, width: '100%',
         boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
       }}>
-        <h3 style={{ fontFamily: 'var(--font-playfair,Georgia,serif)', color: 'var(--teal)', fontSize: 20, marginBottom: 10 }}>
+        <h3 style={{ fontFamily: 'var(--font-playfair,Georgia,serif)', color: '#b33223', fontSize: 20, marginBottom: 10 }}>
           {title}
         </h3>
-        <p style={{ color: '#555', fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>{message}</p>
+        <p style={{ color: '#555', fontSize: 14, lineHeight: 1.7, marginBottom: 24, whiteSpace: 'pre-line' }}>{message}</p>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
           <button
             className="button button-secondary"
@@ -105,15 +105,13 @@ function Toast({ msg, type }: { msg: string; type: 'success' | 'error' }) {
 
 /* ─── Area Card ─── */
 function AreaCard({
-  area, t, onEdit, onToggle, onDelete, deleting, toggling,
+  area, t, onEdit, onDelete, deleting,
 }: {
   area: Area;
   t: Record<string, string>;
   onEdit: (a: Area) => void;
-  onToggle: (a: Area) => void;
   onDelete: (id: string) => void;
   deleting: string | null;
-  toggling: string | null;
 }) {
   const fee = formatFee(area.extraFeeAmount, t.gratisLabel);
 
@@ -209,19 +207,6 @@ function AreaCard({
         </button>
         <button
           className="button"
-          style={{
-            padding: '7px 14px', fontSize: 12, minHeight: 34, flex: '1 1 auto',
-            background: area.isActive ? '#fff7ed' : 'var(--pale-aqua)',
-            color: area.isActive ? '#c2410c' : 'var(--teal)',
-            border: `1px solid ${area.isActive ? '#fed7aa' : 'rgba(32,82,81,0.2)'}`,
-          }}
-          onClick={() => onToggle(area)}
-          disabled={toggling === area.id} type="button"
-        >
-          {toggling === area.id ? '...' : area.isActive ? t.nonaktifkan : t.aktifkan}
-        </button>
-        <button
-          className="button"
           style={{ padding: '7px 14px', fontSize: 12, minHeight: 34, background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}
           onClick={() => onDelete(area.id)}
           disabled={deleting === area.id} type="button"
@@ -242,7 +227,6 @@ export default function AdminCoveragePage() {
   const [loading,  setLoading]  = useState(true);
   const [saving,   setSaving]   = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [toggling, setToggling] = useState<string | null>(null);
   const [form,     setForm]     = useState(EMPTY);
   const [editId,   setEditId]   = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -323,60 +307,23 @@ export default function AdminCoveragePage() {
     }
   }
 
-  async function handleToggle(area: Area) {
-    setToggling(area.id);
-    try {
-      const res = await fetch(`/api/admin/coverage/${area.id}`, {
-        method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !area.isActive }),
-      });
-      if (res.ok) {
-        showToast(area.isActive ? t.areaNonaktifkan : t.areaAktifkan);
-        setAreas(prev => prev.map(a => a.id === area.id ? { ...a, isActive: !area.isActive } : a));
-        return true;
-      } else {
-        showToast(t.gagalMemuat, 'error');
-        return false;
-      }
-    } catch {
-      showToast(t.koneksiFailed, 'error');
-      return false;
-    } finally {
-      setToggling(null);
-    }
-  }
-
-  function askDeactivate(id: string) {
-    const area = areas.find(a => a.id === id);
-    if (!area) return;
-    if (!area.isActive) { void handleToggle(area); return; }
-    const msg = lang === 'id'
-      ? `Area "${area.name}" akan disembunyikan dari publik. Anda bisa mengaktifkannya kembali kapan saja.`
-      : `Area "${area.name}" will be hidden from the public. You can re-enable it at any time.`;
-    setConfirm({
-      open: true,
-      title: t.nonaktifkanAreaTitle,
-      message: msg,
-      confirmLabel: t.nonaktifkan,
-      onConfirm: async () => {
-        setConfirm(c => ({ ...c, loading: true }));
-        const ok = await handleToggle(area);
-        setConfirm(c => ({ ...c, open: ok ? false : c.open, loading: false }));
-      },
-    });
-  }
-
   function askDelete(id: string) {
     const area = areas.find(a => a.id === id);
     if (!area) return;
+
+    const title = lang === 'id'
+      ? `⚠️ Hapus Area Layanan`
+      : `⚠️ Delete Service Area`;
+
     const msg = lang === 'id'
-      ? `Area "${area.name}" akan dihapus secara permanen. Semua booking yang terhubung akan kehilangan referensi area ini. Tindakan ini tidak dapat dibatalkan.`
-      : `Area "${area.name}" will be permanently deleted. All linked bookings will lose their area reference. This cannot be undone.`;
+      ? `Anda akan menghapus area "${area.name}" secara permanen.\n\nSemua booking yang terhubung akan kehilangan referensi area ini. Tindakan ini tidak dapat dibatalkan.`
+      : `You are about to permanently delete the area "${area.name}".\n\nAll linked bookings will lose their area reference. This action cannot be undone.`;
+
     setConfirm({
       open: true, danger: true,
-      title: t.hapusAreaTitle,
+      title,
       message: msg,
-      confirmLabel: t.hapus,
+      confirmLabel: lang === 'id' ? `Hapus "${area.name}"` : `Delete "${area.name}"`,
       onConfirm: async () => {
         setConfirm(c => ({ ...c, loading: true }));
         setDeleting(id);
@@ -431,9 +378,9 @@ export default function AdminCoveragePage() {
       {!loading && areas.length > 0 && (
         <div style={{ display: 'flex', gap: 14, marginBottom: 28, flexWrap: 'wrap' }}>
           {[
-            { label: t.totalArea,    value: areas.length,   color: 'var(--teal)',  bg: 'var(--pale-aqua)' },
-            { label: t.statusAktif,  value: activeCount,    color: '#166534',      bg: '#dcfce7' },
-            { label: t.statusNonaktif, value: inactiveCount, color: '#6b7280',     bg: '#f3f4f6' },
+            { label: t.totalArea,      value: areas.length,   color: 'var(--teal)', bg: 'var(--pale-aqua)' },
+            { label: t.statusAktif,    value: activeCount,    color: '#166534',     bg: '#dcfce7' },
+            { label: t.statusNonaktif, value: inactiveCount,  color: '#6b7280',     bg: '#f3f4f6' },
           ].map(s => (
             <div key={s.label} style={{
               display: 'flex', alignItems: 'center', gap: 12,
@@ -551,10 +498,8 @@ export default function AdminCoveragePage() {
             <AreaCard
               key={area.id} area={area} t={t}
               onEdit={openEdit}
-              onToggle={a => askDeactivate(a.id)}
               onDelete={askDelete}
               deleting={deleting}
-              toggling={toggling}
             />
           ))}
         </div>
