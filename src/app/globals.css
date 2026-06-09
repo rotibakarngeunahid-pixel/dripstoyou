@@ -904,6 +904,14 @@ a { text-decoration: none; }
 .wa-popup-send:disabled { opacity: .55; cursor: not-allowed; }
 
 /* Mobile backdrop + bottom-sheet style */
+/* Give scrollable page content enough bottom padding so WA float never covers the last element */
+.bk-layout, .page-shell, .page-section {
+  padding-bottom: 90px;
+}
+@media (max-width: 768px) {
+  .bk-form-actions { padding-right: 0; margin-bottom: 90px; }
+}
+
 .wa-popup-backdrop { display: none; }
 
 @media (max-width: 480px) {
@@ -3632,11 +3640,30 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   font-size: .83rem; line-height: 1.6;
   background: #fff0ed; border: 1px solid #f2b8ae; color: #b33223;
 }
+.bk-field-error {
+  display: block; margin-top: 5px;
+  font-size: .78rem; color: #b33223; font-weight: 500; line-height: 1.5;
+}
+.bk-input-err {
+  border-color: #e05c4b !important;
+  background: #fffaf9 !important;
+}
 .bk-alert-info {
   padding: 11px 14px; border-radius: var(--r-btn);
   font-size: .83rem; line-height: 1.6;
   background: var(--pale-aqua); border: 1px solid var(--light-aqua); color: var(--ocean);
 }
+
+/* GPS location button */
+.bk-gps-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: var(--r-btn);
+  background: var(--pale-aqua); border: 1.5px solid var(--light-aqua);
+  color: var(--ocean); font-size: .82rem; font-weight: 600;
+  cursor: pointer; transition: background .15s, border-color .15s;
+}
+.bk-gps-btn:hover:not(:disabled) { background: #c4dede; border-color: var(--soft-aqua); }
+.bk-gps-btn:disabled { opacity: .6; cursor: default; }
 
 /* Location section */
 .bk-loc-fields { display: flex; flex-direction: column; gap: 18px; }
@@ -5111,6 +5138,25 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   color: var(--teal);
   font-size: .78rem;
   font-weight: 800;
+}
+
+.admin-lang-toggle {
+  height: 34px;
+  padding: 0 14px;
+  border: 1.5px solid rgba(32,82,81,.22);
+  border-radius: 999px;
+  background: white;
+  color: var(--teal);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.admin-lang-toggle:hover {
+  background: var(--pale-aqua);
+  border-color: var(--ocean);
 }
 
 .admin-account-button {

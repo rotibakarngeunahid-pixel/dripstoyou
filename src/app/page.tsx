@@ -70,6 +70,32 @@ async function getServiceAreas(): Promise<ServiceAreaData[]> {
   }
 }
 
+const JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'MedicalBusiness',
+  name: 'Drips To You - Bali',
+  description: 'Mobile IV therapy and wellness service delivered to villas, hotels, and homes in Bali.',
+  url: 'https://dripstoyou.com',
+  telephone: '+62812-0000-0000',
+  email: 'hello@dripstoyou.com',
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Bali',
+    addressCountry: 'ID',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: -8.4095,
+    longitude: 115.1889,
+  },
+  openingHours: 'Mo-Su 08:00-22:00',
+  priceRange: '$$',
+  areaServed: { '@type': 'Place', name: 'Bali, Indonesia' },
+  sameAs: ['https://instagram.com/dripstoyou'],
+  serviceType: 'IV Therapy, Mobile IV Drip, Wellness',
+  medicalSpecialty: 'IV Hydration Therapy',
+};
+
 export default async function HomePage() {
   const [settings, homepageProducts, serviceAreas] = await Promise.all([
     getPublicSettings(),
@@ -84,6 +110,10 @@ export default async function HomePage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }}
+      />
       <Header />
       <ScrollRevealInit />
       <HomeContent waNumber={waNumber} homepageProducts={homepageProducts} serviceAreas={serviceAreas} />

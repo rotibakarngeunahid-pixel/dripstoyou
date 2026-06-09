@@ -6,8 +6,6 @@ import { useEffect, useState } from 'react';
 import { useLanguage } from '@/contexts/language';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { formatPrice as formatCurrencyPrice } from '@/lib/currency';
-import { useAutoTranslate } from '@/hooks/useAutoTranslate';
-
 interface Benefit {
   id: string;
   benefit_text: string;
@@ -59,13 +57,6 @@ const HOW_IT_WORKS = {
   ],
 };
 
-// Field indices in the translation array
-// [0] name, [1] short_description, [2] full_description, [3+] benefit texts, then FAQ pairs
-const IDX_NAME  = 0;
-const IDX_SHORT = 1;
-const IDX_FULL  = 2;
-const IDX_BENEFITS_START = 3;
-
 function localizedBadge(label: string | null, lang: 'en' | 'id'): string | null {
   if (!label) return null;
   const normalized = label.trim().toLowerCase();
@@ -87,35 +78,7 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
   const [openFaq, setOpenFaq] = useState<string | null>(null);
   const [stickyVisible, setStickyVisible] = useState(false);
 
-  // Build translation input: [name, short_description, full_description, ...benefit_texts, ...faq question/answer]
-  const benefitTexts = product.benefits.map(b => b.benefit_text);
-  const faqTexts = product.faqs.flatMap(f => [f.question, f.answer]);
-  const allFields: (string | null)[] = [
-    product.name,
-    product.short_description,
-    product.full_description,
-    ...benefitTexts,
-    ...faqTexts,
-  ];
-
-  const { translated, loading: translating } = useAutoTranslate(
-    allFields,
-    lang,
-    `product_${product.id}`,
-  );
-
-  const tName      = translating ? null : (translated[IDX_NAME]  ?? product.name);
-  const tShortDesc = translating ? null : (translated[IDX_SHORT] ?? product.short_description);
-  const tFullDesc  = translating ? null : (translated[IDX_FULL]  ?? product.full_description);
-  const tBenefits  = product.benefits.map((b, i) =>
-    translating ? null : (translated[IDX_BENEFITS_START + i] ?? b.benefit_text),
-  );
-  const faqStart = IDX_BENEFITS_START + benefitTexts.length;
-  const tFaqs = product.faqs.map((faq, i) => ({
-    question: translating ? faq.question : (translated[faqStart + i * 2] ?? faq.question),
-    answer: translating ? faq.answer : (translated[faqStart + i * 2 + 1] ?? faq.answer),
-  }));
-  const displayName = tName ?? product.name;
+  const displayName = product.name;
   const displayBadge = localizedBadge(product.label, lang);
 
   const waMessage = t.treatmentDetail.waMessage.replace('{name}', displayName);
@@ -146,17 +109,8 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
               <span className="td-badge">{displayBadge}</span>
             )}
 
-            {/* Product name — skeleton on dark bg while translating */}
-            {translating
-              ? <div className="skeleton-dark" style={{ height: 52, marginBottom: 16, borderRadius: 8 }} />
-              : <h1 className="td-hero-title">{displayName}</h1>
-            }
-
-            {/* Short description */}
-            {translating
-              ? <div className="skeleton-dark" style={{ height: 60, marginBottom: 0, borderRadius: 8, maxWidth: 480 }} />
-              : (tShortDesc && <p className="td-hero-sub">{tShortDesc}</p>)
-            }
+            <h1 className="td-hero-title">{displayName}</h1>
+            {product.short_description && <p className="td-hero-sub">{product.short_description}</p>}
 
             <div className="td-hero-meta">
               <span className="td-price">{formatPrice(product)}</span>
@@ -219,10 +173,7 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   </div>
-                  {translating
-                    ? <div className="skeleton" style={{ height: 16, flex: 1, borderRadius: 4 }} />
-                    : <span>{tBenefits[i] ?? b.benefit_text}</span>
-                  }
+                  <span>{b.benefit_text}</span>
                 </div>
               ))}
             </div>
@@ -231,7 +182,7 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
       )}
 
       {/* ── ABOUT / FULL DESCRIPTION ── */}
-      {(product.full_description || translating) && (
+      {product.full_description && (
         <section className="td-section td-about-section">
           <div className="td-section-inner td-about-grid">
             <div className="reveal">
@@ -239,19 +190,7 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
                 {isId ? 'Detail Treatment' : 'Treatment Details'}
               </div>
               <h2 className="td-sec-title">{t.treatmentDetail.aboutTitle}</h2>
-              {translating
-                ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    <div className="skeleton" style={{ height: 16, borderRadius: 4 }} />
-                    <div className="skeleton" style={{ height: 16, borderRadius: 4, width: '92%' }} />
-                    <div className="skeleton" style={{ height: 16, borderRadius: 4 }} />
-                    <div className="skeleton" style={{ height: 16, borderRadius: 4, width: '85%' }} />
-                    <div className="skeleton" style={{ height: 16, borderRadius: 4 }} />
-                    <div className="skeleton" style={{ height: 16, borderRadius: 4, width: '78%' }} />
-                  </div>
-                )
-                : <p className="td-about-text">{tFullDesc}</p>
-              }
+              <p className="td-about-text">{product.full_description}</p>
             </div>
             {product.image_url && (
               <div className="td-about-img-wrap reveal">
@@ -305,14 +244,14 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
               {isId ? 'Pertanyaan yang Sering Ditanyakan' : 'Frequently Asked Questions'}
             </h2>
             <div className="td-faq-list">
-              {product.faqs.map((faq, i) => (
+              {product.faqs.map((faq) => (
                 <div key={faq.id} className={`td-faq-item${openFaq === faq.id ? ' open' : ''}`}>
                   <button
                     className="td-faq-q"
                     onClick={() => setOpenFaq(openFaq === faq.id ? null : faq.id)}
                     aria-expanded={openFaq === faq.id}
                   >
-                    <span>{tFaqs[i]?.question ?? faq.question}</span>
+                    <span>{faq.question}</span>
                     <svg
                       className="td-faq-arrow"
                       viewBox="0 0 24 24"
@@ -326,7 +265,7 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
                     </svg>
                   </button>
                   <div className="td-faq-a">
-                    <p>{tFaqs[i]?.answer ?? faq.answer}</p>
+                    <p>{faq.answer}</p>
                   </div>
                 </div>
               ))}

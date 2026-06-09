@@ -330,9 +330,10 @@ const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
           ],
         },
         {
-          title: '10. Cookies and Website Logs',
+          title: '10. Cookies, Website Logs, and Location',
           paragraphs: [
             'The website may use essential storage or similar technologies for functionality, preferences such as language selection, security, and performance. We do not use optional advertising cookies unless they are separately disclosed and, where required, consented to.',
+            'The booking form includes an optional "Use my current location" button. If you click it, your browser will request permission to access your device\'s GPS coordinates. These coordinates are sent to OpenStreetMap\'s Nominatim service (a third-party geocoding API) solely to look up a human-readable address, which is then pre-filled into the address field for your convenience. Your coordinates are never stored on our servers and are never shared with us. If you deny location access or do not use the button, no location data is collected. You remain free to type your address manually.',
           ],
         },
         {
@@ -432,9 +433,10 @@ const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
           ],
         },
         {
-          title: '10. Cookie dan Log Website',
+          title: '10. Cookie, Log Website, dan Lokasi',
           paragraphs: [
             'Website dapat menggunakan penyimpanan esensial atau teknologi serupa untuk fungsi, preferensi seperti pilihan bahasa, keamanan, dan kinerja. Kami tidak menggunakan cookie iklan opsional kecuali diinformasikan secara terpisah dan, jika diwajibkan, telah mendapat persetujuan.',
+            'Form booking memiliki tombol opsional "Gunakan lokasi saya". Jika Anda mengkliknya, browser akan meminta izin mengakses koordinat GPS perangkat Anda. Koordinat ini dikirim ke layanan Nominatim dari OpenStreetMap (API geocoding pihak ketiga) semata-mata untuk mendapatkan alamat yang dapat dibaca, yang kemudian diisi otomatis ke kolom alamat sebagai kemudahan. Koordinat Anda tidak pernah disimpan di server kami dan tidak pernah dibagikan kepada kami. Jika Anda menolak akses lokasi atau tidak menggunakan tombol tersebut, tidak ada data lokasi yang dikumpulkan. Anda tetap bebas mengetik alamat secara manual.',
           ],
         },
         {

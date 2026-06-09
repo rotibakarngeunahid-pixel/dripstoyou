@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
+import sharp from 'sharp';
 import { adminApiHandler } from '@/lib/auth';
 import type { SessionData } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+const WEBP_QUALITY = 82;
+
+async function toWebP(file: File): Promise<{ buffer: Buffer; filename: string }> {
+  const original = Buffer.from(await file.arrayBuffer());
+  const type = file.type.toLowerCase();
+  const isWebP = type === 'image/webp';
+  // Skip conversion if already WebP — just ensure it still passes through sharp for safety
+  const buffer = await sharp(original)
+    .webp({ quality: WEBP_QUALITY, effort: 4 })
+    .toBuffer();
+  const baseName = file.name.replace(/\.[^.]+$/, '');
+  const filename = `${baseName}${isWebP ? '' : ''}.webp`;
+  return { buffer, filename };
+}
 
 export const POST = adminApiHandler('products:write', async (req: NextRequest, session: SessionData) => {
   let formData: FormData;
@@ -25,10 +40,21 @@ export const POST = adminApiHandler('products:write', async (req: NextRequest, s
     return NextResponse.json({ error: 'Ukuran file maksimal 5MB' }, { status: 400 });
   }
 
-  // Forward the file to the PHP backend (which has a persistent filesystem).
-  // Vercel is serverless — it cannot write files permanently.
+  // Convert to WebP before forwarding to PHP backend.
+  let uploadBlob: Blob;
+  let uploadFilename: string;
+  try {
+    const { buffer, filename } = await toWebP(file as File);
+    uploadBlob = new Blob([new Uint8Array(buffer)], { type: 'image/webp' });
+    uploadFilename = filename;
+  } catch {
+    // Conversion failed — fall back to the original file.
+    uploadBlob = file as File;
+    uploadFilename = (file as File).name ?? 'upload';
+  }
+
   const phpFormData = new FormData();
-  phpFormData.append('file', file, (file as File).name ?? 'upload');
+  phpFormData.append('file', uploadBlob, uploadFilename);
 
   try {
     const phpRes = await fetch(
@@ -50,8 +76,6 @@ export const POST = adminApiHandler('products:write', async (req: NextRequest, s
       return NextResponse.json({ error: msg }, { status: phpRes.status });
     }
 
-    // PHP returns the direct URL (e.g. https://dripstoyou.com/php-api/uploads/products/xxx.webp).
-    // Files live on the PHP hosting which serves them at that URL directly — no proxy needed.
     return NextResponse.json(phpData);
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Upload error';

@@ -6,7 +6,6 @@ import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import { useLanguage } from '@/contexts/language';
 import { formatPrice as formatCurrencyPrice, getCurrencyOption } from '@/lib/currency';
-import { useAutoTranslate } from '@/hooks/useAutoTranslate';
 
 /* ─── Types ─── */
 type ApiResponse<T> = { success?: boolean; message?: string; data?: T; error?: string };
@@ -74,6 +73,9 @@ interface BK {
   errNoTreatment: string; errLoad: string; errSubmit: string; errNetwork: string;
   detailLabels: string[];
   currencyLabel: string;
+  errDate: string; errTime: string; errArea: string; errAddress: string; errAddressShort: string;
+  errName: string; errPhone: string;
+  gpsBtn: string; gpsDetecting: string; gpsDenied: string; gpsFailed: string;
 }
 
 const BK_TEXT: Record<'en' | 'id', BK> = {
@@ -157,6 +159,17 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     errNetwork: 'Network error. Please try again or contact us via WhatsApp.',
     detailLabels: ['Treatment', 'Date', 'Time', 'Area', 'Name', 'Total'],
     currencyLabel: 'Currency',
+    errDate: 'Please select a date.',
+    errTime: 'Please select a time slot.',
+    errArea: 'Please select a service area.',
+    errAddress: 'Please enter your full address.',
+    errAddressShort: 'Address must be at least 15 characters (include villa/hotel name, room, and street).',
+    errName: 'Please enter your full name.',
+    errPhone: 'Please enter a valid WhatsApp number.',
+    gpsBtn: '📍 Use my current location',
+    gpsDetecting: 'Detecting location…',
+    gpsDenied: 'Location access was denied. Please type your address manually.',
+    gpsFailed: 'Could not detect location. Please type your address manually.',
   },
   id: {
     stepLabels: ['Treatment', 'Jadwal', 'Detail'],
@@ -238,6 +251,17 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     errNetwork: 'Koneksi bermasalah. Coba lagi atau hubungi kami via WhatsApp.',
     detailLabels: ['Treatment', 'Tanggal', 'Waktu', 'Area', 'Nama', 'Total'],
     currencyLabel: 'Mata Uang',
+    errDate: 'Pilih tanggal terlebih dahulu.',
+    errTime: 'Pilih waktu yang tersedia.',
+    errArea: 'Pilih area layanan terlebih dahulu.',
+    errAddress: 'Masukkan alamat lengkap Anda.',
+    errAddressShort: 'Alamat harus minimal 15 karakter (sertakan nama villa/hotel, nomor kamar, dan nama jalan).',
+    errName: 'Masukkan nama lengkap Anda.',
+    errPhone: 'Masukkan nomor WhatsApp yang valid.',
+    gpsBtn: '📍 Gunakan lokasi saya',
+    gpsDetecting: 'Mendeteksi lokasi…',
+    gpsDenied: 'Akses lokasi ditolak. Silakan ketik alamat Anda secara manual.',
+    gpsFailed: 'Lokasi tidak dapat dideteksi. Silakan ketik alamat Anda secara manual.',
   },
 };
 
@@ -614,6 +638,60 @@ function Step1({
   );
 }
 
+/* ─── GPS Location Button ─── */
+function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => void }) {
+  const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
+  const [msg, setMsg] = useState('');
+
+  async function detect() {
+    if (!navigator.geolocation) {
+      setState('error'); setMsg(bk.gpsFailed); return;
+    }
+    setState('loading');
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
+            { headers: { 'Accept-Language': 'en' } },
+          );
+          const data = await res.json() as { display_name?: string };
+          if (data.display_name) {
+            onAddress(data.display_name.slice(0, 300));
+            setState('idle');
+          } else {
+            setState('error'); setMsg(bk.gpsFailed);
+          }
+        } catch {
+          setState('error'); setMsg(bk.gpsFailed);
+        }
+      },
+      (err) => {
+        setState('error');
+        setMsg(err.code === err.PERMISSION_DENIED ? bk.gpsDenied : bk.gpsFailed);
+      },
+      { timeout: 10000, maximumAge: 60000 },
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      <button
+        type="button"
+        className="bk-gps-btn"
+        onClick={detect}
+        disabled={state === 'loading'}
+      >
+        {state === 'loading' ? bk.gpsDetecting : bk.gpsBtn}
+      </button>
+      {state === 'error' && msg && (
+        <span className="bk-field-error" style={{ marginTop: 4 }}>{msg}</span>
+      )}
+    </div>
+  );
+}
+
 /* ─── Step 2: Schedule + Location ─── */
 function Step2({
   bk, form, setForm, areas, slots, loadingSlots, slotError, onDateChange, onNext, onBack,
@@ -635,7 +713,51 @@ function Step2({
     return d.toISOString().split('T')[0];
   }, []);
 
-  const canNext = form.date && form.time && form.areaId && form.address.trim().length > 4;
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const dateRef    = useRef<HTMLLabelElement>(null);
+  const timeRef    = useRef<HTMLDivElement>(null);
+  const areaRef    = useRef<HTMLDivElement>(null);
+  const addressRef = useRef<HTMLDivElement>(null);
+
+  function scrollToFirst(errs: Record<string, string>) {
+    const order = ['date', 'time', 'area', 'address'];
+    for (const key of order) {
+      if (!errs[key]) continue;
+      const el = key === 'date' ? dateRef.current
+               : key === 'time' ? timeRef.current
+               : key === 'area' ? areaRef.current
+               : addressRef.current;
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    }
+  }
+
+  function handleNext() {
+    const errs: Record<string, string> = {};
+    if (!form.date)             errs.date    = bk.errDate;
+    if (!form.time)             errs.time    = bk.errTime;
+    if (!form.areaId)           errs.area    = bk.errArea;
+    if (!form.address.trim())   errs.address = bk.errAddress;
+    else if (form.address.trim().length < 15) errs.address = bk.errAddressShort;
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) { scrollToFirst(errs); return; }
+    onNext();
+  }
+
+  function blurAddress() {
+    if (!form.address.trim()) {
+      setFieldErrors(p => ({ ...p, address: bk.errAddress }));
+    } else if (form.address.trim().length < 15) {
+      setFieldErrors(p => ({ ...p, address: bk.errAddressShort }));
+    } else {
+      setFieldErrors(p => { const n = { ...p }; delete n.address; return n; });
+    }
+  }
+
+  function blurArea() {
+    if (!form.areaId) setFieldErrors(p => ({ ...p, area: bk.errArea }));
+    else setFieldErrors(p => { const n = { ...p }; delete n.area; return n; });
+  }
 
   return (
     <div className="bk-fade-in">
@@ -643,18 +765,22 @@ function Step2({
         <div className="bk-card-title">{bk.schedTitle}</div>
         <div className="bk-card-subtitle">{bk.schedSub}</div>
         <div className="bk-sched-grid">
-          <label className="bk-field">
+          <label className="bk-field" ref={dateRef}>
             <span className="bk-field-label">{bk.dateLabel}</span>
             <input
               type="date"
-              className="control"
+              className={`control${fieldErrors.date ? ' bk-input-err' : ''}`}
               value={form.date}
               min={minDate}
-              onChange={e => onDateChange(e.target.value)}
+              onChange={e => {
+                onDateChange(e.target.value);
+                if (e.target.value) setFieldErrors(p => { const n = { ...p }; delete n.date; return n; });
+              }}
             />
+            {fieldErrors.date && <span className="bk-field-error">{fieldErrors.date}</span>}
           </label>
 
-          <div className="bk-field">
+          <div className="bk-field" ref={timeRef}>
             <span className="bk-field-label">
               {bk.timeLabel}
               {loadingSlots && <span className="bk-loading-text">{bk.loadingSlots}</span>}
@@ -668,7 +794,10 @@ function Step2({
                     key={s}
                     type="button"
                     className={`bk-slot-btn${form.time === s ? ' act' : ''}`}
-                    onClick={() => setForm(f => ({ ...f, time: s }))}
+                    onClick={() => {
+                      setForm(f => ({ ...f, time: s }));
+                      setFieldErrors(p => { const n = { ...p }; delete n.time; return n; });
+                    }}
                   >
                     {s}
                   </button>
@@ -681,6 +810,7 @@ function Step2({
                 {form.date ? bk.loadingSlots.trim() : bk.slotHint}
               </div>
             )}
+            {fieldErrors.time && <span className="bk-field-error">{fieldErrors.time}</span>}
           </div>
         </div>
       </div>
@@ -730,12 +860,16 @@ function Step2({
             </div>
           </div>
 
-          <div className="bk-field">
+          <div className="bk-field" ref={areaRef}>
             <span className="bk-field-label">{bk.areaLabel}</span>
             <select
-              className="control bk-select"
+              className={`control bk-select${fieldErrors.area ? ' bk-input-err' : ''}`}
               value={form.areaId}
-              onChange={e => setForm(f => ({ ...f, areaId: e.target.value }))}
+              onChange={e => {
+                setForm(f => ({ ...f, areaId: e.target.value }));
+                if (e.target.value) setFieldErrors(p => { const n = { ...p }; delete n.area; return n; });
+              }}
+              onBlur={blurArea}
               disabled={areas.length === 0}
             >
               <option value="">{areas.length === 0 ? bk.areaEmpty : bk.areaDefault}</option>
@@ -743,17 +877,27 @@ function Step2({
                 <option key={a.id} value={a.id}>{a.name}</option>
               ))}
             </select>
+            {fieldErrors.area && <span className="bk-field-error">{fieldErrors.area}</span>}
           </div>
 
-          <div className="bk-field">
+          <div className="bk-field" ref={addressRef}>
             <span className="bk-field-label">{bk.addressLabel}</span>
             <textarea
-              className="control"
+              className={`control${fieldErrors.address ? ' bk-input-err' : ''}`}
               rows={3}
               value={form.address}
               placeholder={bk.addressPlaceholder}
-              onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+              onChange={e => {
+                setForm(f => ({ ...f, address: e.target.value }));
+                if (e.target.value.trim().length >= 15) setFieldErrors(p => { const n = { ...p }; delete n.address; return n; });
+              }}
+              onBlur={blurAddress}
             />
+            {fieldErrors.address && <span className="bk-field-error">{fieldErrors.address}</span>}
+            <GpsButton bk={bk} onAddress={addr => {
+              setForm(f => ({ ...f, address: addr }));
+              setFieldErrors(p => { const n = { ...p }; delete n.address; return n; });
+            }} />
           </div>
         </div>
       </div>
@@ -762,7 +906,7 @@ function Step2({
         <button type="button" className="bk-btn bk-btn-ghost" onClick={onBack}>
           <IcArrowLeft /> {bk.btnBack}
         </button>
-        <button className="bk-btn bk-btn-primary" onClick={onNext} disabled={!canNext}>
+        <button className="bk-btn bk-btn-primary" onClick={handleNext}>
           {bk.btnNext2} <IcArrowRight />
         </button>
       </div>
@@ -991,19 +1135,6 @@ export default function BookingPage() {
   const [success, setSuccess]       = useState<{ bookingCode: string } | null>(null);
 
   const slotReqRef = useRef(0);
-  const productTexts = useMemo(
-    () => products.flatMap(p => [p.name, p.short_description ?? '']),
-    [products],
-  );
-  const { translated: translatedProducts } = useAutoTranslate(productTexts, lang, 'booking_products');
-  const localizedProducts = useMemo(
-    () => products.map((product, idx) => ({
-      ...product,
-      name: translatedProducts[idx * 2] ?? product.name,
-      short_description: translatedProducts[idx * 2 + 1] ?? product.short_description,
-    })),
-    [products, translatedProducts],
-  );
 
   useEffect(() => {
     let active = true;
@@ -1118,8 +1249,8 @@ export default function BookingPage() {
     slotReqRef.current++;
   }
 
-  const productIdx  = localizedProducts.findIndex(p => p.id === productId);
-  const product     = productIdx >= 0 ? localizedProducts[productIdx] : undefined;
+  const productIdx  = products.findIndex(p => p.id === productId);
+  const product     = productIdx >= 0 ? products[productIdx] : undefined;
   const productGrad = productIdx >= 0 ? GRADIENTS[productIdx % GRADIENTS.length] : undefined;
   const areaName    = areas.find(a => a.id === form.areaId)?.name ?? '';
 
@@ -1177,7 +1308,7 @@ export default function BookingPage() {
             {step === 1 && (
               <Step1
                 bk={bk}
-                products={localizedProducts}
+                products={products}
                 loading={loadingInitial}
                 selectedId={productId}
                 onSelect={handleProductSelect}

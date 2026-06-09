@@ -54,9 +54,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = await getProduct(slug);
   if (!product) return { title: 'Not Found' };
 
+  const url = `https://dripstoyou.com/treatments/${slug}`;
+  const ogImages = product.image_url
+    ? [{ url: product.image_url, width: 1200, height: 630, alt: product.name }]
+    : [];
+
   return {
-    title: `${product.name} - Drips To You - Bali`,
-    description: product.short_description ?? undefined,
+    title: `${product.name} | Mobile IV Therapy Bali`,
+    description: product.short_description ?? `Book ${product.name} mobile IV therapy in Bali. Certified medical team delivered to your villa, hotel or home.`,
+    openGraph: {
+      title: `${product.name} - Drips To You Bali`,
+      description: product.short_description ?? undefined,
+      url,
+      images: ogImages,
+    },
+    alternates: { canonical: url },
   };
 }
 
@@ -69,8 +81,27 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
 
   if (!product) notFound();
 
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Service',
+    name: product.name,
+    description: product.short_description ?? undefined,
+    provider: {
+      '@type': 'MedicalBusiness',
+      name: 'Drips To You - Bali',
+      url: 'https://dripstoyou.com',
+    },
+    areaServed: { '@type': 'Place', name: 'Bali, Indonesia' },
+    ...(product.image_url ? { image: product.image_url } : {}),
+    ...(product.price_amount ? { offers: { '@type': 'Offer', price: product.price_amount, priceCurrency: product.currency ?? 'IDR' } } : {}),
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Header />
       <TreatmentDetailContent product={product} waNumber={waNumber} />
       <SiteFooter />

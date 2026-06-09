@@ -21,7 +21,53 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+
+/* ─── Admin Language Context ─── */
+type AdminLang = 'id' | 'en';
+
+interface AdminLangCtx {
+  lang: AdminLang;
+  setLang: (l: AdminLang) => void;
+}
+
+const AdminLangContext = createContext<AdminLangCtx>({ lang: 'id', setLang: () => {} });
+
+export function useAdminLang() {
+  return useContext(AdminLangContext);
+}
+
+const ADMIN_LABELS: Record<AdminLang, {
+  mainMenu: string; dashboard: string; booking: string;
+  services: string; treatment: string; schedule: string; coverage: string;
+  content: string; faq: string; socialLinks: string;
+  settings: string; generalSettings: string; waTemplate: string;
+  help: string; adminGuide: string;
+  verifying: string; livePanelLabel: string;
+  langToggle: string; logout: string; loggingOut: string;
+  closeMenu: string; openMenu: string;
+}> = {
+  id: {
+    mainMenu: 'Menu Utama', dashboard: 'Dashboard', booking: 'Booking',
+    services: 'Layanan', treatment: 'Treatment', schedule: 'Jadwal', coverage: 'Area Layanan',
+    content: 'Konten Website', faq: 'FAQ', socialLinks: 'Social Links',
+    settings: 'Pengaturan', generalSettings: 'Pengaturan Umum', waTemplate: 'WhatsApp Template',
+    help: 'Bantuan', adminGuide: 'Panduan Admin',
+    verifying: 'Memverifikasi sesi admin...', livePanelLabel: 'Live panel',
+    langToggle: 'EN', logout: 'Logout', loggingOut: 'Keluar...',
+    closeMenu: 'Tutup menu', openMenu: 'Buka menu',
+  },
+  en: {
+    mainMenu: 'Main Menu', dashboard: 'Dashboard', booking: 'Bookings',
+    services: 'Services', treatment: 'Treatments', schedule: 'Schedule', coverage: 'Service Areas',
+    content: 'Website Content', faq: 'FAQ', socialLinks: 'Social Links',
+    settings: 'Settings', generalSettings: 'General Settings', waTemplate: 'WhatsApp Template',
+    help: 'Help', adminGuide: 'Admin Guide',
+    verifying: 'Verifying admin session...', livePanelLabel: 'Live panel',
+    langToggle: 'ID', logout: 'Logout', loggingOut: 'Logging out...',
+    closeMenu: 'Close menu', openMenu: 'Open menu',
+  },
+};
 
 type NavItem = { href: string; label: string; icon: LucideIcon };
 type NavGroup = { label: string; items: NavItem[] };
@@ -32,47 +78,49 @@ type AdminUser = {
   name: string;
 };
 
-const NAV_GROUPS: NavGroup[] = [
-  {
-    label: 'Menu Utama',
-    items: [
-      { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-      { href: '/admin/bookings', label: 'Booking', icon: ClipboardList },
-    ],
-  },
-  {
-    label: 'Layanan',
-    items: [
-      { href: '/admin/products', label: 'Treatment', icon: PackagePlus },
-      { href: '/admin/schedule', label: 'Jadwal', icon: CalendarDays },
-      { href: '/admin/coverage', label: 'Area Layanan', icon: MapPinned },
-    ],
-  },
-  {
-    label: 'Konten Website',
-    items: [
-      { href: '/admin/faqs', label: 'FAQ', icon: CircleHelp },
-      { href: '/admin/social-links', label: 'Social Links', icon: Share2 },
-    ],
-  },
-  {
-    label: 'Pengaturan',
-    items: [
-      { href: '/admin/settings', label: 'Pengaturan Umum', icon: Settings },
-      { href: '/admin/settings/wa-template', label: 'WhatsApp Template', icon: MessageCircle },
-    ],
-  },
-  {
-    label: 'Bantuan',
-    items: [
-      { href: '/admin/guide', label: 'Panduan Admin', icon: FileText },
-    ],
-  },
-];
+function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang]): NavGroup[] {
+  return [
+    {
+      label: lbl.mainMenu,
+      items: [
+        { href: '/admin/dashboard', label: lbl.dashboard, icon: LayoutDashboard },
+        { href: '/admin/bookings', label: lbl.booking, icon: ClipboardList },
+      ],
+    },
+    {
+      label: lbl.services,
+      items: [
+        { href: '/admin/products', label: lbl.treatment, icon: PackagePlus },
+        { href: '/admin/schedule', label: lbl.schedule, icon: CalendarDays },
+        { href: '/admin/coverage', label: lbl.coverage, icon: MapPinned },
+      ],
+    },
+    {
+      label: lbl.content,
+      items: [
+        { href: '/admin/faqs', label: lbl.faq, icon: CircleHelp },
+        { href: '/admin/social-links', label: lbl.socialLinks, icon: Share2 },
+      ],
+    },
+    {
+      label: lbl.settings,
+      items: [
+        { href: '/admin/settings', label: lbl.generalSettings, icon: Settings },
+        { href: '/admin/settings/wa-template', label: lbl.waTemplate, icon: MessageCircle },
+      ],
+    },
+    {
+      label: lbl.help,
+      items: [
+        { href: '/admin/guide', label: lbl.adminGuide, icon: FileText },
+      ],
+    },
+  ];
+}
 
-function getActiveLabel(pathname: string) {
+function getActiveLabel(pathname: string, groups: NavGroup[]) {
   let activeLabel = 'Admin';
-  for (const group of NAV_GROUPS) {
+  for (const group of groups) {
     for (const item of group.items) {
       if (pathname.startsWith(item.href)) activeLabel = item.label;
     }
@@ -95,6 +143,20 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   const [sessionOk, setSessionOk] = useState(false);
   const [admin, setAdmin] = useState<AdminUser | null>(null);
   const accountRef = useRef<HTMLDivElement>(null);
+
+  const [adminLang, setAdminLangState] = useState<AdminLang>(() => {
+    if (typeof window === 'undefined') return 'id';
+    const saved = localStorage.getItem('admin-lang') as AdminLang | null;
+    return saved === 'id' || saved === 'en' ? saved : 'id';
+  });
+
+  const setAdminLang = useCallback((l: AdminLang) => {
+    localStorage.setItem('admin-lang', l);
+    setAdminLangState(l);
+  }, []);
+
+  const lbl = ADMIN_LABELS[adminLang];
+  const navGroups = buildNavGroups(lbl);
 
   useEffect(() => {
     if (pathname === '/admin/login') {
@@ -172,7 +234,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
       <main className="admin-login-shell">
         <section className="admin-login-card admin-verify-card">
           <span className="admin-verify-spinner" aria-hidden="true" />
-          <p>Memverifikasi sesi admin...</p>
+          <p>{lbl.verifying}</p>
         </section>
       </main>
     );
@@ -189,133 +251,147 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     }
   }
 
-  const activeLabel = getActiveLabel(pathname);
+  const activeLabel = getActiveLabel(pathname, navGroups);
   const name = admin?.name ?? 'Admin';
 
   return (
-    <div className="admin-layout">
-      {sidebarOpen && (
-        <button
-          className="admin-sidebar-overlay"
-          aria-label="Tutup menu"
-          type="button"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <aside
-        id="admin-sidebar"
-        className={`admin-sidebar${sidebarOpen ? ' is-open' : ''}`}
-        aria-label="Admin navigation"
-      >
-        <div className="admin-sidebar-head">
-          <Link href="/admin/dashboard" className="admin-sidebar-brand" aria-label="Dashboard admin">
-            <span className="admin-sidebar-logo">D</span>
-            <span>
-              Drips To You
-              <small>Admin Panel</small>
-            </span>
-          </Link>
+    <AdminLangContext.Provider value={{ lang: adminLang, setLang: setAdminLang }}>
+      <div className="admin-layout">
+        {sidebarOpen && (
           <button
+            className="admin-sidebar-overlay"
+            aria-label={lbl.closeMenu}
             type="button"
-            className="admin-sidebar-close"
-            aria-label="Tutup menu"
             onClick={() => setSidebarOpen(false)}
-          >
-            <X size={18} />
-          </button>
-        </div>
+          />
+        )}
 
-        <div className="admin-sidebar-nav">
-          {NAV_GROUPS.map((group) => (
-            <div key={group.label} className="admin-nav-group">
-              <div className="admin-nav-group-label">{group.label}</div>
-              {group.items.map((item) => {
-                const active = pathname.startsWith(item.href);
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`admin-nav-link${active ? ' active' : ''}`}
-                    aria-current={active ? 'page' : undefined}
-                    onClick={() => {
-                      setSidebarOpen(false);
-                      setAccountOpen(false);
-                    }}
-                  >
-                    <Icon size={18} aria-hidden="true" />
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-      </aside>
-
-      <div className="admin-main-shell">
-        <header className="admin-topbar">
-          <div className="admin-topbar-left">
-            <button
-              type="button"
-              className="admin-menu-button"
-              onClick={() => setSidebarOpen(true)}
-              aria-label="Buka menu"
-              aria-controls="admin-sidebar"
-              aria-expanded={sidebarOpen}
-            >
-              <Menu size={20} />
-            </button>
-            <div className="admin-breadcrumb">
-              <span>Admin</span>
-              <strong>{activeLabel}</strong>
-            </div>
-          </div>
-
-          <div className="admin-topbar-right" ref={accountRef}>
-            <div className="admin-topbar-meta">
-              <BarChart3 size={16} aria-hidden="true" />
-              <span>Live panel</span>
-            </div>
-            <button
-              type="button"
-              className="admin-account-button"
-              onClick={() => setAccountOpen((value) => !value)}
-              aria-haspopup="menu"
-              aria-expanded={accountOpen}
-            >
-              <span className="admin-avatar">{adminInitial(name)}</span>
-              <span className="admin-account-text">
-                <strong>{name}</strong>
-                <small>{admin?.role?.replaceAll('_', ' ') ?? 'Admin'}</small>
+        <aside
+          id="admin-sidebar"
+          className={`admin-sidebar${sidebarOpen ? ' is-open' : ''}`}
+          aria-label="Admin navigation"
+        >
+          <div className="admin-sidebar-head">
+            <Link href="/admin/dashboard" className="admin-sidebar-brand" aria-label="Dashboard admin">
+              <span className="admin-sidebar-logo">D</span>
+              <span>
+                Drips To You
+                <small>Admin Panel</small>
               </span>
-              <ChevronDown size={16} aria-hidden="true" />
+            </Link>
+            <button
+              type="button"
+              className="admin-sidebar-close"
+              aria-label={lbl.closeMenu}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <X size={18} />
             </button>
-
-            {accountOpen && (
-              <div className="admin-account-menu" role="menu">
-                <div className="admin-account-menu-head">
-                  <strong>{name}</strong>
-                  <span>{admin?.email}</span>
-                </div>
-                <button
-                  type="button"
-                  className="admin-account-menu-item"
-                  onClick={handleLogout}
-                  disabled={loggingOut}
-                  role="menuitem"
-                >
-                  {loggingOut ? <Clock3 size={16} /> : <LogOut size={16} />}
-                  {loggingOut ? 'Keluar...' : 'Logout'}
-                </button>
-              </div>
-            )}
           </div>
-        </header>
 
-        <main className="admin-main">{children}</main>
+          <div className="admin-sidebar-nav">
+            {navGroups.map((group) => (
+              <div key={group.label} className="admin-nav-group">
+                <div className="admin-nav-group-label">{group.label}</div>
+                {group.items.map((item) => {
+                  const active = pathname.startsWith(item.href);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`admin-nav-link${active ? ' active' : ''}`}
+                      aria-current={active ? 'page' : undefined}
+                      onClick={() => {
+                        setSidebarOpen(false);
+                        setAccountOpen(false);
+                      }}
+                    >
+                      <Icon size={18} aria-hidden="true" />
+                      <span>{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </aside>
+
+        <div className="admin-main-shell">
+          <header className="admin-topbar">
+            <div className="admin-topbar-left">
+              <button
+                type="button"
+                className="admin-menu-button"
+                onClick={() => setSidebarOpen(true)}
+                aria-label={lbl.openMenu}
+                aria-controls="admin-sidebar"
+                aria-expanded={sidebarOpen}
+              >
+                <Menu size={20} />
+              </button>
+              <div className="admin-breadcrumb">
+                <span>Admin</span>
+                <strong>{activeLabel}</strong>
+              </div>
+            </div>
+
+            <div className="admin-topbar-right" ref={accountRef}>
+              <div className="admin-topbar-meta">
+                <BarChart3 size={16} aria-hidden="true" />
+                <span>{lbl.livePanelLabel}</span>
+              </div>
+
+              {/* Language toggle */}
+              <button
+                type="button"
+                className="admin-lang-toggle"
+                onClick={() => setAdminLang(adminLang === 'id' ? 'en' : 'id')}
+                title={adminLang === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
+                aria-label={adminLang === 'id' ? 'Switch to English' : 'Ganti ke Bahasa Indonesia'}
+              >
+                {lbl.langToggle}
+              </button>
+
+              <button
+                type="button"
+                className="admin-account-button"
+                onClick={() => setAccountOpen((value) => !value)}
+                aria-haspopup="menu"
+                aria-expanded={accountOpen}
+              >
+                <span className="admin-avatar">{adminInitial(name)}</span>
+                <span className="admin-account-text">
+                  <strong>{name}</strong>
+                  <small>{admin?.role?.replaceAll('_', ' ') ?? 'Admin'}</small>
+                </span>
+                <ChevronDown size={16} aria-hidden="true" />
+              </button>
+
+              {accountOpen && (
+                <div className="admin-account-menu" role="menu">
+                  <div className="admin-account-menu-head">
+                    <strong>{name}</strong>
+                    <span>{admin?.email}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-account-menu-item"
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    role="menuitem"
+                  >
+                    {loggingOut ? <Clock3 size={16} /> : <LogOut size={16} />}
+                    {loggingOut ? lbl.loggingOut : lbl.logout}
+                  </button>
+                </div>
+              )}
+            </div>
+          </header>
+
+          <main className="admin-main">{children}</main>
+        </div>
       </div>
-    </div>
+    </AdminLangContext.Provider>
   );
 }

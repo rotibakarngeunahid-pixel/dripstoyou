@@ -5,8 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/language';
 import { formatPrice as formatCurrencyPrice, normalizeCurrency } from '@/lib/currency';
-import { useAutoTranslate } from '@/hooks/useAutoTranslate';
-
 interface Benefit {
   id: string;
   benefit_text: string;
@@ -34,8 +32,6 @@ interface Props {
 }
 
 const SUPPORTED_CURRENCIES = ['IDR', 'USD', 'AUD', 'EUR'] as const;
-const FIELDS_PER_PRODUCT = 2; // name, short_description
-
 const DROP_SVG = (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
@@ -98,14 +94,6 @@ export default function TreatmentsContent({ products }: Props) {
   const { t, lang } = useLanguage();
   const [cardCurrencies, setCardCurrencies] = useState<Record<string, string>>({});
 
-  // Flatten [name, short_description] for all products into a single array for one API call
-  const textsToTranslate = products.flatMap(p => [p.name, p.short_description ?? '']);
-  const { translated, loading: translating } = useAutoTranslate(
-    textsToTranslate,
-    lang,
-    'treatments_list',
-  );
-
   function getCardCurrency(product: Product): string {
     const available = getAvailableCurrencies(product);
     const saved = cardCurrencies[product.id];
@@ -115,14 +103,6 @@ export default function TreatmentsContent({ products }: Props) {
 
   function setCardCurrency(productId: string, currency: string) {
     setCardCurrencies(prev => ({ ...prev, [productId]: currency }));
-  }
-
-  // Get translated (or original) field for product at index idx
-  // field 0 = name, field 1 = short_description
-  function getTranslated(idx: number, field: 0 | 1, fallback: string | null): string | null {
-    if (translating) return null; // skeleton shown instead
-    const val = translated[idx * FIELDS_PER_PRODUCT + field];
-    return val ?? fallback;
   }
 
   const isEn = lang === 'en';
@@ -154,15 +134,12 @@ export default function TreatmentsContent({ products }: Props) {
           <>
             {/* Treatment grid */}
             <div className="tp-grid">
-              {products.map((product, idx) => {
+              {products.map((product) => {
                 const available = getAvailableCurrencies(product);
                 const selectedCurrency = getCardCurrency(product);
                 const primaryPrice = getPrimaryPrice(product, selectedCurrency);
                 const secondaryPrices = getSecondaryPrices(product, selectedCurrency);
                 const hasMultiCurrency = available.length > 1;
-
-                const tName = getTranslated(idx, 0, product.name);
-                const tDesc = getTranslated(idx, 1, product.short_description);
                 const badge = localizedBadge(product.label, lang, t);
 
                 return (
@@ -192,17 +169,13 @@ export default function TreatmentsContent({ products }: Props) {
                       {/* Name row */}
                       <div className="tp-name-row">
                         <span className="tp-drop-icon">{DROP_SVG}</span>
-                        {translating
-                          ? <div className="skeleton" style={{ height: 22, flex: 1, borderRadius: 5 }} />
-                          : <h2 className="tp-name">{tName ?? product.name}</h2>
-                        }
+                        <h2 className="tp-name">{product.name}</h2>
                       </div>
 
                       {/* Description */}
-                      {translating
-                        ? <div className="skeleton" style={{ height: 48, borderRadius: 5, marginBottom: 10 }} />
-                        : (tDesc && <p className="tp-desc">{tDesc}</p>)
-                      }
+                      {product.short_description && (
+                        <p className="tp-desc">{product.short_description}</p>
+                      )}
 
                       {/* Duration */}
                       {product.duration_minutes && (

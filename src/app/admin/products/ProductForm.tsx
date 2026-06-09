@@ -123,19 +123,26 @@ function ImageUpload({
   currentUrl,
   productName,
   onUploaded,
+  onUploadingChange,
 }: {
   currentUrl: string;
   productName: string;
   onUploaded: (url: string) => void;
+  onUploadingChange?: (uploading: boolean) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading]     = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [previewUrl, setPreviewUrl]   = useState(currentUrl);
 
+  function setUploadingState(v: boolean) {
+    setUploading(v);
+    onUploadingChange?.(v);
+  }
+
   async function handleFile(file: File) {
     setUploadError('');
-    setUploading(true);
+    setUploadingState(true);
 
     const form = new FormData();
     form.append('file', file);
@@ -152,7 +159,7 @@ function ImageUpload({
     } catch {
       setUploadError('Koneksi gagal. Periksa jaringan.');
     } finally {
-      setUploading(false);
+      setUploadingState(false);
     }
   }
 
@@ -258,6 +265,7 @@ export function ProductForm({ product }: { product?: Product }) {
   const [homepageOrder,   setHomepageOrder]   = useState(String(product?.homepage_order ?? '0'));
   const [benefits,        setBenefits]        = useState<string[]>(product?.benefits?.map((b) => b.benefit_text) ?? ['']);
   const [saving,          setSaving]          = useState(false);
+  const [uploading,       setUploading]       = useState(false);
   const [deleting,        setDeleting]        = useState(false);
   const [error,           setError]           = useState('');
   const [toast,           setToast]           = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
@@ -498,10 +506,17 @@ export function ProductForm({ product }: { product?: Product }) {
         {/* Image upload */}
         <div className="admin-field">
           <span className="admin-field-label">Foto Produk</span>
+          {uploading && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--ocean)', fontSize: 13 }}>
+              <span className="upload-spinner" aria-hidden="true" style={{ width: 16, height: 16 }} />
+              Mengunggah gambar... mohon tunggu sebelum menyimpan.
+            </div>
+          )}
           <ImageUpload
             currentUrl={imageUrl}
             productName={name}
             onUploaded={(url) => setImageUrl(url)}
+            onUploadingChange={setUploading}
           />
         </div>
 
@@ -559,9 +574,10 @@ export function ProductForm({ product }: { product?: Product }) {
           <button
             className={`button button-primary${saving ? ' loading' : ''}`}
             type="submit"
-            disabled={saving || deleting}
+            disabled={saving || deleting || uploading}
+            title={uploading ? 'Tunggu hingga upload selesai' : undefined}
           >
-            {saving ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Buat Produk'}
+            {uploading ? 'Mengunggah...' : saving ? 'Menyimpan…' : isEdit ? 'Simpan Perubahan' : 'Buat Produk'}
           </button>
           <button
             className="button button-secondary"

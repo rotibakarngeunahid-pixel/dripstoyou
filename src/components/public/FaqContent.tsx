@@ -2,7 +2,6 @@
 
 import { useLanguage } from '@/contexts/language';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
-import { useAutoTranslate } from '@/hooks/useAutoTranslate';
 
 interface Faq {
   id: string;
@@ -21,31 +20,17 @@ export default function FaqContent({ faqs, waNumber }: Props) {
   const { lang, t } = useLanguage();
 
   const waUrl = buildWhatsAppUrl(waNumber, t.faqPage.waMessage);
-  const sourceTexts = faqs.flatMap((faq) => [
-    faq.questionId || faq.questionEn,
-    faq.answerId || faq.answerEn,
-  ]);
-  const { translated } = useAutoTranslate(sourceTexts, lang, 'public_faqs');
 
   const localizedFaqs = faqs
-    .map((faq, idx) => {
-      const translatedQuestion = translated[idx * 2] ?? '';
-      const translatedAnswer = translated[idx * 2 + 1] ?? '';
-      const storedQuestionEn = faq.questionEn && faq.questionEn !== faq.questionId ? faq.questionEn : '';
-      const storedAnswerEn = faq.answerEn && faq.answerEn !== faq.answerId ? faq.answerEn : '';
-      const storedQuestionId = faq.questionId && faq.questionId !== faq.questionEn ? faq.questionId : '';
-      const storedAnswerId = faq.answerId && faq.answerId !== faq.answerEn ? faq.answerId : '';
-
-      return {
-        id: faq.id,
-        question: lang === 'en'
-          ? (storedQuestionEn || translatedQuestion || faq.questionId || faq.questionEn)
-          : (storedQuestionId || translatedQuestion || faq.questionId || faq.questionEn),
-        answer: lang === 'en'
-          ? (storedAnswerEn || translatedAnswer || faq.answerId || faq.answerEn)
-          : (storedAnswerId || translatedAnswer || faq.answerId || faq.answerEn),
-      };
-    })
+    .map((faq) => ({
+      id: faq.id,
+      question: lang === 'en'
+        ? (faq.questionEn || faq.questionId)
+        : (faq.questionId || faq.questionEn),
+      answer: lang === 'en'
+        ? (faq.answerEn || faq.answerId)
+        : (faq.answerId || faq.answerEn),
+    }))
     .filter((faq) => faq.question && faq.answer);
 
   return (

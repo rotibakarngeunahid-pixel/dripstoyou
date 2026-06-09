@@ -7,8 +7,14 @@ import { getWaNumber } from '@/lib/whatsapp';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'FAQ - Drips To You - Bali | Frequently Asked Questions',
-  description: 'Answers to common questions about Drips To You - Bali IV therapy on-call service, booking process, safety, and service areas.',
+  title: 'FAQ | Drips To You - Bali Mobile IV Therapy',
+  description: 'Frequently asked questions about Drips To You - Bali: how IV therapy works, booking process, safety, pricing, and which areas we serve.',
+  openGraph: {
+    title: 'FAQ - Drips To You - Bali',
+    description: 'Answers to common questions about mobile IV therapy in Bali — booking, safety, pricing, and service areas.',
+    url: 'https://dripstoyou.com/faq',
+  },
+  alternates: { canonical: 'https://dripstoyou.com/faq' },
 };
 
 interface Faq {

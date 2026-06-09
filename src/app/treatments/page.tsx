@@ -6,8 +6,14 @@ import TreatmentsContent from '@/components/public/TreatmentsContent';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Treatments - Drips To You - Bali | Mobile IV Therapy',
-  description: 'Browse the active mobile IV therapy treatments configured by Drips To You - Bali.',
+  title: 'IV Therapy Treatments in Bali | Drips To You',
+  description: 'Browse mobile IV therapy treatments delivered to your villa, hotel, or home in Bali. Hangover recovery, immune boost, energy drips and more. Book online.',
+  openGraph: {
+    title: 'IV Therapy Treatments in Bali | Drips To You',
+    description: 'Browse mobile IV therapy treatments in Bali — delivered to your villa, hotel, or home by a certified medical team.',
+    url: 'https://dripstoyou.com/treatments',
+  },
+  alternates: { canonical: 'https://dripstoyou.com/treatments' },
 };
 
 interface Benefit {

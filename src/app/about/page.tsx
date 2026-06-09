@@ -7,8 +7,14 @@ import { getWaNumber } from '@/lib/whatsapp';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'About Us - Drips To You - Bali | Mobile IV Therapy',
-  description: 'Learn about Drips To You - Bali and the active service areas configured by our team.',
+  title: 'About Us | Drips To You - Bali Mobile IV Therapy',
+  description: 'Meet the Drips To You - Bali team. Certified medical professionals delivering IV therapy to villas, hotels, and homes across Bali.',
+  openGraph: {
+    title: 'About Drips To You - Bali',
+    description: 'Certified medical professionals delivering mobile IV therapy across Bali. Learn about our team and service areas.',
+    url: 'https://dripstoyou.com/about',
+  },
+  alternates: { canonical: 'https://dripstoyou.com/about' },
 };
 
 type Area = { id: string; name: string };

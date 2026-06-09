@@ -4,8 +4,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/language';
 import { formatPrice as formatCurrencyPrice } from '@/lib/currency';
-import { useAutoTranslate } from '@/hooks/useAutoTranslate';
-
 export interface HomepageProduct {
   id: string;
   name: string;
@@ -66,8 +64,6 @@ const BOLT_SVG = (
     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
   </svg>
 );
-
-const FIELDS_PER_PRODUCT = 2;
 
 function localizedBadge(label: string | null, lang: 'en' | 'id', t: ReturnType<typeof useLanguage>['t']): string | null {
   if (!label) return null;
@@ -189,17 +185,11 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
 ───────────────────────────────────────────── */
 function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>['t']; products: HomepageProduct[] }) {
   const { lang } = useLanguage();
-  const textsToTranslate = products.flatMap(p => [p.name, p.short_description ?? '']);
-  const { translated } = useAutoTranslate(textsToTranslate, lang, 'home_products');
 
   if (products.length === 0) return null;
 
   function formatPrice(p: HomepageProduct) {
     return p.price_label ?? formatCurrencyPrice(p.price_amount, p.currency);
-  }
-
-  function getTranslated(idx: number, field: 0 | 1, fallback: string | null): string | null {
-    return translated[idx * FIELDS_PER_PRODUCT + field] ?? fallback;
   }
 
   const imgClasses = ['t-img-hangover', 't-img-immune', 't-img-energy', 't-img-beauty'];
@@ -215,8 +205,6 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
 
         <div className="treatments-grid">
           {products.slice(0, 4).map((p, i) => {
-            const tName = getTranslated(i, 0, p.name) ?? p.name;
-            const tDesc = getTranslated(i, 1, p.short_description);
             const badge = localizedBadge(p.label, lang, t);
 
             return (
@@ -226,7 +214,7 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
                     <Image
                       className="card-photo"
                       src={p.image_url}
-                      alt={`${tName} IV Therapy Bali`}
+                      alt={`${p.name} IV Therapy Bali`}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
                       unoptimized
@@ -239,8 +227,8 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
                   )}
                 </div>
                 <div className="t-body">
-                  <div className="t-name">{tName}</div>
-                  {tDesc && <div className="t-detail">{tDesc}</div>}
+                  <div className="t-name">{p.name}</div>
+                  {p.short_description && <div className="t-detail">{p.short_description}</div>}
                   <div className="t-price">{formatPrice(p)} <span>{t.treatments.perSession}</span></div>
                   <div className="t-actions">
                     <Link href={`/treatments/${p.slug}`} className="btn-see-more" prefetch>
