@@ -151,7 +151,7 @@ export default function TreatmentsContent({ products }: Props) {
                           src={product.image_url}
                           alt={`${product.name} IV therapy`}
                           fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px"
                           className="tp-card-photo"
                           unoptimized
                         />
@@ -161,6 +161,12 @@ export default function TreatmentsContent({ products }: Props) {
                       <div className="tp-card-overlay" />
                       {badge && (
                         <span className="tp-card-badge">{badge}</span>
+                      )}
+                      {product.duration_minutes && (
+                        <div className="tp-card-dur-badge">
+                          {CLOCK_SVG}
+                          <span>{t.treatmentsPage.durationText.replace('{n}', String(product.duration_minutes))}</span>
+                        </div>
                       )}
                     </div>
 
@@ -177,43 +183,46 @@ export default function TreatmentsContent({ products }: Props) {
                         <p className="tp-desc">{product.short_description}</p>
                       )}
 
-                      {/* Duration */}
-                      {product.duration_minutes && (
-                        <div className="tp-duration">
-                          {CLOCK_SVG}
-                          <span>
-                            {t.treatmentsPage.durationText.replace('{n}', String(product.duration_minutes))}
-                          </span>
+                      {/* Benefits */}
+                      {product.benefits.length > 0 && (
+                        <div className="tp-benefits">
+                          {product.benefits.slice(0, 3).map(b => (
+                            <div key={b.id} className="tp-benefit-item">
+                              <span className="tp-benefit-check">✓</span>
+                              <span>{b.benefit_text}</span>
+                            </div>
+                          ))}
                         </div>
                       )}
 
-                      {/* Currency selector */}
-                      {hasMultiCurrency && (
-                        <div className="tp-currency-row">
-                          <span className="tp-currency-label">
-                            {isEn ? 'Currency' : 'Mata Uang'}
-                          </span>
-                          <div className="tp-currency-tabs">
-                            {available.map(code => (
-                              <button
-                                key={code}
-                                className={`tp-currency-tab${selectedCurrency === code ? ' active' : ''}`}
-                                onClick={() => setCardCurrency(product.id, code)}
-                                type="button"
-                                aria-pressed={selectedCurrency === code}
-                              >
-                                {code}
-                              </button>
-                            ))}
+                      {/* Price block */}
+                      <div className="tp-price-block">
+                        {/* Currency selector */}
+                        {hasMultiCurrency && (
+                          <div className="tp-currency-row">
+                            <span className="tp-currency-label">
+                              {isEn ? 'Currency' : 'Mata Uang'}
+                            </span>
+                            <div className="tp-currency-tabs">
+                              {available.map(code => (
+                                <button
+                                  key={code}
+                                  className={`tp-currency-tab${selectedCurrency === code ? ' active' : ''}`}
+                                  onClick={() => setCardCurrency(product.id, code)}
+                                  type="button"
+                                  aria-pressed={selectedCurrency === code}
+                                >
+                                  {code}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Price */}
-                      <div className="tp-price-primary">{primaryPrice}</div>
-                      {secondaryPrices && (
-                        <div className="tp-price-secondary">{secondaryPrices}</div>
-                      )}
+                        )}
+                        <div className="tp-price-primary">{primaryPrice}</div>
+                        {secondaryPrices && (
+                          <div className="tp-price-secondary">{secondaryPrices}</div>
+                        )}
+                      </div>
 
                       {/* Actions */}
                       <div className="tp-actions">

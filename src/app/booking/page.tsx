@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
@@ -61,7 +61,7 @@ interface BK {
   btnBack: string; btnNext2: string; btnSubmit: string; btnSubmitting: string;
   sidebarTitle: string; sidebarEmpty: string;
   sidebarDate: string; sidebarTime: string; sidebarArea: string;
-  sidebarLoc: string; sidebarPeople: string;
+  sidebarLoc: string; sidebarPeople: string; sidebarAddress: string;
   sidebarTotal: string; sidebarNote: string;
   waQuestion: string; waLink: string; waCaption: string;
   successTitle: string; successSub: string; codeLabel: string;
@@ -133,6 +133,7 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     sidebarArea: 'Area',
     sidebarLoc: 'Location',
     sidebarPeople: 'Guests',
+    sidebarAddress: 'Address',
     sidebarTotal: 'Estimated Total',
     sidebarNote: 'Final price confirmed via WhatsApp',
     waQuestion: 'Have a question?',
@@ -228,6 +229,7 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     sidebarArea: 'Area',
     sidebarLoc: 'Lokasi',
     sidebarPeople: 'Peserta',
+    sidebarAddress: 'Alamat',
     sidebarTotal: 'Total Estimasi',
     sidebarNote: 'Harga final dikonfirmasi via WhatsApp',
     waQuestion: 'Ada pertanyaan?',
@@ -431,7 +433,7 @@ function StepBar({ step, bk }: { step: number; bk: BK }) {
 
 /* ─── Sidebar ─── */
 function Sidebar({
-  bk, lang, product, productGrad, date, time, areaName, people, locType, bookingCurrency, waNumber,
+  bk, lang, product, productGrad, date, time, areaName, address, people, locType, bookingCurrency, waNumber,
 }: {
   bk: BK;
   lang: 'en' | 'id';
@@ -440,18 +442,21 @@ function Sidebar({
   date: string;
   time: string;
   areaName: string;
+  address: string;
   people: number;
   locType: string;
   bookingCurrency: string;
   waNumber: string;
 }) {
   const loc = bk.locTypes.find(l => l.v === locType);
+  const addrShort = address.length > 60 ? address.slice(0, 60) + '…' : address;
   const rows = [
-    { ic: <IcCal />,    k: bk.sidebarDate,   v: date ? fmtDate(date, lang) : null },
-    { ic: <IcClock />,  k: bk.sidebarTime,   v: time || null },
-    { ic: <IcPin />,    k: bk.sidebarArea,   v: areaName || null },
-    { ic: <IcHome />,   k: bk.sidebarLoc,    v: loc?.l || null },
-    { ic: <IcPeople />, k: bk.sidebarPeople, v: bk.people1(people) },
+    { ic: <IcCal />,    k: bk.sidebarDate,    v: date ? fmtDate(date, lang) : null },
+    { ic: <IcClock />,  k: bk.sidebarTime,    v: time || null },
+    { ic: <IcPin />,    k: bk.sidebarArea,    v: areaName || null },
+    { ic: <IcHome />,   k: bk.sidebarLoc,     v: loc?.l || null },
+    { ic: <IcPin />,    k: bk.sidebarAddress, v: addrShort || null },
+    { ic: <IcPeople />, k: bk.sidebarPeople,  v: bk.people1(people) },
   ].filter(r => r.v);
 
   const unitPrice     = product ? getPriceForCurrency(product, bookingCurrency) : 0;
@@ -655,6 +660,11 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
   const [success, setSuccess] = useState(false);
   const errorRef = useRef<HTMLSpanElement>(null);
   const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Stable refs so the async callbacks always see the latest prop values
+  const bkRef = useRef(bk);
+  const onAddressRef = useRef(onAddress);
+  useEffect(() => { bkRef.current = bk; });
+  useEffect(() => { onAddressRef.current = onAddress; });
 
   function showError(msg: string) {
     if (errorRef.current) {
@@ -662,7 +672,6 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
       errorRef.current.style.display = 'block';
     }
   }
-
   function clearError() {
     if (errorRef.current) {
       errorRef.current.textContent = '';
@@ -670,34 +679,22 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
     }
   }
 
-  async function detect() {
-    // Clear any previous error/success immediately on click
+  const detect = useCallback(async () => {
     clearError();
     if (successTimer.current) clearTimeout(successTimer.current);
     setSuccess(false);
 
-    if (!navigator.geolocation) {
-      showError(bk.gpsFailed);
-      return;
-    }
+    if (!navigator.geolocation) { showError(bkRef.current.gpsFailed); return; }
 
-    // Pre-check permission state — avoids silent failure on OS/browser-level denial
     if ('permissions' in navigator) {
       try {
         const perm = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
-        if (perm.state === 'denied') {
-          showError(bk.gpsDenied);
-          return;
-        }
-      } catch {
-        // Permissions API not supported — proceed normally
-      }
+        if (perm.state === 'denied') { showError(bkRef.current.gpsDenied); return; }
+      } catch { /* Permissions API not supported */ }
     }
 
     setLoading(true);
 
-    // Do NOT wrap getCurrentPosition in try/catch — it is always async,
-    // it never throws; errors arrive only via the error callback.
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         try {
@@ -708,31 +705,37 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
           );
           const data = await res.json() as { display_name?: string };
           if (data.display_name) {
-            onAddress(data.display_name.slice(0, 300));
+            onAddressRef.current(data.display_name.slice(0, 300));
             setLoading(false);
             setSuccess(true);
             successTimer.current = setTimeout(() => setSuccess(false), 3000);
           } else {
             setLoading(false);
-            showError(bk.gpsFailed);
+            showError(bkRef.current.gpsFailed);
           }
         } catch {
           setLoading(false);
-          showError(bk.gpsFailed);
+          showError(bkRef.current.gpsFailed);
         }
       },
       (err) => {
         setLoading(false);
-        // Error shown ONLY here — after user has interacted with the permission dialog
-        let msg = bk.gpsFailed;
-        if (err.code === err.PERMISSION_DENIED) msg = bk.gpsDenied;
-        else if (err.code === err.POSITION_UNAVAILABLE) msg = bk.gpsUnavailable;
-        else if (err.code === err.TIMEOUT) msg = bk.gpsTimeout;
+        let msg = bkRef.current.gpsFailed;
+        if (err.code === err.PERMISSION_DENIED) msg = bkRef.current.gpsDenied;
+        else if (err.code === err.POSITION_UNAVAILABLE) msg = bkRef.current.gpsUnavailable;
+        else if (err.code === err.TIMEOUT) msg = bkRef.current.gpsTimeout;
         showError(msg);
       },
       { timeout: 10000, maximumAge: 0 },
     );
-  }
+  }, []);
+
+  // Auto-trigger browser location popup when step 2 first appears.
+  // setTimeout(0) defers setState calls out of the synchronous effect body.
+  useEffect(() => {
+    const t = setTimeout(() => { void detect(); }, 0);
+    return () => clearTimeout(t);
+  }, [detect]);
 
   return (
     <div style={{ marginTop: 8 }}>
@@ -744,7 +747,6 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
       >
         {loading ? bk.gpsDetecting : success ? bk.gpsSuccess : bk.gpsBtn}
       </button>
-      {/* Error written directly to DOM inside error callback — never before */}
       <span
         ref={errorRef}
         className="bk-field-error"
@@ -1050,6 +1052,7 @@ function Step3({
           <div className="bk-mob-sum-divider" />
           {form.date && <div className="bk-mob-sum-row">📅 {fmtDate(form.date, lang)} · {form.time} WITA</div>}
           {areaName && <div className="bk-mob-sum-row">📍 {areaName}{loc ? ` · ${loc.l}` : ''}</div>}
+          {form.address && <div className="bk-mob-sum-row">🏠 {form.address.length > 55 ? form.address.slice(0, 55) + '…' : form.address}</div>}
           <div className="bk-mob-sum-row">👥 {bk.people1(form.people)}</div>
         </div>
       )}
@@ -1425,6 +1428,7 @@ export default function BookingPage() {
             date={form.date}
             time={form.time}
             areaName={areaName}
+            address={form.address}
             people={form.people}
             locType={form.locType}
             bookingCurrency={bookingCurrency}
