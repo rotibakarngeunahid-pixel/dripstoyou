@@ -134,7 +134,7 @@ export default function SchedulePage() {
 
       <section className="table-shell">
         <div className="table-wrap">
-          <table className="data-table" style={{ minWidth: 900 }}>
+          <table className="data-table admin-schedule-table" style={{ minWidth: 760 }}>
             <thead>
               <tr>
                 {[t.hari, t.buka, t.jamBuka, t.jamTutup, t.slotDurasi, t.maxPerSlot, t.minPreBooking].map((heading) => (
@@ -145,10 +145,10 @@ export default function SchedulePage() {
             <tbody>
               {schedule.map((day) => (
                 <tr key={day.dayOfWeek}>
-                  <td style={{ color: 'var(--teal)', fontWeight: 800 }}>
+                  <td data-label={t.hari} style={{ color: 'var(--teal)', fontWeight: 800 }}>
                     {t[`day${day.dayOfWeek}` as keyof typeof t] ?? String(day.dayOfWeek)}
                   </td>
-                  <td>
+                  <td data-label={t.buka}>
                     <input
                       type="checkbox"
                       checked={day.isOpen}
@@ -156,7 +156,7 @@ export default function SchedulePage() {
                       style={{ width: 18, height: 18 }}
                     />
                   </td>
-                  <td>
+                  <td data-label={t.jamBuka}>
                     <input
                       className="control"
                       type="time"
@@ -165,7 +165,7 @@ export default function SchedulePage() {
                       disabled={!day.isOpen}
                     />
                   </td>
-                  <td>
+                  <td data-label={t.jamTutup}>
                     <input
                       className="control"
                       type="time"
@@ -174,7 +174,7 @@ export default function SchedulePage() {
                       disabled={!day.isOpen}
                     />
                   </td>
-                  <td>
+                  <td data-label={t.slotDurasi}>
                     <input
                       className="control"
                       type="number"
@@ -185,7 +185,7 @@ export default function SchedulePage() {
                       disabled={!day.isOpen}
                     />
                   </td>
-                  <td>
+                  <td data-label={t.maxPerSlot}>
                     <input
                       className="control"
                       type="number"
@@ -196,7 +196,7 @@ export default function SchedulePage() {
                       disabled={!day.isOpen}
                     />
                   </td>
-                  <td>
+                  <td data-label={t.minPreBooking}>
                     <input
                       className="control"
                       type="number"

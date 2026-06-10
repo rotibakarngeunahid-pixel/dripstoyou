@@ -4276,9 +4276,10 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
     overflow: visible;
   }
 
-  /* Hide standard table wrapper, show cards instead */
+  /* Wide tables scroll horizontally; card-layout tables fit naturally */
   .table-wrap {
-    overflow: visible;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .data-table {
@@ -5563,6 +5564,24 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
     padding: 8px 14px;
   }
 
+  .admin-topbar-left {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .admin-breadcrumb {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .admin-breadcrumb strong {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
   .admin-menu-button {
     display: inline-flex;
   }
@@ -5645,6 +5664,14 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   .guide-toc-sidebar {
     display: none !important;
   }
+  .guide-mobile-toc {
+    display: block;
+  }
+}
+
+/* Guide mobile TOC hidden on desktop */
+.guide-mobile-toc {
+  display: none;
 }
 
 /* ─────────────────────────────────────────────
@@ -6710,7 +6737,19 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   .admin-tabs-toolbar { flex-direction: column; align-items: stretch; }
   .admin-tabs-toolbar .admin-search-field { width: 100%; }
   .admin-search-input { width: 100%; }
-  .admin-log-filters { gap: 8px; }
+  .admin-log-filters {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .admin-log-filter-field {
+    width: 100%;
+  }
+  .admin-log-filter-field > div,
+  .admin-log-filter-input,
+  .admin-log-filter-field select {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 /* ---------------------------------------------
@@ -7101,4 +7140,36 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   .bd-timeline-time  { grid-column: 2; grid-row: 1; }
   .bd-timeline-chips { grid-column: 2; grid-row: 2; }
   .bd-timeline-admin { grid-column: 2; grid-row: 3; justify-self: start; margin-top: 2px; }
+}
+
+/* ─── Snapshot modal responsive row ─── */
+.bd-snapshot-row {
+  display: grid !important;
+  grid-template-columns: minmax(80px, 140px) 1fr !important;
+  padding: 7px 0;
+  border-bottom: 1px solid #f4f4f4;
+  font-size: 13px;
+  line-height: 1.6;
+  gap: 8px;
+}
+@media (max-width: 480px) {
+  .bd-snapshot-row {
+    grid-template-columns: 100px 1fr !important;
+    font-size: 12px;
+  }
+}
+
+/* ─── Schedule table — no min-width on mobile, data-label cells ─── */
+@media (max-width: 767px) {
+  .admin-schedule-table {
+    min-width: 0 !important;
+  }
+  .admin-schedule-table td .control {
+    width: 100%;
+    min-width: 0;
+    font-size: 0.82rem;
+  }
+  .admin-schedule-table td[data-label]::before {
+    margin-bottom: 4px;
+  }
 }

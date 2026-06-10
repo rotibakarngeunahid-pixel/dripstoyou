@@ -160,11 +160,7 @@ function SnapshotModal({ log, onClose, t }: SnapshotModalProps) {
           {fields.map(([label, value]) => (
             <div
               key={label}
-              style={{
-                display: 'grid', gridTemplateColumns: '160px 1fr',
-                padding: '7px 0', borderBottom: '1px solid #f4f4f4',
-                fontSize: 13, lineHeight: 1.6,
-              }}
+              className="bd-snapshot-row"
             >
               <span style={{ color: '#888', fontWeight: 500 }}>{label}</span>
               <span style={{ wordBreak: 'break-word', color: '#222' }}>{value}</span>
