@@ -4369,8 +4369,10 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
     gap: 12px;
   }
 
-  .admin-page-head .button,
-  .admin-page-head a.button {
+  /* Direct button children of page-head → full width.
+     Buttons inside a nested div (e.g. Refresh + Export side-by-side) → natural auto width. */
+  .admin-page-head > .button,
+  .admin-page-head > a.button {
     width: 100%;
     justify-content: center;
   }
@@ -5632,11 +5634,11 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
     min-height: 44px;
   }
 
-  /* Swipe indicator on horizontally scrollable tables */
+  /* Swipe indicator — only on tables that actually scroll (have a wide inner table) */
   .table-wrap {
     position: relative;
   }
-  .table-shell::after {
+  .table-shell:has(table):has(tbody tr)::after {
     content: '← scroll →';
     display: block;
     text-align: center;
