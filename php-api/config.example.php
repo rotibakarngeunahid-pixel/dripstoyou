@@ -30,14 +30,15 @@ define('ALLOWED_ORIGINS', [
 // ── WhatsApp ──────────────────────────────────────────────────────────────────
 define('WHATSAPP_NUMBER', '6281200000000');
 
-// ── Upload Storage (opsional — ada nilai default jika tidak diset) ─────────────
-// UPLOAD_DIR: path absolut ke folder penyimpanan gambar produk di server.
-//   Default: {DOCUMENT_ROOT}/uploads/products  (biasanya public_html/uploads/products)
-// UPLOAD_BASE_URL: URL publik dari folder uploads (auto-detect dari HTTP_HOST jika kosong).
-//   Catatan: Next.js di Vercel akan menge-proxy gambar via /api/img/, jadi
-//   nilai ini hanya digunakan sebagai fallback akses langsung ke PHP server.
-// define('UPLOAD_DIR',      '/home/namauser/public_html/uploads/products');
-// define('UPLOAD_BASE_URL', 'https://dripstoyou.com');
+// ── Upload Storage ────────────────────────────────────────────────────────────
+// UPLOAD_DIR: path absolut ke folder uploads di server (opsional, ada auto-detect).
+//   Contoh: /home/rotw4785/public_html/php-api/uploads/products
+// UPLOAD_BASE_URL: URL publik root folder php-api ini (WAJIB diset).
+//   PENTING: Setelah domain dripstoyou.com → Vercel, JANGAN gunakan https://dripstoyou.com
+//   karena sekarang mengarah ke Vercel, bukan cPanel.
+//   Gunakan subdomain yang mengarah langsung ke cPanel: https://api.dripstoyou.com
+// define('UPLOAD_DIR', '/home/rotw4785/public_html/php-api/uploads/products');
+define('UPLOAD_BASE_URL', 'https://api.dripstoyou.com');
 
 // ── Session Duration ──────────────────────────────────────────────────────────
 define('SESSION_DURATION_HOURS', 8);
