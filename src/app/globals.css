@@ -5720,11 +5720,11 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
 }
 .tp-card:hover::before { opacity: 1; }
 
-/* Media — 16:9 ratio, always full-width vertical layout */
+/* Media — 1:1 square, always full-width vertical layout */
 .tp-card-media {
   position: relative;
   width: 100%;
-  aspect-ratio: 16/9;
+  aspect-ratio: 1/1;
   overflow: hidden;
   flex-shrink: 0;
 }
