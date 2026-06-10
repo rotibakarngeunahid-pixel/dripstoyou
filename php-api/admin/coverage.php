@@ -141,9 +141,20 @@ if ($method === 'DELETE') {
     if (!$id) jsonError('ID area wajib diisi', 400);
     findArea($db, $id);
 
-    // Always hard-delete: unlink any bookings first, then remove the record
-    $db->prepare('UPDATE bookings SET service_area_id = NULL WHERE service_area_id = ?')->execute([$id]);
-    $db->prepare('DELETE FROM service_areas WHERE id = ?')->execute([$id]);
+    $db->beginTransaction();
+    try {
+        $db->prepare('UPDATE bookings SET service_area_id = NULL WHERE service_area_id = ?')->execute([$id]);
+        $del = $db->prepare('DELETE FROM service_areas WHERE id = ?');
+        $del->execute([$id]);
+        if ($del->rowCount() === 0) {
+            $db->rollBack();
+            jsonError('Area tidak dapat dihapus dari database', 500);
+        }
+        $db->commit();
+    } catch (Throwable $e) {
+        $db->rollBack();
+        jsonError('Gagal menghapus area: ' . $e->getMessage(), 500);
+    }
     auditLog('UPDATE_AREA', $admin['admin_id'], 'ServiceArea', $id, ['operation' => 'delete_permanent']);
     jsonSuccess(null, 'Area layanan berhasil dihapus');
 }

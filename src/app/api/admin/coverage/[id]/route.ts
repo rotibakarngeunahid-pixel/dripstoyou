@@ -33,5 +33,6 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   return phpProxy(phpUrl(id), {
     method: 'DELETE',
     headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
+    redirect: 'error',
   });
 }

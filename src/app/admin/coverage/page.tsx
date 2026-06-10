@@ -329,19 +329,20 @@ export default function AdminCoveragePage() {
         setDeleting(id);
         try {
           const res = await fetch(`/api/admin/coverage/${id}`, { method: 'DELETE' });
-          if (res.ok) {
-            showToast(t.areaHapus);
-            setAreas(prev => prev.filter(a => a.id !== id));
+          const json = (await res.json()) as ApiResponse<null>;
+          if (res.ok && json.success) {
             setConfirm(c => ({ ...c, open: false, loading: false }));
+            showToast(t.areaHapus);
+            await load();
           } else {
-            const json = (await res.json()) as ApiResponse<null>;
             showToast(json.message ?? json.error ?? t.gagalMemuat, 'error');
+            setConfirm(c => ({ ...c, open: false, loading: false }));
           }
         } catch {
           showToast(t.koneksiFailed, 'error');
+          setConfirm(c => ({ ...c, open: false, loading: false }));
         } finally {
           setDeleting(null);
-          setConfirm(c => ({ ...c, loading: false }));
         }
       },
     });
