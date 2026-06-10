@@ -32,10 +32,10 @@ function Callout({ variant, text }: { variant: CalloutType; text: string }) {
     <div style={{
       background: s.bg, border: `1px solid ${s.border}`, borderRadius: 10,
       padding: '12px 16px', fontSize: 13.5, color: s.color, lineHeight: 1.6,
-      display: 'flex', gap: 10, alignItems: 'flex-start',
+      display: 'flex', gap: 10, alignItems: 'flex-start', minWidth: 0,
     }}>
       <span style={{ flexShrink: 0, fontSize: 18 }}>{s.icon}</span>
-      <span style={{ whiteSpace: 'pre-line' }}>{text}</span>
+      <span style={{ whiteSpace: 'pre-line', overflowWrap: 'break-word', minWidth: 0, flex: 1 }}>{text}</span>
     </div>
   );
 }
@@ -54,15 +54,15 @@ function Steps({ items }: { items: { title: string; desc: string; detail?: strin
           }}>
             {i + 1}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 14.5, color: '#1a1a1a', marginBottom: 4 }}>{step.title}</div>
-            <div style={{ fontSize: 13.5, color: '#555', lineHeight: 1.65 }}>{step.desc}</div>
+          <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+            <div style={{ fontWeight: 700, fontSize: 14.5, color: '#1a1a1a', marginBottom: 4, overflowWrap: 'break-word' }}>{step.title}</div>
+            <div style={{ fontSize: 13.5, color: '#555', lineHeight: 1.65, overflowWrap: 'break-word', whiteSpace: 'pre-line' }}>{step.desc}</div>
             {step.detail && (
               <div style={{
                 marginTop: 8, padding: '8px 12px',
                 background: '#f0f9ff', borderLeft: '3px solid var(--ocean)',
                 fontSize: 12.5, color: '#1e6f8c', borderRadius: '0 6px 6px 0',
-                lineHeight: 1.55,
+                lineHeight: 1.55, overflowWrap: 'break-word',
               }}>
                 💡 {step.detail}
               </div>
@@ -76,7 +76,7 @@ function Steps({ items }: { items: { title: string; desc: string; detail?: strin
 
 function MockupFrame({ html, caption }: { html: string; caption: string }) {
   return (
-    <div style={{ border: '1px solid rgba(32,82,81,0.12)', borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ border: '1px solid rgba(32,82,81,0.12)', borderRadius: 14, overflow: 'hidden', width: '100%', minWidth: 0 }}>
       <div style={{ background: '#f8f7f4', borderBottom: '1px solid #e8e4da', padding: '8px 14px', display: 'flex', gap: 6, alignItems: 'center' }}>
         <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#f87171', display: 'inline-block' }} />
         <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }} />
@@ -1048,7 +1048,7 @@ export default function GuideContent() {
         </div>
 
         {/* Content area */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, minWidth: 0, overflow: 'hidden' }}>
           {sections.length === 0 && (
             <div style={{ textAlign: 'center', padding: 48, color: '#aaa' }}>
               {lang === 'en' ? 'No results found.' : 'Tidak ada hasil yang ditemukan.'}
@@ -1059,13 +1059,14 @@ export default function GuideContent() {
               key={section.id}
               ref={el => { sectionRefs.current[section.id] = el; }}
               id={`guide-${section.id}`}
-              style={{ scrollMarginTop: 90 }}
+              style={{ scrollMarginTop: 90, minWidth: 0 }}
               onClick={() => setActiveId(section.id)}
             >
-              <div style={{
+              <div className="guide-section-card" style={{
                 background: 'white', border: '1px solid rgba(32,82,81,.09)',
                 borderRadius: 18, padding: '24px 26px',
                 boxShadow: '0 4px 18px rgba(32,82,81,.05)',
+                overflow: 'hidden',
               }}>
                 {/* Section header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 22, paddingBottom: 16, borderBottom: '1px solid #f0ede8' }}>

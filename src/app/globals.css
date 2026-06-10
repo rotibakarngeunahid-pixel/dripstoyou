@@ -5660,6 +5660,10 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   /* Guide layout: stack TOC below on mobile */
   .guide-layout {
     grid-template-columns: 1fr !important;
+    gap: 0 !important;
+  }
+  .guide-layout > * {
+    min-width: 0;
   }
   .guide-toc-sidebar {
     display: none !important;
@@ -5672,6 +5676,13 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
 /* Guide mobile TOC hidden on desktop */
 .guide-mobile-toc {
   display: none;
+}
+
+/* Guide section cards — tighter padding on small screens */
+@media (max-width: 480px) {
+  .guide-section-card {
+    padding: 16px 14px !important;
+  }
 }
 
 /* ─────────────────────────────────────────────
