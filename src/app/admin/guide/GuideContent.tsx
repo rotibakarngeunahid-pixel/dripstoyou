@@ -123,80 +123,83 @@ function DataTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
 
 /* ── Mockup HTML snippets ── */
 const DASHBOARD_MOCKUP = `
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
-  <div style="background:#f0f9f8;border:1.5px solid rgba(32,82,81,.15);border-radius:14px;padding:16px">
-    <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
-      <span style="width:32px;height:32px;background:var(--pale-aqua,#d6eaea);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">📋</span>
-      <span style="font-size:11px;color:#667;font-weight:600">Total Booking</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+  <div style="flex:1;min-width:90px;background:#f0f9f8;border:1.5px solid rgba(32,82,81,.15);border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
+      <span style="font-size:18px">📋</span>
+      <span style="font-size:10px;color:#667;font-weight:600">Total Booking</span>
     </div>
-    <div style="font-size:28px;font-weight:800;color:#205251">42</div>
-    <div style="font-size:11px;color:#22c55e;margin-top:4px">↑ +18% dari bulan lalu</div>
+    <div style="font-size:24px;font-weight:800;color:#205251">42</div>
+    <div style="font-size:10px;color:#22c55e;margin-top:2px">↑ +18% bulan lalu</div>
   </div>
-  <div style="background:#fffbf0;border:1.5px solid rgba(201,148,76,.2);border-radius:14px;padding:16px">
-    <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
-      <span style="width:32px;height:32px;background:#fef3e0;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">⏳</span>
-      <span style="font-size:11px;color:#667;font-weight:600">Menunggu Konfirmasi</span>
+  <div style="flex:1;min-width:90px;background:#fffbf0;border:1.5px solid rgba(201,148,76,.2);border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
+      <span style="font-size:18px">⏳</span>
+      <span style="font-size:10px;color:#667;font-weight:600">Menunggu</span>
     </div>
-    <div style="font-size:28px;font-weight:800;color:#c9944c">3</div>
-    <div style="font-size:11px;color:#c9944c;margin-top:4px">Butuh follow-up segera</div>
+    <div style="font-size:24px;font-weight:800;color:#c9944c">3</div>
+    <div style="font-size:10px;color:#c9944c;margin-top:2px">Follow-up segera!</div>
   </div>
-  <div style="background:#f0f7f7;border:1.5px solid rgba(41,128,139,.15);border-radius:14px;padding:16px">
-    <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
-      <span style="width:32px;height:32px;background:#e5f4f6;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">📅</span>
-      <span style="font-size:11px;color:#667;font-weight:600">Booking Hari Ini</span>
+  <div style="flex:1;min-width:90px;background:#f0f7f7;border:1.5px solid rgba(41,128,139,.15);border-radius:12px;padding:12px">
+    <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
+      <span style="font-size:18px">📅</span>
+      <span style="font-size:10px;color:#667;font-weight:600">Hari Ini</span>
     </div>
-    <div style="font-size:28px;font-weight:800;color:#29808b">5</div>
-    <div style="font-size:11px;color:#667;margin-top:4px">Jadwal aktif hari ini</div>
+    <div style="font-size:24px;font-weight:800;color:#29808b">5</div>
+    <div style="font-size:10px;color:#667;margin-top:2px">Jadwal aktif</div>
   </div>
 </div>
-<div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:12px;padding:14px">
-  <div style="font-size:13px;font-weight:700;color:#205251;margin-bottom:10px">Booking Terbaru</div>
-  <div style="font-size:12px;color:#555;display:flex;flex-direction:column;gap:8px">
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:#f9f9f8;border-radius:8px">
-      <span><strong>DTY-042</strong> — Rina Sari · Immunity Boost</span>
-      <span style="background:#fff4ce;color:#8a5b00;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px">BARU</span>
+<div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:10px;padding:12px">
+  <div style="font-size:12px;font-weight:700;color:#205251;margin-bottom:8px">Booking Terbaru</div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px;background:#f9f9f8;border-radius:7px;gap:8px">
+      <div style="min-width:0;flex:1">
+        <span style="font-weight:800;font-size:11px;color:#205251;font-family:monospace">DTY-042</span>
+        <span style="font-size:11px;color:#555;margin-left:5px">Rina Sari</span>
+      </div>
+      <span style="background:#fff4ce;color:#8a5b00;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;flex-shrink:0">BARU</span>
     </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:#f9f9f8;border-radius:8px">
-      <span><strong>DTY-041</strong> — Budi Santoso · Hydration Plus</span>
-      <span style="background:#e7f1ff;color:#1d5f9f;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px">KONFIRMASI</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:7px;background:#f9f9f8;border-radius:7px;gap:8px">
+      <div style="min-width:0;flex:1">
+        <span style="font-weight:800;font-size:11px;color:#205251;font-family:monospace">DTY-041</span>
+        <span style="font-size:11px;color:#555;margin-left:5px">Budi S.</span>
+      </div>
+      <span style="background:#e7f1ff;color:#1d5f9f;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;white-space:nowrap;flex-shrink:0">KONFIRMASI</span>
     </div>
   </div>
 </div>
 `;
 
 const BOOKING_TAB_MOCKUP = `
-<div style="display:flex;gap:4px;padding:5px;background:white;border:1px solid rgba(32,82,81,.09);border-radius:12px;width:fit-content;margin-bottom:14px;overflow-x:auto">
-  <button style="height:32px;padding:0 12px;border:none;border-radius:8px;background:var(--teal,#205251);color:white;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Semua <span style="background:rgba(255,255,255,.25);border-radius:999px;padding:2px 6px;font-size:10px">12</span></button>
-  <button style="height:32px;padding:0 12px;border:none;border-radius:8px;background:transparent;color:#666;font-size:12px;font-weight:600;white-space:nowrap">Aktif <span style="background:rgba(32,82,81,.1);border-radius:999px;padding:2px 6px;font-size:10px;color:#205251">5</span></button>
-  <button style="height:32px;padding:0 12px;border:none;border-radius:8px;background:transparent;color:#666;font-size:12px;font-weight:600;white-space:nowrap">Selesai <span style="background:rgba(32,82,81,.1);border-radius:999px;padding:2px 6px;font-size:10px;color:#205251">4</span></button>
-  <button style="height:32px;padding:0 12px;border:none;border-radius:8px;background:transparent;color:#666;font-size:12px;font-weight:600;white-space:nowrap">Dibatalkan <span style="background:rgba(32,82,81,.1);border-radius:999px;padding:2px 6px;font-size:10px;color:#205251">3</span></button>
+<div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px;background:white;border:1px solid rgba(32,82,81,.09);border-radius:10px;margin-bottom:10px">
+  <button style="height:30px;padding:0 10px;border:none;border-radius:7px;background:#205251;color:white;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">Semua <span style="background:rgba(255,255,255,.25);border-radius:999px;padding:1px 5px;font-size:9px">12</span></button>
+  <button style="height:30px;padding:0 10px;border:none;border-radius:7px;background:transparent;color:#666;font-size:11px;font-weight:600;white-space:nowrap">Aktif <span style="background:rgba(32,82,81,.1);border-radius:999px;padding:1px 5px;font-size:9px;color:#205251">5</span></button>
+  <button style="height:30px;padding:0 10px;border:none;border-radius:7px;background:transparent;color:#666;font-size:11px;font-weight:600;white-space:nowrap">Selesai <span style="background:rgba(32,82,81,.1);border-radius:999px;padding:1px 5px;font-size:9px;color:#205251">4</span></button>
+  <button style="height:30px;padding:0 10px;border:none;border-radius:7px;background:transparent;color:#666;font-size:11px;font-weight:600;white-space:nowrap">Dibatalkan <span style="background:rgba(32,82,81,.1);border-radius:999px;padding:1px 5px;font-size:9px;color:#205251">3</span></button>
 </div>
-<div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:12px;overflow:hidden">
-  <table style="width:100%;border-collapse:collapse;font-size:12px">
-    <thead><tr style="background:#f8f8f8">
-      <th style="padding:10px 14px;text-align:left;color:#205251;font-weight:700">Kode</th>
-      <th style="padding:10px 14px;text-align:left;color:#205251;font-weight:700">Pelanggan</th>
-      <th style="padding:10px 14px;text-align:left;color:#205251;font-weight:700">Treatment</th>
-      <th style="padding:10px 14px;text-align:left;color:#205251;font-weight:700">Status</th>
-      <th style="padding:10px 14px;text-align:left;color:#205251;font-weight:700">Aksi</th>
-    </tr></thead>
-    <tbody>
-      <tr style="border-top:1px solid #f0ede8">
-        <td style="padding:10px 14px;font-weight:800;color:#205251;font-family:monospace">DTY-042</td>
-        <td style="padding:10px 14px">Rina Sari</td>
-        <td style="padding:10px 14px">Immunity Boost IV</td>
-        <td style="padding:10px 14px"><span style="background:#fff4ce;color:#8a5b00;border:1px solid #f7d77a;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700">BARU</span></td>
-        <td style="padding:10px 14px"><button style="padding:3px 10px;font-size:11px;border:1px solid rgba(32,82,81,.2);border-radius:6px;background:white;cursor:pointer">Detail</button></td>
-      </tr>
-      <tr style="border-top:1px solid #f0ede8">
-        <td style="padding:10px 14px;font-weight:800;color:#205251;font-family:monospace">DTY-041</td>
-        <td style="padding:10px 14px">Budi Santoso</td>
-        <td style="padding:10px 14px">Hydration Plus</td>
-        <td style="padding:10px 14px"><span style="background:#e7f1ff;color:#1d5f9f;border:1px solid #aad0ff;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:700">KONFIRMASI</span></td>
-        <td style="padding:10px 14px"><button style="padding:3px 10px;font-size:11px;border:1px solid rgba(32,82,81,.2);border-radius:6px;background:white;cursor:pointer">Detail</button></td>
-      </tr>
-    </tbody>
-  </table>
+<div style="display:flex;flex-direction:column;gap:6px">
+  <div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:8px;padding:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:800;color:#205251;font-size:12px;font-family:monospace;margin-bottom:2px">DTY-042</div>
+      <div style="font-size:12px;color:#333">Rina Sari</div>
+      <div style="font-size:11px;color:#888">Immunity Boost IV</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+      <span style="background:#fff4ce;color:#8a5b00;border:1px solid #f7d77a;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;white-space:nowrap">BARU</span>
+      <button style="padding:3px 8px;font-size:10px;border:1px solid rgba(32,82,81,.2);border-radius:5px;background:white;cursor:pointer">Detail →</button>
+    </div>
+  </div>
+  <div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:8px;padding:10px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:800;color:#205251;font-size:12px;font-family:monospace;margin-bottom:2px">DTY-041</div>
+      <div style="font-size:12px;color:#333">Budi Santoso</div>
+      <div style="font-size:11px;color:#888">Hydration Plus</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0">
+      <span style="background:#e7f1ff;color:#1d5f9f;border:1px solid #aad0ff;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:700;white-space:nowrap">KONFIRMASI</span>
+      <button style="padding:3px 8px;font-size:10px;border:1px solid rgba(32,82,81,.2);border-radius:5px;background:white;cursor:pointer">Detail →</button>
+    </div>
+  </div>
 </div>
 `;
 
@@ -217,100 +220,100 @@ const STATUS_FLOW_MOCKUP = `
 `;
 
 const BOOKING_DETAIL_MOCKUP = `
-<div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:14px;padding:18px">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <div style="font-size:20px;font-weight:800;color:#205251;font-family:Georgia,serif">DTY-042</div>
-    <span style="background:#fff4ce;color:#8a5b00;border:1.5px solid #f7d77a;border-radius:999px;padding:4px 12px;font-size:11px;font-weight:800">BARU</span>
+<div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:14px;padding:14px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px">
+    <div style="font-size:18px;font-weight:800;color:#205251;font-family:Georgia,serif">DTY-042</div>
+    <span style="background:#fff4ce;color:#8a5b00;border:1.5px solid #f7d77a;border-radius:999px;padding:3px 10px;font-size:11px;font-weight:800;white-space:nowrap">BARU</span>
   </div>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px">
-    <div style="background:#f0f9f8;border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px">
-      <span style="font-size:18px">💉</span><div><div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:700">Treatment</div><div style="font-size:13px;font-weight:700;color:#205251">Immunity Boost</div></div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+    <div style="flex:1;min-width:110px;background:#f0f9f8;border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px">
+      <span style="font-size:16px;flex-shrink:0">💉</span>
+      <div style="min-width:0">
+        <div style="font-size:9px;color:#888;text-transform:uppercase;font-weight:700">Treatment</div>
+        <div style="font-size:12px;font-weight:700;color:#205251">Immunity Boost</div>
+      </div>
     </div>
-    <div style="background:#f0f9f8;border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px">
-      <span style="font-size:18px">📅</span><div><div style="font-size:10px;color:#888;text-transform:uppercase;font-weight:700">Tanggal</div><div style="font-size:13px;font-weight:700;color:#205251">12 Jun 2026</div></div>
+    <div style="flex:1;min-width:110px;background:#f0f9f8;border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px">
+      <span style="font-size:16px;flex-shrink:0">📅</span>
+      <div style="min-width:0">
+        <div style="font-size:9px;color:#888;text-transform:uppercase;font-weight:700">Tanggal</div>
+        <div style="font-size:12px;font-weight:700;color:#205251">12 Jun 2026</div>
+      </div>
     </div>
   </div>
-  <div style="border-top:1px solid #f0ede8;padding-top:14px">
-    <div style="font-size:12px;font-weight:700;color:#205251;margin-bottom:8px">Ubah Status:</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button style="padding:6px 12px;font-size:11px;border:1.5px solid #aad0ff;background:#e7f1ff;color:#1d5f9f;border-radius:8px;cursor:pointer;font-weight:700">✅ KONFIRMASI</button>
-      <button style="padding:6px 12px;font-size:11px;border:1.5px solid rgba(32,82,81,.2);background:white;color:#555;border-radius:8px;cursor:pointer">⚙️ DIPROSES</button>
-      <button style="padding:6px 12px;font-size:11px;border:1.5px solid #f2b8ae;background:#fff0ed;color:#b33223;border-radius:8px;cursor:pointer">❌ DIBATALKAN</button>
+  <div style="border-top:1px solid #f0ede8;padding-top:12px">
+    <div style="font-size:11px;font-weight:700;color:#205251;margin-bottom:7px">Ubah Status:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px">
+      <button style="padding:5px 10px;font-size:10px;border:1.5px solid #aad0ff;background:#e7f1ff;color:#1d5f9f;border-radius:7px;cursor:pointer;font-weight:700;white-space:nowrap">✅ KONFIRMASI</button>
+      <button style="padding:5px 10px;font-size:10px;border:1.5px solid rgba(32,82,81,.2);background:white;color:#555;border-radius:7px;cursor:pointer;white-space:nowrap">⚙️ DIPROSES</button>
+      <button style="padding:5px 10px;font-size:10px;border:1.5px solid #f2b8ae;background:#fff0ed;color:#b33223;border-radius:7px;cursor:pointer;white-space:nowrap">❌ BATAL</button>
     </div>
   </div>
 </div>
 `;
 
 const AREA_CARD_MOCKUP = `
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">
-  <div style="background:white;border:1.5px solid rgba(32,82,81,.12);border-radius:16px;padding:18px;position:relative">
-    <span style="position:absolute;top:12px;right:12px;background:#ead4ae;color:#205251;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px">#1</span>
-    <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
-      <span style="width:9px;height:9px;border-radius:50%;background:#22c55e;flex-shrink:0"></span>
-      <strong style="font-size:15px;color:#205251">Seminyak</strong>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">
+  <div style="background:white;border:1.5px solid rgba(32,82,81,.12);border-radius:14px;padding:14px;position:relative">
+    <span style="position:absolute;top:8px;right:8px;background:#ead4ae;color:#205251;font-size:9px;font-weight:800;padding:2px 6px;border-radius:999px">#1</span>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+      <span style="width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0"></span>
+      <strong style="font-size:13px;color:#205251">Seminyak</strong>
     </div>
-    <code style="font-size:10px;color:#aaa;background:#f5f5f5;padding:1px 7px;border-radius:4px">seminyak</code>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
-      <span style="background:#d6eaea;color:#205251;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px">⏱ 25 menit</span>
-      <span style="background:#f0fdf4;color:#166534;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px">✓ Gratis</span>
-      <span style="background:#d6eaea;color:#205251;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px">Aktif</span>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px">
+      <span style="background:#d6eaea;color:#205251;font-size:10px;font-weight:600;padding:2px 7px;border-radius:999px">⏱ 25 mnt</span>
+      <span style="background:#f0fdf4;color:#166534;font-size:10px;font-weight:600;padding:2px 7px;border-radius:999px">✓ Gratis</span>
     </div>
-    <div style="border-top:1px solid #f0ede8;padding-top:10px;margin-top:10px;display:flex;gap:7px">
-      <button style="flex:1;padding:6px;font-size:11px;border:1px solid rgba(32,82,81,.2);border-radius:7px;background:white;cursor:pointer">✏️ Edit</button>
-      <button style="padding:6px 12px;font-size:11px;border:1px solid #fecaca;border-radius:7px;background:#fef2f2;color:#dc2626;cursor:pointer">🗑️ Hapus</button>
+    <div style="border-top:1px solid #f0ede8;padding-top:8px;margin-top:8px;display:flex;gap:5px">
+      <button style="flex:1;padding:5px;font-size:10px;border:1px solid rgba(32,82,81,.2);border-radius:6px;background:white;cursor:pointer">✏️ Edit</button>
+      <button style="padding:5px 8px;font-size:10px;border:1px solid #fecaca;border-radius:6px;background:#fef2f2;color:#dc2626;cursor:pointer">🗑️</button>
     </div>
   </div>
-  <div style="background:white;border:1.5px solid rgba(0,0,0,.08);border-radius:16px;padding:18px;opacity:.65;position:relative">
-    <span style="position:absolute;top:12px;right:12px;background:#ead4ae;color:#205251;font-size:10px;font-weight:800;padding:2px 7px;border-radius:999px">#2</span>
-    <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
-      <span style="width:9px;height:9px;border-radius:50%;background:#d1d5db;flex-shrink:0"></span>
-      <strong style="font-size:15px;color:#888">Kuta Utara</strong>
+  <div style="background:white;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:14px;opacity:.6;position:relative">
+    <span style="position:absolute;top:8px;right:8px;background:#ead4ae;color:#205251;font-size:9px;font-weight:800;padding:2px 6px;border-radius:999px">#2</span>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+      <span style="width:8px;height:8px;border-radius:50%;background:#d1d5db;flex-shrink:0"></span>
+      <strong style="font-size:13px;color:#888">Kuta Utara</strong>
     </div>
-    <code style="font-size:10px;color:#aaa;background:#f5f5f5;padding:1px 7px;border-radius:4px">kuta-utara</code>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
-      <span style="background:#e5e7eb;color:#6b7280;font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px">Nonaktif</span>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:7px">
+      <span style="background:#e5e7eb;color:#6b7280;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px">Nonaktif</span>
     </div>
-    <div style="border-top:1px solid #f0ede8;padding-top:10px;margin-top:10px;display:flex;gap:7px">
-      <button style="flex:1;padding:6px;font-size:11px;border:1px solid rgba(32,82,81,.2);border-radius:7px;background:white;cursor:pointer">✏️ Edit</button>
-      <button style="padding:6px 12px;font-size:11px;border:1px solid #fecaca;border-radius:7px;background:#fef2f2;color:#dc2626;cursor:pointer">🗑️ Hapus</button>
+    <div style="border-top:1px solid #f0ede8;padding-top:8px;margin-top:8px;display:flex;gap:5px">
+      <button style="flex:1;padding:5px;font-size:10px;border:1px solid rgba(32,82,81,.2);border-radius:6px;background:white;cursor:pointer">✏️ Edit</button>
     </div>
   </div>
 </div>
 `;
 
 const SCHEDULE_MOCKUP = `
-<div style="display:flex;flex-direction:column;gap:8px">
-  <div style="display:grid;grid-template-columns:80px 1fr auto;gap:10px;align-items:center;padding:10px 14px;background:#f0f9f8;border-radius:10px;border:1.5px solid rgba(32,82,81,.12)">
-    <span style="font-size:13px;font-weight:700;color:#205251">Senin</span>
-    <div style="display:flex;align-items:center;gap:8px">
+<div style="display:flex;flex-direction:column;gap:7px">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#f0f9f8;border-radius:10px;border:1.5px solid rgba(32,82,81,.12);gap:8px">
+    <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
       <span style="width:8px;height:8px;border-radius:50%;background:#22c55e"></span>
-      <input type="time" value="09:00" style="border:1px solid #ddd;border-radius:6px;padding:4px 8px;font-size:12px;width:90px" readonly />
-      <span style="font-size:11px;color:#888">–</span>
-      <input type="time" value="21:00" style="border:1px solid #ddd;border-radius:6px;padding:4px 8px;font-size:12px;width:90px" readonly />
+      <strong style="font-size:13px;color:#205251">Senin</strong>
     </div>
-    <span style="font-size:11px;color:#22c55e;font-weight:700;background:#f0fdf4;padding:3px 8px;border-radius:999px">BUKA</span>
+    <div style="font-size:12px;color:#444;font-weight:600;flex:1;text-align:center">09:00 – 21:00</div>
+    <span style="font-size:10px;color:#22c55e;font-weight:700;background:#f0fdf4;padding:3px 8px;border-radius:999px;white-space:nowrap;flex-shrink:0">BUKA</span>
   </div>
-  <div style="display:grid;grid-template-columns:80px 1fr auto;gap:10px;align-items:center;padding:10px 14px;background:#fafaf8;border-radius:10px;border:1px solid rgba(0,0,0,.07);opacity:.65">
-    <span style="font-size:13px;font-weight:700;color:#888">Minggu</span>
-    <div style="display:flex;align-items:center;gap:8px">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#fafaf8;border-radius:10px;border:1px solid rgba(0,0,0,.07);opacity:.65;gap:8px">
+    <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
       <span style="width:8px;height:8px;border-radius:50%;background:#d1d5db"></span>
-      <span style="font-size:12px;color:#aaa;font-style:italic">— Tutup —</span>
+      <strong style="font-size:13px;color:#888">Minggu</strong>
     </div>
-    <span style="font-size:11px;color:#6b7280;font-weight:700;background:#f3f4f6;padding:3px 8px;border-radius:999px">TUTUP</span>
+    <div style="font-size:12px;color:#aaa;font-style:italic;flex:1;text-align:center">— Tutup —</div>
+    <span style="font-size:10px;color:#6b7280;font-weight:700;background:#f3f4f6;padding:3px 8px;border-radius:999px;white-space:nowrap;flex-shrink:0">TUTUP</span>
   </div>
-  <div style="display:grid;grid-template-columns:80px 1fr auto;gap:10px;align-items:center;padding:10px 14px;background:#f0f9f8;border-radius:10px;border:1.5px solid rgba(32,82,81,.12)">
-    <span style="font-size:13px;font-weight:700;color:#205251">Sabtu</span>
-    <div style="display:flex;align-items:center;gap:8px">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#f0f9f8;border-radius:10px;border:1.5px solid rgba(32,82,81,.12);gap:8px">
+    <div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
       <span style="width:8px;height:8px;border-radius:50%;background:#22c55e"></span>
-      <input type="time" value="10:00" style="border:1px solid #ddd;border-radius:6px;padding:4px 8px;font-size:12px;width:90px" readonly />
-      <span style="font-size:11px;color:#888">–</span>
-      <input type="time" value="22:00" style="border:1px solid #ddd;border-radius:6px;padding:4px 8px;font-size:12px;width:90px" readonly />
+      <strong style="font-size:13px;color:#205251">Sabtu</strong>
     </div>
-    <span style="font-size:11px;color:#22c55e;font-weight:700;background:#f0fdf4;padding:3px 8px;border-radius:999px">BUKA</span>
+    <div style="font-size:12px;color:#444;font-weight:600;flex:1;text-align:center">10:00 – 22:00</div>
+    <span style="font-size:10px;color:#22c55e;font-weight:700;background:#f0fdf4;padding:3px 8px;border-radius:999px;white-space:nowrap;flex-shrink:0">BUKA</span>
   </div>
 </div>
 <div style="margin-top:10px;display:flex;justify-content:flex-end">
-  <button style="padding:8px 18px;font-size:12px;background:#205251;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700">💾 Simpan Jadwal</button>
+  <button style="padding:7px 16px;font-size:12px;background:#205251;color:white;border:none;border-radius:7px;cursor:pointer;font-weight:700">💾 Simpan Jadwal</button>
 </div>
 `;
 
@@ -348,32 +351,30 @@ const FAQ_MOCKUP = `
 `;
 
 const USERS_MOCKUP = `
-<div style="display:flex;flex-direction:column;gap:10px">
-  <div style="background:white;border:1.5px solid rgba(32,82,81,.1);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px">
-    <div style="width:44px;height:44px;border-radius:12px;background:#205251;color:white;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0">S</div>
-    <div style="flex:1;min-width:0">
-      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:3px">
-        <strong style="font-size:14px;color:#205251">Sari (Owner)</strong>
-        <span style="background:#fff4ce;color:#8a5b00;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px">Super Admin</span>
+<div style="display:flex;flex-direction:column;gap:8px">
+  <div style="background:white;border:1.5px solid rgba(32,82,81,.1);border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div style="width:40px;height:40px;border-radius:10px;background:#205251;color:white;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">S</div>
+    <div style="flex:1;min-width:100px">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
+        <strong style="font-size:13px;color:#205251">Sari (Owner)</strong>
+        <span style="background:#fff4ce;color:#8a5b00;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap">Super Admin</span>
       </div>
-      <div style="font-size:12px;color:#888">sari@dripstoyou.com · Login terakhir: hari ini</div>
+      <div style="font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Login terakhir: hari ini</div>
     </div>
-    <div style="display:flex;gap:6px;flex-shrink:0">
-      <button style="padding:5px 10px;font-size:11px;border:1px solid rgba(32,82,81,.2);border-radius:7px;background:white;cursor:pointer">Edit</button>
-    </div>
+    <button style="padding:5px 10px;font-size:11px;border:1px solid rgba(32,82,81,.2);border-radius:7px;background:white;cursor:pointer;flex-shrink:0">Edit</button>
   </div>
-  <div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px">
-    <div style="width:44px;height:44px;border-radius:12px;background:#276f73;color:white;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0">D</div>
-    <div style="flex:1;min-width:0">
-      <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:3px">
-        <strong style="font-size:14px;color:#205251">Dewi</strong>
-        <span style="background:#e5f4f6;color:#276f73;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px">Admin Operasional</span>
+  <div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:14px;padding:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div style="width:40px;height:40px;border-radius:10px;background:#276f73;color:white;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">D</div>
+    <div style="flex:1;min-width:100px">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
+        <strong style="font-size:13px;color:#205251">Dewi</strong>
+        <span style="background:#e5f4f6;color:#276f73;font-size:9px;font-weight:700;padding:2px 6px;border-radius:999px;white-space:nowrap">Admin Operasional</span>
       </div>
-      <div style="font-size:12px;color:#888">dewi@dripstoyou.com · Login terakhir: 2 hari lalu</div>
+      <div style="font-size:11px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Login terakhir: 2 hari lalu</div>
     </div>
-    <div style="display:flex;gap:6px;flex-shrink:0">
-      <button style="padding:5px 10px;font-size:11px;border:1px solid rgba(32,82,81,.2);border-radius:7px;background:white;cursor:pointer">Edit</button>
-      <button style="padding:5px 10px;font-size:11px;border:1px solid #fecaca;border-radius:7px;background:#fef2f2;color:#dc2626;cursor:pointer">Nonaktif</button>
+    <div style="display:flex;gap:5px;flex-shrink:0">
+      <button style="padding:5px 9px;font-size:11px;border:1px solid rgba(32,82,81,.2);border-radius:7px;background:white;cursor:pointer">Edit</button>
+      <button style="padding:5px 9px;font-size:11px;border:1px solid #fecaca;border-radius:7px;background:#fef2f2;color:#dc2626;cursor:pointer">Nonaktif</button>
     </div>
   </div>
 </div>
@@ -422,26 +423,26 @@ const DELETE_CONFIRM_MOCKUP = `
 `;
 
 const SETTINGS_MOCKUP = `
-<div style="display:flex;flex-direction:column;gap:12px">
-  <div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:12px;padding:16px">
-    <div style="font-size:13px;font-weight:700;color:#205251;margin-bottom:12px">📱 WhatsApp & Kontak</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<div style="display:flex;flex-direction:column;gap:10px">
+  <div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:10px;padding:14px">
+    <div style="font-size:12px;font-weight:700;color:#205251;margin-bottom:10px">📱 WhatsApp & Kontak</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
       <div>
-        <label style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;display:block;margin-bottom:4px">Nomor WA Utama</label>
-        <input style="width:100%;border:1px solid #ddd;border-radius:7px;padding:7px 10px;font-size:12px;box-sizing:border-box" value="6281234567890" readonly />
-        <div style="font-size:10px;color:#aaa;margin-top:3px">Format: 628xxx (tanpa + atau 0 di depan)</div>
+        <label style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;display:block;margin-bottom:3px">Nomor WA Utama</label>
+        <input style="width:100%;border:1px solid #ddd;border-radius:6px;padding:7px 10px;font-size:12px;box-sizing:border-box" value="6281234567890" readonly />
+        <div style="font-size:10px;color:#aaa;margin-top:2px">Format: 628xxx (tanpa + atau 0)</div>
       </div>
       <div>
-        <label style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;display:block;margin-bottom:4px">Email Bisnis</label>
-        <input style="width:100%;border:1px solid #ddd;border-radius:7px;padding:7px 10px;font-size:12px;box-sizing:border-box" value="hello@dripstoyou.com" readonly />
+        <label style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;display:block;margin-bottom:3px">Email Bisnis</label>
+        <input style="width:100%;border:1px solid #ddd;border-radius:6px;padding:7px 10px;font-size:12px;box-sizing:border-box" value="hello@dripstoyou.com" readonly />
       </div>
     </div>
   </div>
-  <div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:12px;padding:16px">
-    <div style="font-size:13px;font-weight:700;color:#205251;margin-bottom:12px">🏢 Info Situs</div>
+  <div style="background:white;border:1px solid rgba(32,82,81,.09);border-radius:10px;padding:14px">
+    <div style="font-size:12px;font-weight:700;color:#205251;margin-bottom:10px">🏢 Info Situs</div>
     <div>
-      <label style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;display:block;margin-bottom:4px">Nama Situs</label>
-      <input style="width:100%;border:1px solid #ddd;border-radius:7px;padding:7px 10px;font-size:12px;box-sizing:border-box" value="Drips To You - Bali" readonly />
+      <label style="font-size:10px;font-weight:700;color:#888;text-transform:uppercase;display:block;margin-bottom:3px">Nama Situs</label>
+      <input style="width:100%;border:1px solid #ddd;border-radius:6px;padding:7px 10px;font-size:12px;box-sizing:border-box" value="Drips To You - Bali" readonly />
     </div>
   </div>
 </div>
