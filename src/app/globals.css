@@ -5634,20 +5634,6 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
     min-height: 44px;
   }
 
-  /* Swipe indicator — only on tables that actually scroll (have a wide inner table) */
-  .table-wrap {
-    position: relative;
-  }
-  .table-shell:has(table):has(tbody tr)::after {
-    content: '← scroll →';
-    display: block;
-    text-align: center;
-    font-size: 11px;
-    color: #bbb;
-    padding: 6px 0 2px;
-    letter-spacing: .5px;
-  }
-
   /* Fullscreen modals on mobile */
   .admin-modal-fullmobile {
     position: fixed !important;
@@ -6746,7 +6732,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
 }
 .admin-log-filter-input:focus { outline: none; border-color: var(--ocean); }
 
-@media (max-width: 760px) {
+@media (max-width: 767px) {
   .admin-tabs-toolbar { flex-direction: column; align-items: stretch; }
   .admin-tabs-toolbar .admin-search-field { width: 100%; }
   .admin-search-input { width: 100%; }
@@ -7172,11 +7158,14 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   }
 }
 
-/* ─── Schedule table — no min-width on mobile, data-label cells ─── */
+/* ─── Wide admin tables — min-width hanya di desktop; mobile pakai layout kartu ─── */
+@media (min-width: 768px) {
+  .admin-bookings-table { min-width: 1080px; }
+  .admin-logs-table     { min-width: 900px; }
+  .admin-schedule-table { min-width: 760px; }
+}
+
 @media (max-width: 767px) {
-  .admin-schedule-table {
-    min-width: 0 !important;
-  }
   .admin-schedule-table td .control {
     width: 100%;
     min-width: 0;
@@ -7184,5 +7173,39 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   }
   .admin-schedule-table td[data-label]::before {
     margin-bottom: 4px;
+  }
+}
+
+/* ─── Admin toast notification ─── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.admin-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 2000;
+  padding: 12px 20px;
+  border-radius: 12px;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  max-width: 380px;
+  line-height: 1.4;
+  pointer-events: none;
+  animation: fadeInUp 0.2s ease;
+}
+.admin-toast--success { background: #16a34a; }
+.admin-toast--error   { background: #dc2626; }
+
+@media (max-width: 480px) {
+  .admin-toast {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    max-width: none;
   }
 }

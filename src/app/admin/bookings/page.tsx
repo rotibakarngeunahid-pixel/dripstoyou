@@ -487,7 +487,7 @@ export default function BookingsPage() {
       {activeTab !== 'dihapus' && (
         <section className="table-shell">
           <div className="table-wrap">
-            <table className="data-table" style={{ minWidth: 1080 }}>
+            <table className="data-table admin-bookings-table">
               <thead>
                 <tr>
                   {tableHeaders.map((heading) => (
@@ -503,21 +503,21 @@ export default function BookingsPage() {
                       <td className="mono" style={{ color: 'var(--teal)', fontWeight: 800 }}>
                         {booking.booking_code}
                       </td>
-                      <td>{booking.customer_name}</td>
-                      <td className="mono muted-small" style={{ whiteSpace: 'nowrap' }}>
+                      <td data-label={t.pelanggan}>{booking.customer_name}</td>
+                      <td data-label={t.noHP} className="mono muted-small" style={{ whiteSpace: 'nowrap' }}>
                         {booking.customer_phone ?? `...${booking.customer_phone_last4}`}
                       </td>
-                      <td>{booking.product_name}</td>
-                      <td className="muted-small">{formatDate(booking.booking_date)}</td>
-                      <td className="muted-small">{booking.booking_time}</td>
-                      <td className="muted-small">{booking.people_count}</td>
-                      <td className="muted-small">{booking.service_area_name ?? booking.location_type}</td>
-                      <td>
+                      <td data-label={t.treatment}>{booking.product_name}</td>
+                      <td data-label={t.tanggal} className="muted-small">{formatDate(booking.booking_date)}</td>
+                      <td data-label={t.waktu} className="muted-small">{booking.booking_time}</td>
+                      <td data-label={t.orang} className="muted-small">{booking.people_count}</td>
+                      <td data-label={t.area} className="muted-small">{booking.service_area_name ?? booking.location_type}</td>
+                      <td data-label={t.status}>
                         <span className={`status-pill ${statusClass}`}>
                           {statusLabel(booking.status)}
                         </span>
                       </td>
-                      <td className="muted-small">{formatDate(booking.created_at, false)}</td>
+                      <td data-label={t.dibuat} className="muted-small">{formatDate(booking.created_at, false)}</td>
                       <td>
                         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                           <Link
@@ -616,7 +616,7 @@ export default function BookingsPage() {
           ) : (
             <section className="table-shell">
               <div className="table-wrap">
-                <table className="data-table" style={{ minWidth: 900 }}>
+                <table className="data-table admin-logs-table">
                   <thead>
                     <tr>
                       <th>{t.kodeBookingTh}</th>
@@ -633,15 +633,15 @@ export default function BookingsPage() {
                     {logs.map(log => (
                       <tr key={log.id}>
                         <td className="mono" style={{ color: 'var(--teal)', fontWeight: 800 }}>{log.booking_code}</td>
-                        <td>{log.customer_name}</td>
-                        <td>{log.product_name}</td>
-                        <td className="muted-small">{formatDate(log.booking_date)} • {log.booking_time}</td>
-                        <td style={{ fontSize: 13 }}>
+                        <td data-label={t.customerTh}>{log.customer_name}</td>
+                        <td data-label={t.treatmentTh}>{log.product_name}</td>
+                        <td data-label={t.tanggalBookingTh} className="muted-small">{formatDate(log.booking_date)} • {log.booking_time}</td>
+                        <td data-label={t.dihapusOlehTh} style={{ fontSize: 13 }}>
                           <div>{log.deleted_by_admin_name}</div>
                           <div style={{ fontSize: 11, color: '#aaa' }}>{log.deleted_by_admin_email}</div>
                         </td>
-                        <td className="muted-small" style={{ whiteSpace: 'nowrap' }}>{formatDateTime(log.deleted_at)}</td>
-                        <td style={{ fontSize: 13, maxWidth: 200 }}>
+                        <td data-label={t.waktuHapusTh} className="muted-small">{formatDateTime(log.deleted_at)}</td>
+                        <td data-label={t.alasanTh} style={{ fontSize: 13, maxWidth: 200 }}>
                           <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                             {log.reason}
                           </span>
@@ -691,15 +691,7 @@ export default function BookingsPage() {
         <div
           role="status"
           aria-live="polite"
-          style={{
-            position: 'fixed', bottom: 28, right: 28, zIndex: 2000,
-            padding: '12px 20px', borderRadius: 12,
-            background: toast.type === 'success' ? '#16a34a' : '#dc2626',
-            color: 'white', fontSize: 14, fontWeight: 600,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
-            maxWidth: 380, lineHeight: 1.4,
-            animation: 'fadeInUp 0.2s ease',
-          }}
+          className={`admin-toast ${toast.type === 'success' ? 'admin-toast--success' : 'admin-toast--error'}`}
         >
           {toast.message}
         </div>

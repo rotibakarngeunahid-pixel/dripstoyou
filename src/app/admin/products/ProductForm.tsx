@@ -80,7 +80,7 @@ function ConfirmModal({
 /* ─── Toast ─── */
 function Toast({ msg, type }: { msg: string; type: 'success' | 'error' }) {
   return (
-    <div style={{ position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)', zIndex: 2000, background: type === 'success' ? 'var(--teal)' : '#dc2626', color: 'white', padding: '12px 24px', borderRadius: 12, fontSize: 14, fontWeight: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+    <div role="status" aria-live="polite" className={`admin-toast ${type === 'success' ? 'admin-toast--success' : 'admin-toast--error'}`}>
       {msg}
     </div>
   );

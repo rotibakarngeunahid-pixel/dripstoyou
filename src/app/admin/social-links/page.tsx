@@ -222,61 +222,63 @@ export default function AdminSocialLinksPage() {
       ) : links.length === 0 ? (
         <div className="empty-state surface-card">{t.belumAdaLink}</div>
       ) : (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>{t.urutanTh}</th>
-                <th>{t.platformTh}</th>
-                <th>{t.labelTh}</th>
-                <th>{t.nilaiTh}</th>
-                <th>{t.statusTh}</th>
-                <th>{t.aksiTh}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {links.map((link) => (
-                <tr key={link.id}>
-                  <td style={{ width: 60, textAlign: 'center' }}>{link.sortOrder}</td>
-                  <td><span className="soft-tag">{platformLabel(link.platform)}</span></td>
-                  <td>{link.label}</td>
-                  <td style={{ maxWidth: 300 }}>
-                    <div style={{ fontSize: 13 }}>{link.value}</div>
-                    {link.normalizedUrl && (
-                      <a href={link.normalizedUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--ocean)' }}>
-                        {link.normalizedUrl}
-                      </a>
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      type="button"
-                      style={{ cursor: 'pointer', background: link.isActive ? 'var(--pale-aqua)' : '#f5f5f5', color: link.isActive ? 'var(--teal)' : '#888', border: 'none', borderRadius: 6, padding: '3px 10px', fontSize: 12 }}
-                      onClick={() => toggleActive(link)}
-                      disabled={toggling === link.id}
-                    >
-                      {toggling === link.id ? '...' : link.isActive ? t.aktif : t.nonaktif}
-                    </button>
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="button button-secondary" style={{ padding: '4px 12px', fontSize: 13 }} onClick={() => openEdit(link)} type="button">{t.edit}</button>
-                      <button
-                        className="button"
-                        style={{ padding: '4px 12px', fontSize: 13, background: '#fee2e2', color: '#dc2626', border: 'none' }}
-                        onClick={() => askDelete(link)}
-                        disabled={deleting === link.id}
-                        type="button"
-                      >
-                        {deleting === link.id ? '...' : t.hapus}
-                      </button>
-                    </div>
-                  </td>
+        <section className="table-shell">
+          <div className="table-wrap">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>{t.platformTh}</th>
+                  <th>{t.labelTh}</th>
+                  <th>{t.nilaiTh}</th>
+                  <th>{t.urutanTh}</th>
+                  <th>{t.statusTh}</th>
+                  <th>{t.aksiTh}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {links.map((link) => (
+                  <tr key={link.id}>
+                    <td><span className="soft-tag">{platformLabel(link.platform)}</span></td>
+                    <td data-label={t.labelTh}>{link.label}</td>
+                    <td data-label={t.nilaiTh} style={{ maxWidth: 300 }}>
+                      <div style={{ fontSize: 13, overflowWrap: 'anywhere' }}>{link.value}</div>
+                      {link.normalizedUrl && (
+                        <a href={link.normalizedUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--ocean)', overflowWrap: 'anywhere' }}>
+                          {link.normalizedUrl}
+                        </a>
+                      )}
+                    </td>
+                    <td data-label={t.urutanTh} className="muted-small">{link.sortOrder}</td>
+                    <td data-label={t.statusTh}>
+                      <button
+                        type="button"
+                        style={{ cursor: 'pointer', background: link.isActive ? 'var(--pale-aqua)' : '#f5f5f5', color: link.isActive ? 'var(--teal)' : '#888', border: 'none', borderRadius: 6, padding: '3px 10px', fontSize: 12 }}
+                        onClick={() => toggleActive(link)}
+                        disabled={toggling === link.id}
+                      >
+                        {toggling === link.id ? '...' : link.isActive ? t.aktif : t.nonaktif}
+                      </button>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button className="button button-secondary" style={{ padding: '4px 12px', fontSize: 13 }} onClick={() => openEdit(link)} type="button">{t.edit}</button>
+                        <button
+                          className="button"
+                          style={{ padding: '4px 12px', fontSize: 13, background: '#fee2e2', color: '#dc2626', border: 'none' }}
+                          onClick={() => askDelete(link)}
+                          disabled={deleting === link.id}
+                          type="button"
+                        >
+                          {deleting === link.id ? '...' : t.hapus}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
     </div>
   );

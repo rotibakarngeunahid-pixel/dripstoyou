@@ -403,13 +403,11 @@ export default function AdminUsersPage() {
     <div className="admin-page wide">
       {/* Toast */}
       {toast && (
-        <div style={{
-          position: 'fixed', bottom: 28, right: 28, zIndex: 2000,
-          padding: '12px 20px', borderRadius: 12,
-          background: toast.type === 'success' ? '#16a34a' : '#dc2626',
-          color: 'white', fontSize: 14, fontWeight: 600,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
-        }}>
+        <div
+          role="status"
+          aria-live="polite"
+          className={`admin-toast ${toast.type === 'success' ? 'admin-toast--success' : 'admin-toast--error'}`}
+        >
           {toast.msg}
         </div>
       )}

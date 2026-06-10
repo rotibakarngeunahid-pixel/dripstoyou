@@ -134,7 +134,7 @@ export default function SchedulePage() {
 
       <section className="table-shell">
         <div className="table-wrap">
-          <table className="data-table admin-schedule-table" style={{ minWidth: 760 }}>
+          <table className="data-table admin-schedule-table">
             <thead>
               <tr>
                 {[t.hari, t.buka, t.jamBuka, t.jamTutup, t.slotDurasi, t.maxPerSlot, t.minPreBooking].map((heading) => (

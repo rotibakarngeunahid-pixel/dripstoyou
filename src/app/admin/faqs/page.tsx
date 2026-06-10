@@ -65,7 +65,7 @@ function ConfirmModal({
 /* ─── Toast ─── */
 function Toast({ msg, type }: { msg: string; type: 'success' | 'error' }) {
   return (
-    <div style={{ position: 'fixed', bottom: 28, left: '50%', transform: 'translateX(-50%)', zIndex: 2000, background: type === 'success' ? 'var(--teal)' : '#dc2626', color: 'white', padding: '12px 24px', borderRadius: 12, fontSize: 14, fontWeight: 600, boxShadow: '0 8px 32px rgba(0,0,0,0.2)', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+    <div role="status" aria-live="polite" className={`admin-toast ${type === 'success' ? 'admin-toast--success' : 'admin-toast--error'}`}>
       {msg}
     </div>
   );
@@ -340,7 +340,7 @@ export default function AdminFaqsPage() {
       )}
 
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))', gap: 18 }}>
           {[1, 2, 3, 4].map(i => <div key={i} className="skeleton" style={{ height: 180, borderRadius: 18 }} />)}
         </div>
       ) : faqs.length === 0 ? (
@@ -348,7 +348,7 @@ export default function AdminFaqsPage() {
           <p style={{ color: 'var(--text-muted)', fontSize: 15 }}>{t.belumAdaFAQ}</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))', gap: 18 }}>
           {faqs.map(faq => (
             <FaqCard key={faq.id} faq={faq} t={t} onEdit={openEdit} onToggle={handleToggle} onRegenerate={handleRegenerate} onDelete={askDelete} deleting={deleting} toggling={toggling} regenerating={regenerating} />
           ))}
