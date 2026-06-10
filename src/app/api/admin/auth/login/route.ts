@@ -22,17 +22,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Guard: reject obviously wrong base URLs that would loop back to this Vercel app.
-  // dripstoyou.com now points to Vercel — calling it from a Vercel function = 403 loop.
+  // Guard: reject URLs that loop back to Vercel (dripstoyou.com now → Vercel, not cPanel).
+  // Fix: set PHP_BACKEND_URL=https://api.dripstoyou.com in Vercel env vars, then redeploy.
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
   if (appUrl && apiBase.startsWith(appUrl)) {
     console.error(
-      '[admin/login] NEXT_PUBLIC_API_BASE_URL points to the same domain as NEXT_PUBLIC_APP_URL. ' +
-      'This would cause a self-loop. Set NEXT_PUBLIC_API_BASE_URL to the PHP backend subdomain ' +
-      '(e.g. https://api.dripstoyou.com), then redeploy.'
+      '[admin/login] API base URL points to the same domain as the app — this causes a 403 self-loop. ' +
+      'Set PHP_BACKEND_URL=https://api.dripstoyou.com in Vercel Dashboard → Environment Variables, ' +
+      'then trigger a Redeploy.'
     );
     return NextResponse.json(
-      { error: 'Konfigurasi API URL tidak valid. Hubungi administrator.' },
+      { error: 'Konfigurasi server belum selesai. Hubungi administrator.' },
       { status: 503 },
     );
   }

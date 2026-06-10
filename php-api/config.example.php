@@ -31,14 +31,14 @@ define('ALLOWED_ORIGINS', [
 define('WHATSAPP_NUMBER', '6281200000000');
 
 // ── Upload Storage ────────────────────────────────────────────────────────────
-// UPLOAD_DIR: path absolut ke folder uploads di server (opsional, ada auto-detect).
+// UPLOAD_DIR: path absolut ke folder uploads (opsional, ada auto-detect dari lokasi file ini).
 //   Contoh: /home/rotw4785/public_html/php-api/uploads/products
-// UPLOAD_BASE_URL: URL publik root folder php-api ini (WAJIB diset).
-//   PENTING: Setelah domain dripstoyou.com → Vercel, JANGAN gunakan https://dripstoyou.com
-//   karena sekarang mengarah ke Vercel, bukan cPanel.
-//   Gunakan subdomain yang mengarah langsung ke cPanel: https://api.dripstoyou.com
+// UPLOAD_BASE_URL: URL publik root folder php-api ini.
+//   TETAP GUNAKAN https://dripstoyou.com/php-api — JANGAN diganti ke api.dripstoyou.com.
+//   Vercel akan mem-proxy /php-api/* ke api.dripstoyou.com secara otomatis,
+//   sehingga URL gambar di database tetap dripstoyou.com/php-api/uploads/... (tidak berubah).
 // define('UPLOAD_DIR', '/home/rotw4785/public_html/php-api/uploads/products');
-define('UPLOAD_BASE_URL', 'https://api.dripstoyou.com');
+define('UPLOAD_BASE_URL', 'https://dripstoyou.com/php-api');
 
 // ── Session Duration ──────────────────────────────────────────────────────────
 define('SESSION_DURATION_HOURS', 8);

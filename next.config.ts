@@ -1,18 +1,50 @@
 import type { NextConfig } from 'next';
 
-// PHP backend URL — set NEXT_PUBLIC_API_BASE_URL in Vercel env vars.
-// Previously this was https://dripstoyou.com/php-api (when cPanel hosted the domain).
-// Now that dripstoyou.com → Vercel, the PHP backend must use a separate subdomain:
-// https://api.dripstoyou.com  (create an A record → cPanel server IP)
-const phpApiBase = (process.env.NEXT_PUBLIC_API_BASE_URL ?? '').replace(/\/+$/, '');
+// ─── PHP backend resolution ───────────────────────────────────────────────────
+//
+// ARCHITECTURE (after dripstoyou.com → Vercel DNS migration):
+//   Browser / Vercel → dripstoyou.com        (Vercel, Next.js)
+//   Vercel (server)  → api.dripstoyou.com    (cPanel hosting, PHP + MySQL)
+//
+// PHP_BACKEND_URL (server-side only, NOT NEXT_PUBLIC_):
+//   Set this in Vercel Dashboard → Settings → Environment Variables.
+//   Value: https://api.dripstoyou.com  (subdomain pointing to cPanel php-api/ folder)
+//
+// Why NOT use NEXT_PUBLIC_API_BASE_URL as-is:
+//   If NEXT_PUBLIC_API_BASE_URL = https://dripstoyou.com/php-api, Vercel serverless
+//   functions calling that URL hit themselves → Vercel blocks with 403 (self-loop).
+//
+// How the env override works:
+//   At build time, next.config.ts reads PHP_BACKEND_URL (if set) and uses it as the
+//   effective value of NEXT_PUBLIC_API_BASE_URL for ALL code (both server and client).
+//   This means no changes are needed in any of the 20+ API route files — they keep
+//   reading process.env.NEXT_PUBLIC_API_BASE_URL and automatically get the right URL.
+//
+// UPLOAD_BASE_URL in php-api/config.php stays https://dripstoyou.com/php-api.
+//   New uploads are stored at dripstoyou.com/php-api/uploads/products/... (unchanged).
+//   The /php-api/* rewrite below proxies these requests to api.dripstoyou.com.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const phpBackendUrl = (process.env.PHP_BACKEND_URL ?? '').replace(/\/+$/, '');
+
+// Effective API base: prefer PHP_BACKEND_URL (server IP), fall back to NEXT_PUBLIC_
+const effectiveApiBase = (
+  process.env.PHP_BACKEND_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
+).replace(/\/+$/, '');
 
 const nextConfig: NextConfig = {
+  // Override NEXT_PUBLIC_API_BASE_URL at build time so all existing server and client
+  // code automatically uses the correct PHP backend URL with zero per-file changes.
+  env: {
+    NEXT_PUBLIC_API_BASE_URL: effectiveApiBase,
+  },
+
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.pexels.com' },
-      // PHP backend subdomain — new uploads stored here
+      // PHP backend served via subdomain (api.dripstoyou.com → cPanel php-api/)
       { protocol: 'https', hostname: 'api.dripstoyou.com' },
-      // Keep dripstoyou.com for any existing DB records that still use the old URL
+      // dripstoyou.com kept for legacy DB image URLs and next/image optimization
       { protocol: 'https', hostname: 'dripstoyou.com' },
       { protocol: 'http',  hostname: 'dripstoyou.com' },
       { protocol: 'https', hostname: 'ik.imagekit.io' },
@@ -20,14 +52,15 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Proxy old product image URLs (https://dripstoyou.com/php-api/uploads/...)
-  // to the new PHP backend subdomain so existing DB records keep working.
+  // Proxy /php-api/* requests to the actual PHP server (api.dripstoyou.com).
+  // This makes https://dripstoyou.com/php-api/uploads/products/... image URLs
+  // work transparently — DB records and UPLOAD_BASE_URL never need to change.
   async rewrites() {
-    if (!phpApiBase) return [];
+    if (!phpBackendUrl) return [];
     return [
       {
         source: '/php-api/:path*',
-        destination: `${phpApiBase}/:path*`,
+        destination: `${phpBackendUrl}/:path*`,
       },
     ];
   },
