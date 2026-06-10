@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (session.role === 'CONTENT_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   try {
     const phpRes = await fetch(

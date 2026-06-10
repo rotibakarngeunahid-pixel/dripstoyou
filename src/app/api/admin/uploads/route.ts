@@ -10,14 +10,11 @@ const WEBP_QUALITY = 82;
 
 async function toWebP(file: File): Promise<{ buffer: Buffer; filename: string }> {
   const original = Buffer.from(await file.arrayBuffer());
-  const type = file.type.toLowerCase();
-  const isWebP = type === 'image/webp';
-  // Skip conversion if already WebP — just ensure it still passes through sharp for safety
   const buffer = await sharp(original)
     .webp({ quality: WEBP_QUALITY, effort: 4 })
     .toBuffer();
   const baseName = file.name.replace(/\.[^.]+$/, '');
-  const filename = `${baseName}${isWebP ? '' : ''}.webp`;
+  const filename = `${baseName}.webp`;
   return { buffer, filename };
 }
 

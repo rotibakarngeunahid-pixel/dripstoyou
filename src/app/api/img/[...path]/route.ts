@@ -16,15 +16,20 @@ export async function GET(
     return new NextResponse('Image server not configured', { status: 503 });
   }
 
-  const relPath = path.join('/');
-  if (!relPath.startsWith('products/') && !relPath.startsWith('uploads/')) {
+  // Normalize path: remove empty segments, dots, and traversal components.
+  const normalized = path
+    .flatMap(s => s.split('/'))
+    .filter(s => s.length > 0 && s !== '.' && s !== '..')
+    .join('/');
+
+  if (!normalized.startsWith('products/')) {
     return new NextResponse('Forbidden', { status: 403 });
   }
 
   // Files live at {API_BASE}/uploads/products/ on the PHP hosting.
   // e.g. NEXT_PUBLIC_API_BASE_URL=https://dripstoyou.com/php-api
   //   → fetches https://dripstoyou.com/php-api/uploads/products/:file
-  const imageUrl = `${phpBase.replace(/\/$/, '')}/uploads/${relPath}`;
+  const imageUrl = `${phpBase.replace(/\/$/, '')}/uploads/${normalized}`;
 
   try {
     const res = await fetch(imageUrl, {

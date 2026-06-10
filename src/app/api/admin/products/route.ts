@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
 
   const qs     = req.nextUrl.searchParams.toString();
   return phpProxyPath(`admin/products.php${qs ? `?${qs}` : ''}`, {
-    headers: { Authorization: `Bearer ${session.adminToken}` },
+    headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
   });
 }
 
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const body   = await req.text();
   return phpProxyPath('admin/products.php', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.adminToken}` },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.adminToken ?? ''}` },
     body,
   });
 }

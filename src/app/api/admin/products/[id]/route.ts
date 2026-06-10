@@ -9,7 +9,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { id } = await params;
   return phpProxyPath(`admin/products.php?id=${encodeURIComponent(id)}`, {
-    headers: { Authorization: `Bearer ${session.adminToken}` },
+    headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },
   });
 }
 
@@ -20,7 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const body   = await req.text();
   return phpProxyPath(`admin/products.php?id=${encodeURIComponent(id)}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.adminToken}` },
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.adminToken ?? ''}` },
     body,
   });
 }

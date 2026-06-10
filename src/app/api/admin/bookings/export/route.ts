@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (session.role !== 'SUPER_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const phpRes = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/bookings-export.php`,
