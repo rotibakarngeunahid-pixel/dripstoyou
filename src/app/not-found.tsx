@@ -36,7 +36,7 @@ function IVDripIllustration() {
       <text x="70" y="43" textAnchor="middle"
         fill="#205251" fontSize="7.5" fontWeight="700"
         fontFamily="DM Sans, system-ui, sans-serif" letterSpacing="0.5">
-        DRIP TO YOU
+        DRIPS TO YOU
       </text>
       <text x="70" y="53.5" textAnchor="middle"
         fill="#29808B" fontSize="5.5"
