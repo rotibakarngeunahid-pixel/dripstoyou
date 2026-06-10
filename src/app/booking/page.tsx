@@ -170,7 +170,7 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     gpsBtn: '📍 Use my current location',
     gpsDetecting: 'Detecting location…',
     gpsSuccess: '✓ Location detected',
-    gpsDenied: 'Location access was denied. Please type your address manually.',
+    gpsDenied: 'Location access was denied. To enable it, go to your browser Settings → Site Permissions → Location and allow this site. Then try again.',
     gpsUnavailable: 'Unable to detect your location. Please type your address manually.',
     gpsTimeout: 'Location request timed out. Please type your address manually.',
     gpsFailed: 'Could not detect location. Please type your address manually.',
@@ -265,7 +265,7 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     gpsBtn: '📍 Gunakan lokasi saya',
     gpsDetecting: 'Mendeteksi lokasi…',
     gpsSuccess: '✓ Lokasi terdeteksi',
-    gpsDenied: 'Akses lokasi ditolak. Silakan ketik alamat Anda secara manual.',
+    gpsDenied: 'Akses lokasi ditolak. Buka Pengaturan Browser → Izin Situs → Lokasi, lalu izinkan situs ini. Kemudian coba lagi.',
     gpsUnavailable: 'Lokasi tidak tersedia. Silakan ketik alamat Anda secara manual.',
     gpsTimeout: 'Permintaan lokasi habis waktu. Silakan ketik alamat Anda secara manual.',
     gpsFailed: 'Lokasi tidak dapat dideteksi. Silakan ketik alamat Anda secara manual.',
@@ -670,7 +670,7 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
     }
   }
 
-  function detect() {
+  async function detect() {
     // Clear any previous error/success immediately on click
     clearError();
     if (successTimer.current) clearTimeout(successTimer.current);
@@ -679,6 +679,19 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
     if (!navigator.geolocation) {
       showError(bk.gpsFailed);
       return;
+    }
+
+    // Pre-check permission state — avoids silent failure on OS/browser-level denial
+    if ('permissions' in navigator) {
+      try {
+        const perm = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
+        if (perm.state === 'denied') {
+          showError(bk.gpsDenied);
+          return;
+        }
+      } catch {
+        // Permissions API not supported — proceed normally
+      }
     }
 
     setLoading(true);

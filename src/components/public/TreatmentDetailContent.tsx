@@ -93,6 +93,11 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    document.body.dataset.stickyVisible = stickyVisible ? 'true' : 'false';
+    return () => { delete document.body.dataset.stickyVisible; };
+  }, [stickyVisible]);
+
   return (
     <main className="td-shell">
 

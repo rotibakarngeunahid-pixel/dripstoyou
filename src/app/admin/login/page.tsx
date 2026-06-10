@@ -87,7 +87,7 @@ export default function AdminLoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              placeholder="admin@dripstoyou.com"
+              placeholder="Enter your email"
               disabled={loading || Boolean(success)}
             />
           </div>

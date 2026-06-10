@@ -43,7 +43,8 @@ function Bar() {
       if (!href) return;
       if (
         href.startsWith('http') || href.startsWith('//') ||
-        href.startsWith('#') || href.startsWith('mailto:') ||
+        href.startsWith('#') || href.includes('#') ||
+        href.startsWith('mailto:') ||
         href.startsWith('tel:') || anchor.target === '_blank'
       ) return;
       startBar();
