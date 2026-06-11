@@ -6,6 +6,10 @@ handleCors();
 
 $admin = requireAuth();
 $method = getMethod();
+// Menulis template hanya untuk SUPER_ADMIN dan CONTENT_ADMIN.
+if ($method !== 'GET') {
+    requireRole($admin, 'SUPER_ADMIN', 'CONTENT_ADMIN');
+}
 $key = 'whatsapp_booking_template';
 $allowed = [
     'customer_name',

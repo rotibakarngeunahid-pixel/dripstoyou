@@ -14,6 +14,16 @@ if ($code === '' && $name === '') {
     jsonError('Masukkan kode booking atau nama pelanggan', 400);
 }
 
+// Cegah enumerasi data pelanggan: nama minimal 3 karakter, dan wildcard
+// LIKE (% _ \) di-escape supaya "?name=%" tidak mencocokkan semua booking.
+if ($code === '' && mb_strlen($name) < 3) {
+    jsonError('Nama minimal 3 karakter', 422);
+}
+
+function escapeLikePattern(string $value): string {
+    return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+}
+
 $validStatuses = ['BARU', 'KONFIRMASI', 'DIPROSES', 'SELESAI', 'DIBATALKAN'];
 
 function formatBookingForTrack(array $b): array {
@@ -59,11 +69,11 @@ $stmt = $db->prepare(
      FROM   bookings b
      JOIN   products p ON p.id = b.product_id
      LEFT JOIN service_areas sa ON sa.id = b.service_area_id
-     WHERE  LOWER(b.customer_name) LIKE LOWER(?)
+     WHERE  LOWER(b.customer_name) LIKE LOWER(?) ESCAPE '\\\\'
      ORDER  BY b.created_at DESC
      LIMIT  10"
 );
-$stmt->execute(['%' . $name . '%']);
+$stmt->execute(['%' . escapeLikePattern($name) . '%']);
 $bookings = $stmt->fetchAll();
 if (empty($bookings)) {
     jsonError('Tidak ditemukan booking dengan nama tersebut.', 404);

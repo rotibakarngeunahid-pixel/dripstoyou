@@ -4,7 +4,9 @@
 require_once __DIR__ . '/../helpers.php';
 handleCors();
 requireMethod('GET');
-requireAuth();
+$admin = requireAuth();
+// CONTENT_ADMIN tidak boleh melihat PII booking — nomor HP tidak didekripsi.
+$canSeePhone = in_array($admin['role'] ?? '', ['SUPER_ADMIN', 'ADMIN_OPERASIONAL'], true);
 
 $db  = getDb();
 $today = date('Y-m-d');
@@ -36,7 +38,7 @@ $recent = $stmt->fetchAll();
 
 foreach ($recent as &$b) {
     $phone = null;
-    if (!empty($b['customer_phone_encrypted'])) {
+    if ($canSeePhone && !empty($b['customer_phone_encrypted'])) {
         try { $phone = decryptField($b['customer_phone_encrypted']); } catch (Exception $e) {}
     }
     $b['customer_phone'] = $phone ?? ('...' . $b['customer_phone_last4']);

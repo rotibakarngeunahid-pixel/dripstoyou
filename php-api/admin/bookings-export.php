@@ -7,6 +7,8 @@ handleCors();
 requireMethod('GET');
 
 $admin = requireAuth();
+// Export berisi PII terdekripsi (no. HP, alamat, catatan) — hanya SUPER_ADMIN.
+requireRole($admin, 'SUPER_ADMIN');
 $db    = getDb();
 
 // Rate limit: 3 exports per 10 min per admin
@@ -37,8 +39,15 @@ $bookings = $stmt->fetchAll();
 
 auditLog('EXPORT_BOOKINGS', $admin['admin_id'], 'Booking', null, ['count' => count($bookings)]);
 
-// Build CSV
-$escape = fn($v) => '"' . str_replace('"', '""', (string)$v) . '"';
+// Build CSV — semua sel di-quote, plus guard formula injection untuk Excel
+// (nilai yang diawali = + - @ bisa dieksekusi sebagai formula saat dibuka).
+$escape = function ($v): string {
+    $v = (string)$v;
+    if ($v !== '' && in_array($v[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+        $v = "'" . $v;
+    }
+    return '"' . str_replace('"', '""', $v) . '"';
+};
 
 $header = implode(',', [
     'Kode', 'Tanggal', 'Waktu', 'Nama', 'No. HP', 'Treatment', 'Harga',
@@ -58,21 +67,21 @@ foreach ($bookings as $b) {
     }
 
     $rows[] = implode(',', [
-        $b['booking_code'],
-        $b['booking_date'],
-        $b['booking_time'],
+        $escape($b['booking_code']),
+        $escape($b['booking_date']),
+        $escape($b['booking_time']),
         $escape($b['customer_name']),
-        $phone,
+        $escape($phone),
         $escape($b['product_name']),
-        $b['price_label'] ?? '',
-        $b['people_count'],
-        $b['location_type'],
-        $b['service_area_name'] ?? '',
+        $escape($b['price_label'] ?? ''),
+        $escape($b['people_count']),
+        $escape($b['location_type']),
+        $escape($b['service_area_name'] ?? ''),
         $escape($address),
         $escape($notes),
-        $b['status'],
-        $b['source'],
-        $b['created_at'],
+        $escape($b['status']),
+        $escape($b['source']),
+        $escape($b['created_at']),
     ]);
 }
 

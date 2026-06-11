@@ -8,6 +8,9 @@ require_once __DIR__ . '/../helpers.php';
 handleCors();
 
 $admin  = requireAuth();
+// Data booking berisi PII pelanggan — CONTENT_ADMIN tidak punya akses
+// (konsisten dengan pemeriksaan di route Next.js).
+requireRole($admin, 'SUPER_ADMIN', 'ADMIN_OPERASIONAL');
 // Support X-HTTP-Method-Override header AND ?_method query param so hosts
 // that strip DELETE (shared hosting / some proxies) can still call this endpoint.
 $method = strtoupper(

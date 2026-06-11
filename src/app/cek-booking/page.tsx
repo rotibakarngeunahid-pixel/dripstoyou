@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
@@ -101,15 +101,12 @@ export default function CekBookingPage() {
   const [results, setResults] = useState<BookingResult[] | null>(null);
   const [error, setError] = useState('');
 
-  async function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    const q = query.trim();
-    if (!q) return;
+  const runSearch = useCallback(async (searchMode: 'code' | 'name', q: string) => {
     setLoading(true);
     setError('');
     setResults(null);
     try {
-      const param = mode === 'code' ? `code=${encodeURIComponent(q)}` : `name=${encodeURIComponent(q)}`;
+      const param = searchMode === 'code' ? `code=${encodeURIComponent(q)}` : `name=${encodeURIComponent(q)}`;
       const res = await fetch(`/api/public/track?${param}`, { cache: 'no-store' });
       const json = await res.json();
       if (!res.ok) {
@@ -123,6 +120,27 @@ export default function CekBookingPage() {
     } finally {
       setLoading(false);
     }
+  }, [isId]);
+
+  // Auto-search when arriving with ?code=XXX (e.g. from the booking success page).
+  // setTimeout(0) defers setState calls out of the synchronous effect body.
+  useEffect(() => {
+    const codeParam = new URLSearchParams(window.location.search).get('code')?.trim();
+    if (!codeParam) return;
+    const t = setTimeout(() => {
+      setMode('code');
+      setQuery(codeParam);
+      void runSearch('code', codeParam);
+    }, 0);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    await runSearch(mode, q);
   }
 
   return (

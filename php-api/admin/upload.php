@@ -5,6 +5,9 @@ require_once __DIR__ . '/../helpers.php';
 handleCors();
 
 $admin = requireAuth();
+// Upload foto produk = products:write — hanya SUPER_ADMIN dan CONTENT_ADMIN
+// (konsisten dengan permission 'products:write' di route Next.js).
+requireRole($admin, 'SUPER_ADMIN', 'CONTENT_ADMIN');
 
 if (getMethod() !== 'POST') jsonError('Method not allowed', 405);
 

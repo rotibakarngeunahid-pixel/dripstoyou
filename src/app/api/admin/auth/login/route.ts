@@ -39,10 +39,16 @@ export async function POST(req: NextRequest) {
 
   const loginUrl = `${apiBase}/admin/login.php`;
 
+  // Forward the real client IP so the PHP login rate limiter (5/15min) tracks
+  // the actual visitor, not the shared Vercel egress IP.
+  const loginHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+  const clientIp = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? '';
+  if (clientIp) loginHeaders['X-Forwarded-For'] = clientIp;
+
   try {
     const phpRes = await fetch(loginUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: loginHeaders,
       body: JSON.stringify({ email, password }),
       cache: 'no-store',
       signal: AbortSignal.timeout(10000),

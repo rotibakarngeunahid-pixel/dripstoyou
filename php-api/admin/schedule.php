@@ -6,6 +6,9 @@ require_once __DIR__ . '/../helpers.php';
 handleCors();
 
 $admin  = requireAuth();
+// Jadwal adalah ranah operasional — CONTENT_ADMIN tidak punya akses
+// (konsisten dengan pemeriksaan di route Next.js).
+requireRole($admin, 'SUPER_ADMIN', 'ADMIN_OPERASIONAL');
 $method = getMethod();
 $db     = getDb();
 
@@ -32,9 +35,11 @@ if ($method === 'PUT') {
     $now = date('Y-m-d H:i:s');
 
     foreach ($body as $day) {
-        if (!isset($day['dayOfWeek'])) continue;
+        if (!is_array($day) || !isset($day['dayOfWeek'])) continue;
 
-        $dow             = (int)$day['dayOfWeek'];
+        $dow = (int)$day['dayOfWeek'];
+        if ($dow < 0 || $dow > 6) continue;
+
         $isOpen          = isset($day['isOpen']) ? ((bool)$day['isOpen'] ? 1 : 0) : 1;
         $openTime        = preg_match('/^\d{2}:\d{2}$/', $day['openTime'] ?? '') ? $day['openTime'] : '08:00';
         $closeTime       = preg_match('/^\d{2}:\d{2}$/', $day['closeTime'] ?? '') ? $day['closeTime'] : '22:00';

@@ -39,15 +39,17 @@ function handleCors(): void {
 
     if (!empty($allowed) && in_array($origin, $allowed, true)) {
         header("Access-Control-Allow-Origin: $origin");
+        header('Access-Control-Allow-Credentials: true');
     } elseif (!empty($allowed)) {
         header('Access-Control-Allow-Origin: ' . $allowed[0]);
+        header('Access-Control-Allow-Credentials: true');
     } else {
+        // Wildcard origin must not be combined with credentials (browsers reject it)
         header('Access-Control-Allow-Origin: *');
     }
 
     header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
-    header('Access-Control-Allow-Credentials: true');
     header('Content-Type: application/json; charset=utf-8');
 
     if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -125,6 +127,15 @@ function requireAuth(): array {
     }
 
     return $admin;
+}
+
+// RBAC — endpoint/method hanya boleh diakses role tertentu.
+// PHP adalah trust boundary terakhir: cek role di Next.js saja tidak cukup
+// karena API ini bisa dipanggil langsung tanpa melewati proxy Vercel.
+function requireRole(array $admin, string ...$roles): void {
+    if (!in_array($admin['role'] ?? '', $roles, true)) {
+        jsonError('Forbidden', 403);
+    }
 }
 
 // ── Rate Limiting (MySQL-based) ───────────────────────────────────────────────
@@ -207,7 +218,7 @@ function generateBookingCode(): string {
 
 function auditLog(string $action, ?string $adminId = null, ?string $entityType = null, ?string $entityId = null, array $meta = []): void {
     try {
-        $ip     = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? null;
+        $ip     = getClientIp() ?: null;
         $ua     = $_SERVER['HTTP_USER_AGENT'] ?? null;
         $ipHash = $ip ? hash('sha256', $ip) : null;
         $uaHash = $ua ? hash('sha256', $ua) : null;
@@ -258,7 +269,16 @@ function requireFields(array $data, array $fields): void {
 }
 
 function getClientIp(): string {
-    return $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+    // X-Forwarded-For bisa berisi daftar "client, proxy1, proxy2" dan bisa
+    // dipalsukan oleh pemanggil langsung — ambil hanya IP valid pertama.
+    $xff = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+    if ($xff !== '') {
+        $first = trim(explode(',', $xff)[0]);
+        if (filter_var($first, FILTER_VALIDATE_IP) !== false) {
+            return $first;
+        }
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? '';
 }
 
 function getIpHash(): string {

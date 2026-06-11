@@ -4,10 +4,15 @@
 Options -Indexes
 ServerSignature Off
 
-# Blokir akses langsung ke file config dan helpers
-<FilesMatch "^(config|helpers)\.php$">
-    Order Allow,Deny
-    Deny from all
+# Blokir akses langsung ke file config, helpers, dan library internal
+<FilesMatch "^(config|config\.example|helpers|offline-translate)\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Allow,Deny
+        Deny from all
+    </IfModule>
 </FilesMatch>
 
 # Security headers

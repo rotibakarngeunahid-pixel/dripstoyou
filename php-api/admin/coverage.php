@@ -5,6 +5,9 @@ require_once __DIR__ . '/../helpers.php';
 handleCors();
 
 $admin = requireAuth();
+// Area layanan adalah ranah operasional — CONTENT_ADMIN tidak punya akses
+// (konsisten dengan pemeriksaan di route Next.js).
+requireRole($admin, 'SUPER_ADMIN', 'ADMIN_OPERASIONAL');
 $method = getMethod();
 $id = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
 $db = getDb();
