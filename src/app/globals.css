@@ -3272,6 +3272,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   line-height: 1.8;
   font-style: italic;
   text-align: justify;
+  -webkit-hyphens: none;
   hyphens: none;
   overflow-wrap: break-word;
   margin-bottom: 32px;
@@ -3306,6 +3307,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   line-height: 1.8;
   margin-bottom: 14px;
   text-align: justify;
+  -webkit-hyphens: none;
   hyphens: none;
   overflow-wrap: break-word;
 }
@@ -3328,6 +3330,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   color: #1a1a1a;
   line-height: 1.75;
   text-align: justify;
+  -webkit-hyphens: none;
   hyphens: none;
   overflow-wrap: break-word;
 }
@@ -4510,6 +4513,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   line-height: 1.68;
   max-width: 480px;
   text-align: justify;
+  -webkit-hyphens: none;
   hyphens: none;
   overflow-wrap: break-word;
 }
@@ -4657,6 +4661,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   font-size: 1rem;
   white-space: pre-wrap;
   text-align: justify;
+  -webkit-hyphens: none;
   hyphens: none;
   overflow-wrap: break-word;
   max-width: 720px;
