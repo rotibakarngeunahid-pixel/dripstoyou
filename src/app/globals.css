@@ -3272,7 +3272,8 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   line-height: 1.8;
   font-style: italic;
   text-align: justify;
-  hyphens: auto;
+  hyphens: none;
+  overflow-wrap: break-word;
   margin-bottom: 32px;
   padding-bottom: 32px;
   border-bottom: 1px solid #f0ede8;
@@ -3305,7 +3306,8 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   line-height: 1.8;
   margin-bottom: 14px;
   text-align: justify;
-  hyphens: auto;
+  hyphens: none;
+  overflow-wrap: break-word;
 }
 .legal-para:last-child { margin-bottom: 0; }
 
@@ -3326,7 +3328,8 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   color: #1a1a1a;
   line-height: 1.75;
   text-align: justify;
-  hyphens: auto;
+  hyphens: none;
+  overflow-wrap: break-word;
 }
 .legal-list li::before {
   content: '';
@@ -4507,6 +4510,8 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   line-height: 1.68;
   max-width: 480px;
   text-align: justify;
+  hyphens: none;
+  overflow-wrap: break-word;
 }
 .td-hero-meta {
   display: flex;
@@ -4652,7 +4657,8 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   font-size: 1rem;
   white-space: pre-wrap;
   text-align: justify;
-  hyphens: auto;
+  hyphens: none;
+  overflow-wrap: break-word;
   max-width: 720px;
 }
 .td-about-img-wrap {

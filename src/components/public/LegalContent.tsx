@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLanguage, type Lang } from '@/contexts/language';
 
 export type LegalSlug = 'terms-conditions' | 'privacy-policy';
@@ -136,7 +136,7 @@ const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
         {
           title: '14. Contact',
           paragraphs: [
-            'Questions about these terms can be sent to hello@dripstoyou.com or through the official WhatsApp contact shown on this website.',
+            'Questions about these terms can be sent to {EMAIL} or through the official WhatsApp contact shown on this website.',
           ],
         },
       ],
@@ -241,7 +241,7 @@ const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
         {
           title: '14. Kontak',
           paragraphs: [
-            'Pertanyaan mengenai ketentuan ini dapat dikirim ke hello@dripstoyou.com atau melalui kontak WhatsApp resmi pada website.',
+            'Pertanyaan mengenai ketentuan ini dapat dikirim ke {EMAIL} atau melalui kontak WhatsApp resmi pada website.',
           ],
         },
       ],
@@ -346,7 +346,7 @@ const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
           title: '12. Policy Changes and Contact',
           paragraphs: [
             'We may update this policy to reflect changes in law, technology, or our services. The current version and update date will remain available on this page.',
-            'For privacy questions or requests, contact hello@dripstoyou.com or use the official WhatsApp contact shown on this website.',
+            'For privacy questions or requests, contact {EMAIL} or use the official WhatsApp contact shown on this website.',
           ],
         },
       ],
@@ -449,7 +449,7 @@ const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
           title: '12. Perubahan Kebijakan dan Kontak',
           paragraphs: [
             'Kami dapat memperbarui kebijakan ini untuk menyesuaikan perubahan hukum, teknologi, atau layanan. Versi terkini dan tanggal pembaruan akan tersedia di halaman ini.',
-            'Untuk pertanyaan atau permintaan terkait privasi, hubungi hello@dripstoyou.com atau gunakan kontak WhatsApp resmi pada website.',
+            'Untuk pertanyaan atau permintaan terkait privasi, hubungi {EMAIL} atau gunakan kontak WhatsApp resmi pada website.',
           ],
         },
       ],
@@ -457,7 +457,19 @@ const DOCUMENTS: Record<LegalSlug, Record<Lang, LegalDocument>> = {
   },
 };
 
-export default function LegalContent({ slug }: { slug: LegalSlug }) {
+function renderPara(text: string, email: string): React.ReactNode {
+  if (!text.includes('{EMAIL}')) return text;
+  const [before, after] = text.split('{EMAIL}');
+  return (
+    <>
+      {before}
+      <a href={`mailto:${email}`} style={{ color: 'inherit', textDecoration: 'underline' }}>{email}</a>
+      {after}
+    </>
+  );
+}
+
+export default function LegalContent({ slug, siteEmail = 'hello@dripstoyou.com' }: { slug: LegalSlug; siteEmail?: string }) {
   const { lang } = useLanguage();
   const doc = DOCUMENTS[slug][lang];
   const [showBackToTop, setShowBackToTop] = useState(false);
@@ -569,7 +581,7 @@ export default function LegalContent({ slug }: { slug: LegalSlug }) {
             <section key={i} id={`ls-${i + 1}`} className="legal-section">
               <h2 className="legal-section-heading">{section.title}</h2>
               {section.paragraphs.map((p, j) => (
-                <p key={j} className="legal-para">{p}</p>
+                <p key={j} className="legal-para">{renderPara(p, siteEmail)}</p>
               ))}
               {section.bullets && (
                 <ul className="legal-list">
