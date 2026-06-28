@@ -18,6 +18,7 @@ import {
   PackagePlus,
   Settings,
   Share2,
+  Stethoscope,
   Users,
   X,
   type LucideIcon,
@@ -45,6 +46,7 @@ const ADMIN_LABELS: Record<AdminLang, {
   content: string; faq: string; socialLinks: string;
   settings: string; generalSettings: string; waTemplate: string;
   help: string; adminGuide: string; adminUsers: string;
+  crmGroup: string; crmInternal: string;
   verifying: string; livePanelLabel: string;
   langToggle: string; logout: string; loggingOut: string;
   closeMenu: string; openMenu: string;
@@ -55,6 +57,7 @@ const ADMIN_LABELS: Record<AdminLang, {
     content: 'Konten Website', faq: 'FAQ', socialLinks: 'Social Links',
     settings: 'Pengaturan', generalSettings: 'Pengaturan Umum', waTemplate: 'WhatsApp Template',
     help: 'Bantuan', adminGuide: 'Panduan Admin', adminUsers: 'Manajemen Admin',
+    crmGroup: 'CRM Internal', crmInternal: 'Buka CRM',
     verifying: 'Memverifikasi sesi admin...', livePanelLabel: 'Live panel',
     langToggle: 'EN', logout: 'Logout', loggingOut: 'Keluar...',
     closeMenu: 'Tutup menu', openMenu: 'Buka menu',
@@ -65,6 +68,7 @@ const ADMIN_LABELS: Record<AdminLang, {
     content: 'Website Content', faq: 'FAQ', socialLinks: 'Social Links',
     settings: 'Settings', generalSettings: 'General Settings', waTemplate: 'WhatsApp Template',
     help: 'Help', adminGuide: 'Admin Guide', adminUsers: 'Admin Management',
+    crmGroup: 'CRM Internal', crmInternal: 'Open CRM',
     verifying: 'Verifying admin session...', livePanelLabel: 'Live panel',
     langToggle: 'ID', logout: 'Logout', loggingOut: 'Logging out...',
     closeMenu: 'Close menu', openMenu: 'Open menu',
@@ -97,6 +101,10 @@ function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang], role?: string | nul
       label: lbl.mainMenu,
       items: mainItems,
     },
+    // CRM Internal (nurse/finance/patient management etc.) — not for CONTENT_ADMIN.
+    ...(role !== 'CONTENT_ADMIN'
+      ? [{ label: lbl.crmGroup, items: [{ href: '/crm/dashboard', label: lbl.crmInternal, icon: Stethoscope }] }]
+      : []),
     {
       label: lbl.services,
       items: [
