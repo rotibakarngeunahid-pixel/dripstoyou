@@ -1,0 +1,21 @@
+# CRM API folder — semua endpoint butuh Bearer token (crm_sessions)
+# Berlaku juga untuk subfolder (auth/, dst). Tidak ada direct-browser access
+# tanpa Authorization header.
+
+Options -Indexes
+ServerSignature Off
+
+# Blokir akses langsung ke shared library internal CRM
+<FilesMatch "^_crm\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order Allow,Deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+<FilesMatch "\.php$">
+    Header always set X-Content-Type-Options "nosniff"
+</FilesMatch>

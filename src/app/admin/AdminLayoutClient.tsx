@@ -188,18 +188,18 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
         if (res.status === 401) {
           setSessionOk(false);
           setAuthChecked(true);
-          router.replace('/admin/login?reason=session-expired');
+          router.replace('/login?reason=session-expired');
           return;
         }
 
         setSessionOk(false);
         setAuthChecked(true);
-        router.replace('/admin/login?reason=auth-unavailable');
+        router.replace('/login?reason=auth-unavailable');
       } catch {
         if (!active) return;
         setSessionOk(false);
         setAuthChecked(true);
-        router.replace('/admin/login?reason=auth-unavailable');
+        router.replace('/login?reason=auth-unavailable');
       }
     }
 
@@ -251,9 +251,9 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     if (loggingOut) return;
     setLoggingOut(true);
     try {
-      await fetch('/api/admin/auth/logout', { method: 'POST' });
+      await fetch('/api/auth/logout', { method: 'POST' });
     } finally {
-      router.replace('/admin/login');
+      router.replace('/login');
       router.refresh();
     }
   }
