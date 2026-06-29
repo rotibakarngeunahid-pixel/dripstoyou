@@ -6,6 +6,23 @@ function base(): string | null {
   return process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, '') || null;
 }
 
+// Simple in-memory rate limiter: max 3 attempts per IP per 15 minutes.
+const setupAttempts = new Map<string, { count: number; resetAt: number }>();
+const SETUP_MAX = 3;
+const SETUP_WINDOW_MS = 15 * 60 * 1000;
+
+function setupRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = setupAttempts.get(ip);
+  if (!entry || now > entry.resetAt) {
+    setupAttempts.set(ip, { count: 1, resetAt: now + SETUP_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= SETUP_MAX) return false;
+  entry.count++;
+  return true;
+}
+
 // GET → whether first-run setup is needed (no auth; PHP only reveals a boolean).
 export async function GET() {
   const b = base();
@@ -22,9 +39,20 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const b = base();
   if (!b) return NextResponse.json({ error: 'Konfigurasi server tidak lengkap.' }, { status: 503 });
-  const clientIp = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? '';
+
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
+    ?? req.headers.get('x-real-ip')
+    ?? 'unknown';
+
+  if (!setupRateLimit(clientIp)) {
+    return NextResponse.json(
+      { error: 'Terlalu banyak percobaan. Coba lagi dalam 15 menit.' },
+      { status: 429 },
+    );
+  }
+
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (clientIp) headers['X-Forwarded-For'] = clientIp;
+  if (clientIp !== 'unknown') headers['X-Forwarded-For'] = clientIp;
   try {
     const res = await fetch(`${b}/crm/setup.php`, {
       method: 'POST',

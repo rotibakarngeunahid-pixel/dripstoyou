@@ -10,3 +10,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if ('error' in g) return g.error;
   return crmProxyForward(req, g.session, 'patient.php', `?id=${encodeURIComponent(id)}`);
 }
+
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const g = await crmGuard('patient');
+  if ('error' in g) return g.error;
+  return crmProxyForward(req, g.session, 'patient.php', `?id=${encodeURIComponent(id)}`);
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const g = await crmGuard('patient');
+  if ('error' in g) return g.error;
+  return crmProxyForward(req, g.session, 'patient.php', `?id=${encodeURIComponent(id)}`);
+}

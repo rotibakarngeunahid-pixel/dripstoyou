@@ -57,11 +57,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { token, staff, modules } = phpData.data as {
+    const raw = phpData.data;
+    if (
+      !raw || typeof raw !== 'object' ||
+      typeof (raw as Record<string, unknown>).token !== 'string' ||
+      typeof (raw as Record<string, unknown>).staff !== 'object' ||
+      !(raw as Record<string, unknown>).staff
+    ) {
+      console.error('[crm/login] PHP returned unexpected data shape:', raw);
+      return NextResponse.json(
+        { error: 'Server autentikasi mengembalikan data tidak valid. Hubungi administrator.' },
+        { status: 502 },
+      );
+    }
+
+    const { token, staff, modules } = raw as {
       token: string;
       staff: { id: string; name: string; email: string; role: string };
       modules?: string[];
     };
+
+    const VALID_ROLES: CRMRole[] = ['OWNER', 'ADMIN', 'NURSE', 'FINANCE'];
+    if (!VALID_ROLES.includes(staff.role as CRMRole)) {
+      console.error('[crm/login] PHP returned unknown role:', staff.role);
+      return NextResponse.json({ error: 'Role staff tidak dikenali.' }, { status: 502 });
+    }
 
     const session = await getCRMSession();
     session.staffId = staff.id;
