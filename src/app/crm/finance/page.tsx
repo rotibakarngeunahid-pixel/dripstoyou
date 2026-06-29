@@ -49,10 +49,13 @@ export default function FinancePage() {
   return (
     <div className="crm-page">
       <div className="crm-page-header">
-        <div className="flex items-center gap-2">
-          <button onClick={() => setMonth(shiftMonth(month, -1))} className="crm-button-secondary h-10 w-10 p-0"><ChevronLeft size={18} /></button>
-          <h2 className="crm-page-title">Finance · {monthLabel(month)}</h2>
-          <button onClick={() => setMonth(shiftMonth(month, 1))} className="crm-button-secondary h-10 w-10 p-0"><ChevronRight size={18} /></button>
+        <div>
+          <h2 className="crm-page-title">Finance</h2>
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <button onClick={() => setMonth(shiftMonth(month, -1))} className="crm-button-secondary h-8 w-8 p-0"><ChevronLeft size={16} /></button>
+            <span className="text-sm font-semibold text-[#4d6060]">{monthLabel(month)}</span>
+            <button onClick={() => setMonth(shiftMonth(month, 1))} className="crm-button-secondary h-8 w-8 p-0"><ChevronRight size={16} /></button>
+          </div>
         </div>
         <div className="crm-actions">
           <button onClick={() => setExpOpen(true)} className="crm-button-secondary"><Plus size={16} /> Pengeluaran</button>

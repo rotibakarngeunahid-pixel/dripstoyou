@@ -37,23 +37,48 @@ export default function AreaPage() {
       {loading ? <LoadingBlock /> : error ? <ErrorBlock message={error} onRetry={load} /> : rows.length === 0 ? (
         <EmptyState title="Belum ada area" />
       ) : (
-        <div className="crm-table-card crm-table-scroll">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead className="bg-[#F3F0E7] text-left text-xs uppercase tracking-wide text-[#4d6060]">
-              <tr><th className="px-4 py-3">Area</th><th className="px-4 py-3">Visit Fee</th><th className="px-4 py-3">Estimasi</th><th className="px-4 py-3">Status</th></tr>
-            </thead>
-            <tbody className="divide-y divide-[#DBDAD7]">
-              {rows.map((a) => (
-                <tr key={a.id} className="hover:bg-[#F3F0E7]/60">
-                  <td className="px-4 py-3"><button onClick={() => setModal(a)} className="font-medium text-[#205251] hover:underline">{a.name}</button></td>
-                  <td className="px-4 py-3">{formatRupiah(a.visit_fee_amount)}</td>
-                  <td className="px-4 py-3">{a.estimated_arrival_minutes ? `${a.estimated_arrival_minutes} mnt` : '—'}</td>
-                  <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${a.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{a.is_active ? 'Aktif' : 'Nonaktif'}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {/* Desktop table */}
+          <div className="crm-table-card crm-table-scroll hidden md:block">
+            <table className="w-full min-w-[560px] text-sm">
+              <thead className="bg-[#F3F0E7] text-left text-xs uppercase tracking-wide text-[#4d6060]">
+                <tr><th className="px-4 py-3">Area</th><th className="px-4 py-3">Visit Fee</th><th className="px-4 py-3">Estimasi</th><th className="px-4 py-3">Status</th></tr>
+              </thead>
+              <tbody className="divide-y divide-[#DBDAD7]">
+                {rows.map((a) => (
+                  <tr key={a.id} className="hover:bg-[#F3F0E7]/60">
+                    <td className="px-4 py-3"><button onClick={() => setModal(a)} className="font-medium text-[#205251] hover:underline">{a.name}</button></td>
+                    <td className="px-4 py-3">{formatRupiah(a.visit_fee_amount)}</td>
+                    <td className="px-4 py-3">{a.estimated_arrival_minutes ? `${a.estimated_arrival_minutes} mnt` : '—'}</td>
+                    <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${a.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{a.is_active ? 'Aktif' : 'Nonaktif'}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="space-y-3 md:hidden">
+            {rows.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => setModal(a)}
+                className="crm-record-card flex w-full items-center justify-between gap-3 p-4 text-left"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[#205251]">{a.name}</p>
+                  <p className="mt-0.5 text-xs text-[#4d6060]">
+                    {formatRupiah(a.visit_fee_amount)}
+                    {a.estimated_arrival_minutes ? ` · ${a.estimated_arrival_minutes} mnt` : ''}
+                  </p>
+                </div>
+                <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium ${a.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                  {a.is_active ? 'Aktif' : 'Nonaktif'}
+                </span>
+              </button>
+            ))}
+          </div>
+        </>
       )}
 
       {modal && <AreaModal area={modal === 'new' ? null : modal} onClose={() => setModal(null)} onSaved={() => { setModal(null); load(); }} />}

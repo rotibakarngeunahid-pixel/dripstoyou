@@ -47,12 +47,12 @@ export default function StaffPage() {
       ) : (
         <div className="crm-list-panel overflow-hidden">
           {rows.map((s) => (
-            <button key={s.id} onClick={() => setModal(s)} className="flex w-full items-center justify-between border-b border-[#eef4f5] px-4 py-3 text-left last:border-0 hover:bg-[#fbfdfd]">
-              <div>
+            <button key={s.id} onClick={() => setModal(s)} className="flex w-full items-center justify-between gap-3 border-b border-[#eef4f5] px-4 py-3 text-left last:border-0 hover:bg-[#fbfdfd]">
+              <div className="min-w-0 flex-1">
                 <p className="font-medium text-[#205251]">{s.name}</p>
-                <p className="text-xs text-[#8EBFBF]">{s.email} · Login terakhir {s.last_login_at ? formatDate(s.last_login_at) : '—'}</p>
+                <p className="truncate text-xs text-[#8EBFBF]">{s.email} · Login terakhir {s.last_login_at ? formatDate(s.last_login_at) : '—'}</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex shrink-0 items-center gap-2">
                 <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${ROLE_BADGE[s.role] ?? 'bg-gray-100'}`}>{s.role}</span>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${s.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{s.is_active ? 'Aktif' : 'Nonaktif'}</span>
               </div>

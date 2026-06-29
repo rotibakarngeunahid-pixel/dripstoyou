@@ -68,34 +68,78 @@ export default function InventoryPage() {
       {loading ? <LoadingBlock /> : error ? <ErrorBlock message={error} onRetry={load} /> : items.length === 0 ? (
         <EmptyState title="Belum ada item" description="Tambahkan item medis pertama Anda." />
       ) : (
-        <div className="crm-table-card crm-table-scroll">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-[#F3F0E7] text-left text-xs uppercase tracking-wide text-[#4d6060]">
-              <tr>
-                <th className="px-4 py-3">Item</th><th className="px-4 py-3">Kategori</th><th className="px-4 py-3">Stok</th>
-                <th className="px-4 py-3">Min</th><th className="px-4 py-3">Expired</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#DBDAD7]">
-              {items.map((it) => {
-                const st = statusOf(it);
-                return (
-                  <tr key={it.id} className="hover:bg-[#F3F0E7]/60">
-                    <td className="px-4 py-3"><button onClick={() => setEditItem(it)} className="font-medium text-[#205251] hover:underline">{it.name}</button><span className="block text-xs text-[#8EBFBF]">{it.supplier ?? '—'}</span></td>
-                    <td className="px-4 py-3">{it.category}</td>
-                    <td className="px-4 py-3">{it.stock_current} {it.unit}</td>
-                    <td className="px-4 py-3">{it.stock_minimum}</td>
-                    <td className="px-4 py-3">{it.expired_date ? formatDate(it.expired_date) : '—'}</td>
-                    <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${st.cls}`}>{st.label}</span></td>
-                    <td className="px-4 py-3">
-                      <button onClick={() => setMoveItem(it)} className="inline-flex items-center gap-1 rounded-lg border border-[#DBDAD7] px-2 py-1 text-xs text-[#205251]"><ArrowLeftRight size={14} /> Stok</button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <>
+          {/* Desktop table */}
+          <div className="crm-table-card crm-table-scroll hidden md:block">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="bg-[#F3F0E7] text-left text-xs uppercase tracking-wide text-[#4d6060]">
+                <tr>
+                  <th className="px-4 py-3">Item</th><th className="px-4 py-3">Kategori</th><th className="px-4 py-3">Stok</th>
+                  <th className="px-4 py-3">Min</th><th className="px-4 py-3">Expired</th><th className="px-4 py-3">Status</th><th className="px-4 py-3">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#DBDAD7]">
+                {items.map((it) => {
+                  const st = statusOf(it);
+                  return (
+                    <tr key={it.id} className="hover:bg-[#F3F0E7]/60">
+                      <td className="px-4 py-3"><button onClick={() => setEditItem(it)} className="font-medium text-[#205251] hover:underline">{it.name}</button><span className="block text-xs text-[#8EBFBF]">{it.supplier ?? '—'}</span></td>
+                      <td className="px-4 py-3">{it.category}</td>
+                      <td className="px-4 py-3">{it.stock_current} {it.unit}</td>
+                      <td className="px-4 py-3">{it.stock_minimum}</td>
+                      <td className="px-4 py-3">{it.expired_date ? formatDate(it.expired_date) : '—'}</td>
+                      <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${st.cls}`}>{st.label}</span></td>
+                      <td className="px-4 py-3">
+                        <button onClick={() => setMoveItem(it)} className="inline-flex items-center gap-1 rounded-lg border border-[#DBDAD7] px-2 py-1 text-xs text-[#205251]"><ArrowLeftRight size={14} /> Stok</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="space-y-3 md:hidden">
+            {items.map((it) => {
+              const st = statusOf(it);
+              return (
+                <div key={it.id} className="crm-record-card p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <button onClick={() => setEditItem(it)} className="text-left font-semibold text-[#205251] hover:underline">
+                        {it.name}
+                      </button>
+                      {it.supplier && (
+                        <p className="text-xs text-[#8EBFBF]">{it.supplier}</p>
+                      )}
+                    </div>
+                    <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${st.cls}`}>
+                      {st.label}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-[#4d6060]">
+                    <span>{it.category}</span>
+                    <span>
+                      Stok: <strong className="text-[#0c2524]">{it.stock_current}</strong>/{it.stock_minimum} {it.unit}
+                    </span>
+                    {it.expired_date && (
+                      <span>Exp: {formatDate(it.expired_date)}</span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => setMoveItem(it)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-[#DBDAD7] px-3 py-1.5 text-xs font-medium text-[#205251] transition hover:bg-[#D6EAEA]"
+                  >
+                    <ArrowLeftRight size={14} /> Update Stok
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
 
       {(addOpen || editItem) && <ItemModal item={editItem} onClose={() => { setAddOpen(false); setEditItem(null); }} onSaved={() => { setAddOpen(false); setEditItem(null); load(); }} />}

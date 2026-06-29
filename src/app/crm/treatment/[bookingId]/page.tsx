@@ -104,10 +104,10 @@ export default function TreatmentPage() {
   return (
     <div className="crm-page mx-auto max-w-2xl">
       <Link href={`/crm/booking/${booking.booking_code_display ?? bookingId}`} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
-      <div className="mb-5 flex items-center justify-between gap-2">
-        <div>
-          <h2 className="crm-page-title">Treatment - {booking.customer_name}</h2>
-          <p className="text-sm text-[#4d6060]">{booking.booking_code_display} · {booking.product_name}</p>
+      <div className="crm-page-header mb-5">
+        <div className="min-w-0">
+          <h2 className="crm-page-title">Treatment</h2>
+          <p className="crm-page-subtitle">{booking.customer_name} · {booking.product_name}</p>
         </div>
         <StatusBadge status={booking.crm_status} />
       </div>
