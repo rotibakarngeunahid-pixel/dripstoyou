@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { formatRupiah, formatDayTime } from '@/lib/crm-format';
 import { STATUS_LABEL, type CRMBookingStatus } from '@/lib/crm-status';
@@ -42,11 +42,13 @@ export default function BookingListPage() {
   const [status, setStatus] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [showFilter, setShowFilter] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
 
+  const hasFilter = !!(status || dateFrom || dateTo);
+
   const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     try {
       const params = new URLSearchParams();
       if (q) params.set('q', q);
@@ -59,8 +61,7 @@ export default function BookingListPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Gagal memuat booking');
     } finally {
-      setLoading(false);
-    }
+      setLoading(false); }
   }, [q, status, dateFrom, dateTo]);
 
   useEffect(() => {
@@ -68,88 +69,166 @@ export default function BookingListPage() {
     return () => clearTimeout(t);
   }, [load]);
 
+  function clearFilters() {
+    setStatus(''); setDateFrom(''); setDateTo('');
+  }
+
   return (
-    <div>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="font-display text-2xl text-[#205251]">Booking Management</h2>
-          <p className="text-sm text-[#4d6060]">{total} booking</p>
+          <h1 className="font-display text-2xl font-bold text-[#0f172a]">Booking</h1>
+          <p className="mt-0.5 text-sm text-[#64748b]">
+            {total > 0 ? `${total} booking ditemukan` : 'Manajemen booking'}
+          </p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#205251] px-4 text-sm font-semibold text-white hover:brightness-110"
+          className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#205251] px-5 text-sm font-bold text-white shadow-sm transition hover:brightness-110 active:scale-95"
         >
           <Plus size={18} /> Tambah Booking
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="relative">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8EBFBF]" />
+      {/* Search + Filter */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8]" />
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Cari kode / nama / 4 digit HP…"
-            className="h-11 w-full rounded-xl border border-[#DBDAD7] bg-white pl-9 pr-3 text-sm outline-none focus:border-[#29808B]"
+            placeholder="Cari kode, nama, atau 4 digit HP…"
+            className="h-11 w-full rounded-2xl border border-[#e2e8f0] bg-white pl-10 pr-4 text-sm text-[#0f172a] shadow-sm outline-none placeholder:text-[#94a3b8] focus:border-[#205251] focus:ring-2 focus:ring-[#205251]/10"
           />
+          {q && (
+            <button onClick={() => setQ('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94a3b8] hover:text-[#64748b]">
+              <X size={14} />
+            </button>
+          )}
         </div>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="h-11 rounded-xl border border-[#DBDAD7] bg-white px-3 text-sm outline-none focus:border-[#29808B]"
+        <button
+          onClick={() => setShowFilter((v) => !v)}
+          className={`inline-flex h-11 items-center gap-2 rounded-2xl border px-4 text-sm font-semibold shadow-sm transition ${
+            hasFilter
+              ? 'border-[#205251] bg-[#205251] text-white'
+              : 'border-[#e2e8f0] bg-white text-[#64748b] hover:border-[#205251] hover:text-[#205251]'
+          }`}
         >
-          <option value="">Semua Status</option>
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{STATUS_LABEL[s]}</option>
-          ))}
-        </select>
-        <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-11 rounded-xl border border-[#DBDAD7] bg-white px-3 text-sm outline-none focus:border-[#29808B]" />
-        <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-11 rounded-xl border border-[#DBDAD7] bg-white px-3 text-sm outline-none focus:border-[#29808B]" />
+          <SlidersHorizontal size={16} />
+          <span className="hidden sm:inline">Filter</span>
+          {hasFilter && <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-[#205251]">!</span>}
+        </button>
       </div>
 
+      {/* Filter panel */}
+      {showFilter && (
+        <div className="rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-bold text-[#0f172a]">Filter</p>
+            {hasFilter && (
+              <button onClick={clearFilters} className="text-xs font-semibold text-red-500 hover:text-red-600">
+                Reset
+              </button>
+            )}
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-[#64748b]">Status</label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="h-11 w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-sm text-[#0f172a] outline-none focus:border-[#205251]"
+              >
+                <option value="">Semua Status</option>
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s} value={s}>{STATUS_LABEL[s]}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-[#64748b]">Dari Tanggal</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="h-11 w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-sm text-[#0f172a] outline-none focus:border-[#205251]"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-[#64748b]">Sampai Tanggal</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="h-11 w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-sm text-[#0f172a] outline-none focus:border-[#205251]"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Content */}
       {loading ? (
         <LoadingBlock />
       ) : error ? (
         <ErrorBlock message={error} onRetry={load} />
       ) : rows.length === 0 ? (
-        <EmptyState title="Belum ada booking" description="Booking baru akan muncul di sini." action={
-          <button onClick={() => setShowAdd(true)} className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#205251] px-4 text-sm font-semibold text-white">
-            <Plus size={16} /> Tambah Booking
-          </button>
-        } />
+        <EmptyState
+          title="Belum ada booking"
+          description={q || hasFilter ? 'Coba ubah kata kunci atau filter.' : 'Booking baru akan muncul di sini.'}
+          action={
+            !q && !hasFilter ? (
+              <button
+                onClick={() => setShowAdd(true)}
+                className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#205251] px-5 text-sm font-bold text-white"
+              >
+                <Plus size={16} /> Tambah Booking
+              </button>
+            ) : undefined
+          }
+        />
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden overflow-x-auto rounded-2xl border border-[#DBDAD7] bg-white md:block">
+          <div className="hidden overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-sm md:block">
             <table className="w-full text-sm">
-              <thead className="bg-[#F3F0E7] text-left text-xs uppercase tracking-wide text-[#4d6060]">
-                <tr>
-                  <th className="px-4 py-3">Kode</th>
-                  <th className="px-4 py-3">Pasien</th>
-                  <th className="px-4 py-3">Layanan</th>
-                  <th className="px-4 py-3">Jadwal</th>
-                  <th className="px-4 py-3">Area</th>
-                  <th className="px-4 py-3">Nurse</th>
-                  <th className="px-4 py-3">Bayar</th>
-                  <th className="px-4 py-3">Status</th>
+              <thead>
+                <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
+                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Kode</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Pasien</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Layanan</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Jadwal</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Nurse</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Bayar</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#DBDAD7]">
+              <tbody className="divide-y divide-[#f8fafc]">
                 {rows.map((b) => (
-                  <tr key={b.id} className="hover:bg-[#F3F0E7]/60">
-                    <td className="px-4 py-3">
-                      <Link href={`/crm/booking/${b.booking_code_display ?? b.id}`} className="font-medium text-[#205251] hover:underline">
+                  <tr key={b.id} className="group transition hover:bg-[#f8fafc]">
+                    <td className="px-4 py-3.5">
+                      <Link
+                        href={`/crm/booking/${b.booking_code_display ?? b.id}`}
+                        className="font-mono text-xs font-bold text-[#205251] hover:underline"
+                      >
                         {b.booking_code_display ?? '—'}
                       </Link>
                     </td>
-                    <td className="px-4 py-3">{b.customer_name}<span className="block text-xs text-[#8EBFBF]">···{b.customer_phone_last4}</span></td>
-                    <td className="px-4 py-3">{b.product_name}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{formatDayTime(b.booking_date, b.booking_time)}</td>
-                    <td className="px-4 py-3">{b.service_area_name ?? '—'}</td>
-                    <td className="px-4 py-3">{b.nurse_name ?? '—'}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">{formatRupiah(b.paid_amount)} <span className="text-xs text-[#8EBFBF]">/ {formatRupiah(b.total_fee)}</span></td>
-                    <td className="px-4 py-3"><StatusBadge status={b.crm_status} /></td>
+                    <td className="px-4 py-3.5">
+                      <p className="font-semibold text-[#0f172a]">{b.customer_name}</p>
+                      <p className="text-xs text-[#94a3b8]">···{b.customer_phone_last4}</p>
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-[#374151]">{b.product_name}</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm text-[#374151]">
+                      {formatDayTime(b.booking_date, b.booking_time)}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-[#374151]">{b.nurse_name ?? <span className="text-[#94a3b8]">—</span>}</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap">
+                      <p className="text-sm font-semibold text-[#0f172a]">{formatRupiah(b.paid_amount)}</p>
+                      <p className="text-xs text-[#94a3b8]">/ {formatRupiah(b.total_fee)}</p>
+                    </td>
+                    <td className="px-4 py-3.5"><StatusBadge status={b.crm_status} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -162,18 +241,26 @@ export default function BookingListPage() {
               <Link
                 key={b.id}
                 href={`/crm/booking/${b.booking_code_display ?? b.id}`}
-                className="block rounded-2xl border border-[#DBDAD7] bg-white p-4"
+                className="block rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-sm transition hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-[#205251]">{b.booking_code_display ?? '—'}</p>
-                    <p className="text-sm">{b.customer_name} · {b.product_name}</p>
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#D6EAEA] text-sm font-bold text-[#205251]">
+                      {b.customer_name[0]?.toUpperCase()}
+                    </span>
+                    <div>
+                      <p className="font-semibold text-[#0f172a]">{b.customer_name}</p>
+                      <p className="text-xs text-[#94a3b8]">{b.booking_code_display}</p>
+                    </div>
                   </div>
                   <StatusBadge status={b.crm_status} />
                 </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-[#4d6060]">
-                  <span>{formatDayTime(b.booking_date, b.booking_time)} · {b.service_area_name ?? '—'}</span>
-                  <span>{formatRupiah(b.total_fee)}</span>
+                <div className="mt-3 border-t border-[#f1f5f9] pt-3">
+                  <p className="text-sm text-[#374151]">{b.product_name}</p>
+                  <div className="mt-1.5 flex items-center justify-between text-xs text-[#64748b]">
+                    <span>{formatDayTime(b.booking_date, b.booking_time)}</span>
+                    <span className="font-semibold text-[#0f172a]">{formatRupiah(b.total_fee)}</span>
+                  </div>
                 </div>
               </Link>
             ))}
@@ -181,7 +268,9 @@ export default function BookingListPage() {
         </>
       )}
 
-      {showAdd && <AddBookingModal onClose={() => setShowAdd(false)} onCreated={() => { setShowAdd(false); load(); }} />}
+      {showAdd && (
+        <AddBookingModal onClose={() => setShowAdd(false)} onCreated={() => { setShowAdd(false); load(); }} />
+      )}
     </div>
   );
 }
@@ -210,8 +299,7 @@ function AddBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
   async function submit() {
     setErr('');
     if (!form.customer_name || !form.customer_phone || !form.address || !form.product_id || !form.booking_date || !form.booking_time) {
-      setErr('Lengkapi semua kolom wajib.');
-      return;
+      setErr('Lengkapi semua kolom wajib.'); return;
     }
     setSaving(true);
     try {
@@ -223,7 +311,7 @@ function AddBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
     }
   }
 
-  const inputCls = 'h-11 w-full rounded-xl border border-[#DBDAD7] px-3 text-base outline-none focus:border-[#29808B]';
+  const inputCls = 'h-11 w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] px-3 text-sm text-[#0f172a] outline-none focus:border-[#205251] focus:bg-white focus:ring-2 focus:ring-[#205251]/10';
 
   return (
     <Modal
@@ -232,50 +320,87 @@ function AddBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
       title="Tambah Booking"
       footer={
         <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="h-11 rounded-xl border border-[#DBDAD7] px-4 text-sm">Batal</button>
-          <button onClick={submit} disabled={saving} className="h-11 rounded-xl bg-[#205251] px-5 text-sm font-semibold text-white disabled:opacity-70">
-            {saving ? 'Menyimpan…' : 'Simpan'}
+          <button onClick={onClose} className="h-11 rounded-xl border border-[#e2e8f0] px-4 text-sm font-semibold text-[#64748b] hover:bg-[#f8fafc]">
+            Batal
+          </button>
+          <button
+            onClick={submit}
+            disabled={saving}
+            className="h-11 rounded-xl bg-[#205251] px-6 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-70"
+          >
+            {saving ? 'Menyimpan…' : 'Simpan Booking'}
           </button>
         </div>
       }
     >
       <div className="space-y-3">
-        {err && <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{err}</div>}
+        {err && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{err}</div>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm">Nama Pasien*<input className={inputCls} value={form.customer_name} onChange={(e) => set('customer_name', e.target.value)} /></label>
-          <label className="text-sm">No. HP*<input className={inputCls} value={form.customer_phone} onChange={(e) => set('customer_phone', e.target.value)} placeholder="08…" /></label>
+          <label className="block text-xs font-bold text-[#64748b]">
+            Nama Pasien *
+            <input className={`mt-1 ${inputCls}`} value={form.customer_name} onChange={(e) => set('customer_name', e.target.value)} />
+          </label>
+          <label className="block text-xs font-bold text-[#64748b]">
+            No. HP *
+            <input className={`mt-1 ${inputCls}`} value={form.customer_phone} onChange={(e) => set('customer_phone', e.target.value)} placeholder="08…" />
+          </label>
         </div>
-        <label className="block text-sm">Alamat*<textarea className="min-h-[60px] w-full rounded-xl border border-[#DBDAD7] p-3 text-base outline-none focus:border-[#29808B]" value={form.address} onChange={(e) => set('address', e.target.value)} /></label>
-        <label className="block text-sm">Layanan*
-          <select className={inputCls} value={form.product_id} onChange={(e) => set('product_id', e.target.value)}>
+        <label className="block text-xs font-bold text-[#64748b]">
+          Alamat *
+          <textarea className={`mt-1 min-h-[64px] w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-3 text-sm text-[#0f172a] outline-none focus:border-[#205251] focus:bg-white`} value={form.address} onChange={(e) => set('address', e.target.value)} />
+        </label>
+        <label className="block text-xs font-bold text-[#64748b]">
+          Layanan *
+          <select className={`mt-1 ${inputCls}`} value={form.product_id} onChange={(e) => set('product_id', e.target.value)}>
             <option value="">Pilih layanan</option>
             {opts?.products.map((p) => <option key={p.id} value={p.id}>{p.name} — {formatRupiah(p.price_amount)}</option>)}
           </select>
         </label>
-        <label className="block text-sm">Area
-          <select className={inputCls} value={form.service_area_id} onChange={(e) => set('service_area_id', e.target.value)}>
+        <label className="block text-xs font-bold text-[#64748b]">
+          Area Layanan
+          <select className={`mt-1 ${inputCls}`} value={form.service_area_id} onChange={(e) => set('service_area_id', e.target.value)}>
             <option value="">Tanpa area</option>
             {opts?.areas.map((a) => <option key={a.id} value={a.id}>{a.name} — visit {formatRupiah(a.visit_fee)}</option>)}
           </select>
         </label>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm">Tanggal*<input type="date" className={inputCls} value={form.booking_date} onChange={(e) => set('booking_date', e.target.value)} /></label>
-          <label className="text-sm">Jam*<input type="time" className={inputCls} value={form.booking_time} onChange={(e) => set('booking_time', e.target.value)} /></label>
+          <label className="block text-xs font-bold text-[#64748b]">
+            Tanggal *
+            <input type="date" className={`mt-1 ${inputCls}`} value={form.booking_date} onChange={(e) => set('booking_date', e.target.value)} />
+          </label>
+          <label className="block text-xs font-bold text-[#64748b]">
+            Jam *
+            <input type="time" className={`mt-1 ${inputCls}`} value={form.booking_time} onChange={(e) => set('booking_time', e.target.value)} />
+          </label>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm">Tipe Lokasi
-            <select className={inputCls} value={form.location_type} onChange={(e) => set('location_type', e.target.value)}>
+          <label className="block text-xs font-bold text-[#64748b]">
+            Tipe Lokasi
+            <select className={`mt-1 ${inputCls}`} value={form.location_type} onChange={(e) => set('location_type', e.target.value)}>
               {['VILLA', 'HOTEL', 'RUMAH', 'AIRBNB', 'LAINNYA'].map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </label>
-          <label className="text-sm">Jumlah Orang<input type="number" min={1} className={inputCls} value={form.people_count} onChange={(e) => set('people_count', Number(e.target.value))} /></label>
+          <label className="block text-xs font-bold text-[#64748b]">
+            Jumlah Orang
+            <input type="number" min={1} className={`mt-1 ${inputCls}`} value={form.people_count} onChange={(e) => set('people_count', Number(e.target.value))} />
+          </label>
         </div>
-        <label className="block text-sm">Catatan<textarea className="min-h-[50px] w-full rounded-xl border border-[#DBDAD7] p-3 text-base outline-none focus:border-[#29808B]" value={form.notes} onChange={(e) => set('notes', e.target.value)} /></label>
+        <label className="block text-xs font-bold text-[#64748b]">
+          Catatan
+          <textarea className={`mt-1 min-h-[48px] w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-3 text-sm text-[#0f172a] outline-none focus:border-[#205251] focus:bg-white`} value={form.notes} onChange={(e) => set('notes', e.target.value)} />
+        </label>
 
-        <div className="rounded-xl bg-[#D6EAEA] px-4 py-3 text-sm text-[#205251]">
-          Total estimasi: <strong>{formatRupiah(total)}</strong>
-          <span className="block text-xs text-[#29808B]">Layanan {formatRupiah(product?.price_amount ?? 0)} + Visit {formatRupiah(area?.visit_fee ?? 0)}</span>
-        </div>
+        {(product || area) && (
+          <div className="rounded-xl border border-[#D6EAEA] bg-[#f0f9f9] px-4 py-3">
+            <p className="text-xs font-bold text-[#205251]">Estimasi Total</p>
+            <p className="mt-0.5 font-display text-xl font-bold text-[#205251]">{formatRupiah(total)}</p>
+            <p className="text-xs text-[#64748b]">
+              Layanan {formatRupiah(product?.price_amount ?? 0)} + Visit {formatRupiah(area?.visit_fee ?? 0)}
+            </p>
+          </div>
+        )}
       </div>
     </Modal>
   );

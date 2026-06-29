@@ -162,7 +162,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
 
   return (
     <CRMStaffContext.Provider value={staff}>
-      <div className="min-h-screen bg-[#F3F0E7] font-ui text-[#111a1a]">
+      <div className="min-h-screen bg-[#f0f4f8] font-ui text-[#0f172a]">
 
         {/* ── Sidebar (desktop) ── */}
         <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-[#1a4342] text-white md:flex">
@@ -239,8 +239,8 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
         {/* ── Main area ── */}
         <div className="md:ml-64">
           {/* Topbar */}
-          <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#DBDAD7] bg-white/92 px-4 backdrop-blur-md md:px-8">
-            {/* Mobile: brand mark */}
+          <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#e4e9ef] bg-white px-4 shadow-sm md:px-8">
+            {/* Mobile: brand mark + page title */}
             <div className="flex items-center gap-2.5 md:hidden">
               <span
                 className="flex h-8 w-8 items-center justify-center rounded-lg font-display text-sm font-bold shadow-sm"
@@ -248,11 +248,13 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
               >
                 D
               </span>
-              <span className="font-display text-base font-semibold text-[#205251]">{pageTitle}</span>
+              <span className="font-display text-base font-bold text-[#0f172a]">{pageTitle}</span>
             </div>
 
-            {/* Desktop: page title */}
-            <h1 className="hidden font-display text-xl font-semibold text-[#205251] md:block">{pageTitle}</h1>
+            {/* Desktop: page title + date */}
+            <div className="hidden md:block">
+              <h1 className="font-display text-lg font-bold text-[#0f172a] leading-tight">{pageTitle}</h1>
+            </div>
 
             {/* Account menu */}
             <div className="relative flex items-center gap-3" ref={accountRef}>
@@ -304,7 +306,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <main className="px-4 py-6 pb-28 md:px-8 md:pb-10">{children}</main>
+          <main className="px-4 py-6 pb-28 md:px-8 md:py-8 md:pb-10">{children}</main>
         </div>
 
         {/* ── Bottom nav (mobile) ── */}
@@ -355,8 +357,6 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          {/* iOS-style home indicator spacing */}
-          <div className="h-safe-bottom" />
         </nav>
 
         {/* ── Mobile "More" sheet ── */}
