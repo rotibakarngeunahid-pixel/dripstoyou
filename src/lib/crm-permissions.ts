@@ -6,9 +6,9 @@ import type { CRMRole } from './crm-session';
 export const CRM_PERMISSIONS: Record<CRMRole, string[]> = {
   OWNER: [
     'dashboard', 'booking', 'patient', 'nurse', 'inventory', 'purchase_order',
-    'finance', 'whatsapp', 'staff', 'area', 'audit', 'screening', 'consent', 'treatment', 'service',
+    'finance', 'whatsapp', 'staff', 'area', 'audit', 'screening', 'consent', 'treatment',
   ],
-  ADMIN: ['booking', 'patient', 'nurse', 'whatsapp', 'area', 'service', 'screening', 'consent', 'treatment'],
+  ADMIN: ['booking', 'patient', 'nurse', 'whatsapp', 'area', 'screening', 'consent', 'treatment'],
   NURSE: ['nurse_portal', 'screening', 'consent', 'treatment'],
   FINANCE: ['finance', 'purchase_order'],
 };
@@ -26,7 +26,6 @@ export const CRM_MODULE_LABELS: { key: string; label: string }[] = [
   { key: 'patient', label: 'Pasien' },
   { key: 'nurse', label: 'Nurse (kelola & assign)' },
   { key: 'nurse_portal', label: 'Portal Nurse (jadwal sendiri)' },
-  { key: 'service', label: 'Layanan' },
   { key: 'screening', label: 'Screening' },
   { key: 'consent', label: 'Consent' },
   { key: 'treatment', label: 'Treatment' },
@@ -58,7 +57,6 @@ const HOME_PRIORITY: { module: string; path: string }[] = [
   { module: 'finance', path: '/crm/finance' },
   { module: 'purchase_order', path: '/crm/purchase-order' },
   { module: 'inventory', path: '/crm/inventory' },
-  { module: 'service', path: '/crm/layanan' },
   { module: 'area', path: '/crm/area' },
   { module: 'whatsapp', path: '/crm/whatsapp' },
 ];

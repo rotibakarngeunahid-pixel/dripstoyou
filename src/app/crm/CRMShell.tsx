@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import {
-  LayoutDashboard, Calendar, Users, Stethoscope, Sparkles, Package, ShoppingCart,
+  LayoutDashboard, Calendar, Users, Stethoscope, Package, ShoppingCart,
   Wallet, MapPin, MessageCircle, Shield, ClipboardList, LogOut, X, ChevronDown,
   MoreHorizontal, type LucideIcon,
 } from 'lucide-react';
@@ -28,7 +28,6 @@ const NAV_GROUPS: NavGroup[] = [
       { href: '/crm/booking', label: 'Booking', icon: Calendar, module: 'booking' },
       { href: '/crm/pasien', label: 'Pasien', icon: Users, module: 'patient' },
       { href: '/crm/nurse', label: 'Nurse', icon: Stethoscope, module: 'nurse_portal' },
-      { href: '/crm/layanan', label: 'Layanan', icon: Sparkles, module: 'service' },
     ],
   },
   {
