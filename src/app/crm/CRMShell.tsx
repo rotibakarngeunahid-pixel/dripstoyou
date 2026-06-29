@@ -50,8 +50,6 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-// Visibility is driven by the staff's effective modules (role default or custom).
-// The "Nurse" item shows for either the portal or the manage permission.
 function canSee(modules: string[], role: CRMRole, item: NavItem): boolean {
   if (role === 'OWNER') return true;
   if (item.module === 'nurse_portal') return modules.includes('nurse_portal') || modules.includes('nurse');
@@ -149,7 +147,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
   const pageTitle = activeItem?.label ?? 'CRM';
 
   const bottomItems = flatItems.slice(0, 4);
-  const overflowItems = flatItems.slice(4);
+  const hasOverflow = flatItems.length > 4;
 
   async function handleLogout() {
     if (loggingOut) return;
@@ -165,21 +163,31 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
   return (
     <CRMStaffContext.Provider value={staff}>
       <div className="min-h-screen bg-[#F3F0E7] font-ui text-[#111a1a]">
-        {/* Sidebar (desktop) */}
-        <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-[#205251] text-white md:flex">
-          <div className="flex items-center gap-3 px-5 py-5">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-lg font-bold text-[#EAD4AE]">D</span>
-            <span className="leading-tight">
-              <span className="block font-display text-base">Drips To You</span>
-              <span className="block text-[11px] tracking-wider text-white/60">CRM INTERNAL</span>
+
+        {/* ── Sidebar (desktop) ── */}
+        <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-[#1a4342] text-white md:flex">
+          {/* Brand */}
+          <div className="flex h-[72px] items-center gap-3 border-b border-white/8 px-5">
+            <span
+              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl font-display text-lg font-bold shadow-md"
+              style={{ background: 'linear-gradient(135deg, #EAD4AE, #C9944C)', color: '#103b3a' }}
+            >
+              D
             </span>
+            <div className="min-w-0">
+              <p className="truncate font-display text-[15px] font-semibold leading-tight text-white">Drips To You</p>
+              <p className="text-[10px] font-bold uppercase tracking-[2px] text-white/50">CRM Internal</p>
+            </div>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-3 pb-4">
+          {/* Navigation */}
+          <nav className="flex-1 overflow-y-auto px-3 py-4">
             {visibleGroups.map((group) => (
               <div key={group.label} className="mb-5">
-                <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-wider text-white/40">{group.label}</p>
-                <div className="space-y-1">
+                <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[2px] text-white/35">
+                  {group.label}
+                </p>
+                <div className="space-y-0.5">
                   {group.items.map((item) => {
                     const active = pathname.startsWith(item.href);
                     const Icon = item.icon;
@@ -188,14 +196,15 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
                         key={item.href}
                         href={item.href}
                         aria-current={active ? 'page' : undefined}
-                        className={`flex items-center gap-3 rounded-lg border-l-[3px] px-3 py-2.5 text-sm transition ${
+                        className={`flex items-center gap-3 rounded-xl border-l-[3px] px-3 py-2.5 text-sm font-medium transition-all ${
                           active
-                            ? 'border-[#C9944C] bg-white/10 font-medium text-white'
-                            : 'border-transparent text-white/70 hover:bg-white/5 hover:text-white'
+                            ? 'border-[#C9944C] bg-white/12 text-white'
+                            : 'border-transparent text-white/65 hover:bg-white/7 hover:text-white/90'
                         }`}
                       >
                         <Icon size={18} aria-hidden />
-                        <span>{item.label}</span>
+                        <span className="flex-1">{item.label}</span>
+                        {active && <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#C9944C]" />}
                       </Link>
                     );
                   })}
@@ -204,26 +213,48 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          <div className="border-t border-white/10 px-4 py-4">
-            <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-semibold">{initials(staff.name)}</span>
-              <span className="min-w-0 flex-1 leading-tight">
-                <span className="block truncate text-sm text-white">{staff.name}</span>
-                <span className="block text-[11px] text-white/50">{ROLE_LABEL[role]}</span>
+          {/* User + logout */}
+          <div className="border-t border-white/10 p-4">
+            <div className="mb-2 flex items-center gap-3">
+              <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${ROLE_BADGE[role]}`}>
+                {initials(staff.name)}
               </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-white">{staff.name}</p>
+                <p className="text-[11px] text-white/50">{ROLE_LABEL[role]}</p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-white/55 transition hover:bg-white/10 hover:text-white/90 disabled:opacity-50"
+            >
+              <LogOut size={14} aria-hidden />
+              {loggingOut ? 'Keluar…' : 'Logout'}
+            </button>
           </div>
         </aside>
 
-        {/* Main */}
+        {/* ── Main area ── */}
         <div className="md:ml-64">
           {/* Topbar */}
-          <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#DBDAD7] bg-white/90 px-4 backdrop-blur md:px-8">
-            <div className="flex items-center gap-2 md:hidden">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#205251] text-sm font-bold text-[#EAD4AE]">D</span>
+          <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#DBDAD7] bg-white/92 px-4 backdrop-blur-md md:px-8">
+            {/* Mobile: brand mark */}
+            <div className="flex items-center gap-2.5 md:hidden">
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-lg font-display text-sm font-bold shadow-sm"
+                style={{ background: 'linear-gradient(135deg, #EAD4AE, #C9944C)', color: '#103b3a' }}
+              >
+                D
+              </span>
+              <span className="font-display text-base font-semibold text-[#205251]">{pageTitle}</span>
             </div>
-            <h1 className="hidden font-display text-xl text-[#205251] md:block">{pageTitle}</h1>
 
+            {/* Desktop: page title */}
+            <h1 className="hidden font-display text-xl font-semibold text-[#205251] md:block">{pageTitle}</h1>
+
+            {/* Account menu */}
             <div className="relative flex items-center gap-3" ref={accountRef}>
               <button
                 type="button"
@@ -232,30 +263,30 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
                 aria-haspopup="menu"
                 aria-expanded={accountOpen}
               >
-                <span className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-white ${ROLE_BADGE[role]}`}>
+                <span className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white ${ROLE_BADGE[role]}`}>
                   {initials(staff.name)}
                 </span>
                 <span className="hidden text-left leading-tight sm:block">
-                  <span className="block text-sm font-medium text-[#205251]">{staff.name}</span>
+                  <span className="block text-sm font-semibold text-[#205251]">{staff.name}</span>
                   <span className="block text-[11px] text-[#4d6060]">{ROLE_LABEL[role]}</span>
                 </span>
-                <ChevronDown size={16} className="text-[#4d6060]" aria-hidden />
+                <ChevronDown size={15} className="text-[#8EBFBF]" aria-hidden />
               </button>
 
               {accountOpen && (
-                <div role="menu" className="absolute right-0 top-12 w-56 overflow-hidden rounded-xl border border-[#DBDAD7] bg-white shadow-lg">
-                  <div className="border-b border-[#DBDAD7] px-4 py-3">
-                    <p className="truncate text-sm font-medium text-[#205251]">{staff.name}</p>
-                    <p className="truncate text-xs text-[#4d6060]">{staff.email}</p>
+                <div role="menu" className="absolute right-0 top-12 w-56 overflow-hidden rounded-2xl border border-[#DBDAD7] bg-white shadow-xl">
+                  <div className="border-b border-[#F3F0E7] px-4 py-3">
+                    <p className="truncate text-sm font-semibold text-[#205251]">{staff.name}</p>
+                    <p className="truncate text-xs text-[#8EBFBF]">{staff.email}</p>
                   </div>
                   {staff.isWebsiteAdmin && (
                     <Link
                       href="/admin/dashboard"
                       role="menuitem"
                       onClick={() => setAccountOpen(false)}
-                      className="flex w-full items-center gap-2 border-b border-[#DBDAD7] px-4 py-3 text-sm text-[#205251] transition hover:bg-[#F3F0E7]"
+                      className="flex w-full items-center gap-2 border-b border-[#F3F0E7] px-4 py-3 text-sm text-[#205251] transition hover:bg-[#F3F0E7]"
                     >
-                      <Shield size={16} aria-hidden /> Panel Website Admin
+                      <Shield size={15} aria-hidden /> Panel Website Admin
                     </Link>
                   )}
                   <button
@@ -265,7 +296,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
                     role="menuitem"
                     className="flex w-full items-center gap-2 px-4 py-3 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-60"
                   >
-                    <LogOut size={16} aria-hidden />
+                    <LogOut size={15} aria-hidden />
                     {loggingOut ? 'Keluar…' : 'Logout'}
                   </button>
                 </div>
@@ -273,64 +304,118 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <main className="px-4 py-6 pb-24 md:px-8 md:pb-10">{children}</main>
+          <main className="px-4 py-6 pb-28 md:px-8 md:pb-10">{children}</main>
         </div>
 
-        {/* Bottom nav (mobile) */}
-        <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-[#DBDAD7] bg-white md:hidden">
-          {bottomItems.map((item) => {
-            const active = pathname.startsWith(item.href);
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] ${active ? 'text-[#205251]' : 'text-[#4d6060]'}`}
+        {/* ── Bottom nav (mobile) ── */}
+        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#DBDAD7] bg-white/95 backdrop-blur-md md:hidden">
+          <div className="flex items-stretch">
+            {bottomItems.map((item) => {
+              const active = pathname.startsWith(item.href);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex flex-1 flex-col items-center gap-0.5 py-2"
+                >
+                  <span
+                    className={`flex h-9 w-14 items-center justify-center rounded-2xl transition-colors ${
+                      active ? 'bg-[#D6EAEA]' : ''
+                    }`}
+                  >
+                    <Icon
+                      size={21}
+                      aria-hidden
+                      className={active ? 'text-[#205251]' : 'text-[#8EBFBF]'}
+                    />
+                  </span>
+                  <span
+                    className={`text-[10px] font-semibold leading-tight ${
+                      active ? 'text-[#205251]' : 'text-[#8EBFBF]'
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
+
+            {hasOverflow && (
+              <button
+                type="button"
+                onClick={() => setMoreOpen(true)}
+                className="flex flex-1 flex-col items-center gap-0.5 py-2"
               >
-                <Icon size={22} aria-hidden />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-          {overflowItems.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setMoreOpen(true)}
-              className="flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] text-[#4d6060]"
-            >
-              <MoreHorizontal size={22} aria-hidden />
-              <span>Lainnya</span>
-            </button>
-          )}
+                <span className="flex h-9 w-14 items-center justify-center rounded-2xl">
+                  <MoreHorizontal size={21} className="text-[#8EBFBF]" aria-hidden />
+                </span>
+                <span className="text-[10px] font-semibold leading-tight text-[#8EBFBF]">Lainnya</span>
+              </button>
+            )}
+          </div>
+
+          {/* iOS-style home indicator spacing */}
+          <div className="h-safe-bottom" />
         </nav>
 
-        {/* Mobile "More" sheet */}
+        {/* ── Mobile "More" sheet ── */}
         {moreOpen && (
           <div className="fixed inset-0 z-40 md:hidden">
-            <button className="absolute inset-0 bg-black/40" aria-label="Tutup" onClick={() => setMoreOpen(false)} />
-            <div className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white p-4 pb-8">
-              <div className="mb-3 flex items-center justify-between">
-                <p className="font-display text-lg text-[#205251]">Menu</p>
-                <button onClick={() => setMoreOpen(false)} aria-label="Tutup"><X size={20} className="text-[#4d6060]" /></button>
+            <button
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              aria-label="Tutup"
+              onClick={() => setMoreOpen(false)}
+            />
+            <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white shadow-2xl">
+              {/* Drag handle */}
+              <div className="flex justify-center pb-1 pt-3">
+                <span className="h-1 w-10 rounded-full bg-[#DBDAD7]" />
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                {flatItems.map((item) => {
-                  const Icon = item.icon;
-                  const active = pathname.startsWith(item.href);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMoreOpen(false)}
-                      className={`flex flex-col items-center gap-2 rounded-xl border p-3 text-center text-xs ${
-                        active ? 'border-[#205251] bg-[#D6EAEA] text-[#205251]' : 'border-[#DBDAD7] text-[#4d6060]'
-                      }`}
-                    >
-                      <Icon size={22} aria-hidden />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
+
+              <div className="px-5 pb-2 pt-3">
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="font-display text-xl font-semibold text-[#205251]">Menu</p>
+                  <button
+                    onClick={() => setMoreOpen(false)}
+                    aria-label="Tutup"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F3F0E7] text-[#205251] transition hover:bg-[#D6EAEA]"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+
+                {visibleGroups.map((group) => (
+                  <div key={group.label} className="mb-5">
+                    <p className="mb-2 text-[10px] font-bold uppercase tracking-[2px] text-[#8EBFBF]">
+                      {group.label}
+                    </p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {group.items.map((item) => {
+                        const Icon = item.icon;
+                        const active = pathname.startsWith(item.href);
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            onClick={() => setMoreOpen(false)}
+                            className={`flex flex-col items-center gap-2 rounded-2xl p-3 text-center text-[11px] font-semibold leading-tight transition ${
+                              active
+                                ? 'bg-[#D6EAEA] text-[#205251]'
+                                : 'bg-[#F3F0E7] text-[#4d6060]'
+                            }`}
+                          >
+                            <Icon size={20} aria-hidden />
+                            <span>{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Bottom padding for safe area */}
+                <div className="pb-6" />
               </div>
             </div>
           </div>
