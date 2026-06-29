@@ -40,18 +40,18 @@ export default function PatientListPage() {
   useEffect(() => { const t = setTimeout(load, 300); return () => clearTimeout(t); }, [load]);
 
   return (
-    <div>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div className="crm-page">
+      <div className="crm-page-header">
         <div>
-          <h2 className="font-display text-2xl text-[#205251]">Pasien</h2>
-          <p className="text-sm text-[#4d6060]">{total} pasien</p>
+          <h2 className="crm-page-title">Pasien</h2>
+          <p className="crm-page-subtitle">{total} pasien</p>
         </div>
-        <button onClick={() => setShowAdd(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#205251] px-4 text-sm font-semibold text-white hover:brightness-110">
+        <button onClick={() => setShowAdd(true)} className="crm-button">
           <Plus size={18} /> Tambah Pasien
         </button>
       </div>
 
-      <div className="mb-4 grid gap-2 sm:grid-cols-3">
+      <div className="crm-filter-card grid gap-2 p-3 sm:grid-cols-3">
         <div className="relative sm:col-span-1">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8EBFBF]" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cari nama / 4 digit HP…" className="h-11 w-full rounded-xl border border-[#DBDAD7] bg-white pl-9 pr-3 text-sm outline-none focus:border-[#29808B]" />
@@ -69,9 +69,9 @@ export default function PatientListPage() {
       {loading ? <LoadingBlock /> : error ? <ErrorBlock message={error} onRetry={load} /> : rows.length === 0 ? (
         <EmptyState title="Belum ada pasien" description="Tambahkan pasien atau buat booking baru." />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {rows.map((p) => (
-            <Link key={p.id} href={`/crm/pasien/${p.id}`} className="flex items-center gap-3 rounded-2xl border border-[#DBDAD7] bg-white p-3 hover:bg-[#F3F0E7]/60">
+            <Link key={p.id} href={`/crm/pasien/${p.id}`} className="crm-record-card flex items-center gap-3 p-3">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#D6EAEA] text-sm font-semibold text-[#205251]">{initials(p.name)}</span>
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2 font-medium text-[#205251]">

@@ -8,7 +8,7 @@ import { STATUS_RANK, type CRMBookingStatus } from '@/lib/crm-status';
 import StatusBadge from '@/components/crm/StatusBadge';
 import { LoadingBlock, ErrorBlock, EmptyState } from '@/components/crm/states';
 import { useCRMStaff } from '../CRMShell';
-import { CalendarDays, Stethoscope, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Stethoscope, CheckCircle2, ChevronRight } from 'lucide-react';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -57,12 +57,12 @@ function NursePortal() {
   const firstName = staff?.name?.split(' ')[0] ?? 'Nurse';
 
   return (
-    <div className="space-y-5">
+    <div className="crm-page">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="crm-page-header">
         <div>
-          <h1 className="font-display text-2xl font-bold text-[#0f172a]">Halo, {firstName} 👋</h1>
-          <p className="mt-0.5 text-sm text-[#64748b]">Jadwal kamu hari ini</p>
+          <h1 className="crm-page-title">Halo, {firstName}</h1>
+          <p className="crm-page-subtitle">Jadwal kamu hari ini</p>
         </div>
         <input
           type="date"
@@ -74,13 +74,13 @@ function NursePortal() {
 
       {/* Summary cards */}
       {items.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {[
             { label: 'Total', value: items.length, color: '#205251', bg: '#D6EAEA' },
             { label: 'Selesai', value: doneCount, color: '#10b981', bg: '#d1fae5' },
             { label: 'Sisa', value: items.length - doneCount, color: '#f59e0b', bg: '#fef3c7' },
           ].map((s) => (
-            <div key={s.label} className="rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-sm text-center">
+            <div key={s.label} className="crm-card text-center">
               <p className="text-xs font-bold uppercase tracking-widest text-[#94a3b8]">{s.label}</p>
               <p className="mt-1 font-display text-3xl font-bold" style={{ color: s.color }}>{s.value}</p>
             </div>
@@ -101,13 +101,13 @@ function NursePortal() {
             return (
               <div
                 key={b.id}
-                className={`rounded-2xl border bg-white p-4 shadow-sm transition ${
+                className={`crm-record-card p-4 transition ${
                   isDone ? 'border-[#d1fae5] opacity-70' : 'border-[#e2e8f0]'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-sm font-bold ${
+                    <span className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
                       isDone ? 'bg-[#d1fae5] text-[#10b981]' : 'bg-[#D6EAEA] text-[#205251]'
                     }`}>
                       {isDone ? <CheckCircle2 size={20} /> : b.customer_name[0]?.toUpperCase()}
@@ -125,7 +125,7 @@ function NursePortal() {
                 {!isDone && (
                   <Link
                     href={cta.href}
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#205251] py-2.5 text-sm font-bold text-white transition hover:brightness-110"
+                    className="crm-button mt-3 flex w-full py-2.5 text-sm"
                   >
                     {cta.label} <ChevronRight size={16} />
                   </Link>
@@ -161,11 +161,11 @@ function NurseAdminView() {
   }, [load]);
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="crm-page">
+      <div className="crm-page-header">
         <div>
-          <h1 className="font-display text-2xl font-bold text-[#0f172a]">Nurse</h1>
-          <p className="mt-0.5 text-sm text-[#64748b]">Beban kerja per {formatDate(date)}</p>
+          <h1 className="crm-page-title">Nurse</h1>
+          <p className="crm-page-subtitle">Beban kerja per {formatDate(date)}</p>
         </div>
         <input
           type="date"
@@ -180,9 +180,9 @@ function NurseAdminView() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((n) => (
-            <div key={n.id} className="rounded-2xl border border-[#e2e8f0] bg-white p-5 shadow-sm">
+            <div key={n.id} className="crm-record-card p-5">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[#D6EAEA] text-base font-bold text-[#205251]">
+                <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-[#D6EAEA] text-base font-bold text-[#205251]">
                   {n.name[0]?.toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">

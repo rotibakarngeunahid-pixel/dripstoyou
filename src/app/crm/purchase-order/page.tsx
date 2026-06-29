@@ -34,18 +34,21 @@ export default function PurchaseOrderPage() {
   useEffect(() => { const t = setTimeout(() => { void load(); }, 0); return () => clearTimeout(t); }, [load]);
 
   return (
-    <div>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-2xl text-[#205251]">Purchase Order</h2>
-        <button onClick={() => setCreateOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#205251] px-4 text-sm font-semibold text-white hover:brightness-110"><Plus size={18} /> Buat PO</button>
+    <div className="crm-page">
+      <div className="crm-page-header">
+        <div>
+          <h2 className="crm-page-title">Purchase Order</h2>
+          <p className="crm-page-subtitle">Buat dan pantau pembelian stok medis.</p>
+        </div>
+        <button onClick={() => setCreateOpen(true)} className="crm-button"><Plus size={18} /> Buat PO</button>
       </div>
 
       {loading ? <LoadingBlock /> : error ? <ErrorBlock message={error} onRetry={load} /> : rows.length === 0 ? (
         <EmptyState title="Belum ada PO" description="Buat purchase order untuk memesan stok." />
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {rows.map((po) => (
-            <button key={po.id} onClick={() => setDetailId(po.id)} className="flex w-full items-center justify-between rounded-2xl border border-[#DBDAD7] bg-white p-4 text-left hover:bg-[#F3F0E7]/60">
+            <button key={po.id} onClick={() => setDetailId(po.id)} className="crm-record-card flex w-full items-center justify-between p-4 text-left">
               <div>
                 <p className="font-semibold text-[#205251]">{po.po_number} · {po.supplier}</p>
                 <p className="text-xs text-[#4d6060]">Order {formatDate(po.order_date)}{po.received_date ? ` · Terima ${formatDate(po.received_date)}` : ''}</p>

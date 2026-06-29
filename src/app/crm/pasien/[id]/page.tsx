@@ -45,16 +45,16 @@ export default function PatientDetailPage() {
   if (error || !p) return <ErrorBlock message={error || 'Tidak ditemukan'} onRetry={load} />;
 
   return (
-    <div>
+    <div className="crm-page">
       <Link href="/crm/pasien" className="mb-4 inline-flex items-center gap-1 text-sm text-[#4d6060] hover:text-[#205251]">
         <ArrowLeft size={16} /> Kembali ke daftar pasien
       </Link>
 
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-[#DBDAD7] bg-white p-4">
+      <div className="crm-card flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-4">
           <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#D6EAEA] text-xl font-semibold text-[#205251]">{initials(p.name)}</span>
           <div>
-            <h2 className="flex items-center gap-2 font-display text-2xl text-[#205251]">
+            <h2 className="flex items-center gap-2 font-display text-2xl font-semibold text-[#174846]">
               {p.name}
               {p.is_repeat && <span className="rounded-full bg-[#C9944C] px-2 py-0.5 text-[10px] font-medium text-white">REPEAT · {p.booking_count}x</span>}
             </h2>
@@ -67,7 +67,7 @@ export default function PatientDetailPage() {
         </button>
       </div>
 
-      <div className="mb-4 flex gap-1 overflow-x-auto rounded-xl bg-white p-1">
+      <div className="flex gap-1 overflow-x-auto rounded-lg border border-[#dce5ea] bg-white p-1 shadow-sm">
         {TABS.map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`flex-1 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-medium ${tab === t ? 'bg-[#205251] text-white' : 'text-[#4d6060]'}`}>{t}</button>
         ))}
@@ -106,7 +106,7 @@ export default function PatientDetailPage() {
         p.bookings.length === 0 ? <EmptyState title="Belum ada booking" /> : (
           <div className="space-y-2">
             {p.bookings.map((b) => (
-              <Link key={b.id} href={`/crm/booking/${b.booking_code_display ?? b.id}`} className="flex items-center justify-between rounded-2xl border border-[#DBDAD7] bg-white p-3">
+              <Link key={b.id} href={`/crm/booking/${b.booking_code_display ?? b.id}`} className="crm-record-card flex items-center justify-between p-3">
                 <div>
                   <p className="font-medium text-[#205251]">{b.booking_code_display ?? '—'} · {b.product_name}</p>
                   <p className="text-xs text-[#4d6060]">{formatDate(b.booking_date)} {b.booking_time} · {b.nurse_name ?? 'Tanpa nurse'}</p>
@@ -122,7 +122,7 @@ export default function PatientDetailPage() {
         p.treatments.length === 0 ? <EmptyState title="Belum ada treatment" /> : (
           <div className="space-y-2">
             {p.treatments.map((t) => (
-              <div key={t.id} className="rounded-2xl border border-[#DBDAD7] bg-white p-3 text-sm">
+              <div key={t.id} className="crm-record-card p-3 text-sm">
                 <div className="flex justify-between">
                   <p className="font-medium text-[#205251]">{t.product_name}</p>
                   <span className="text-[#4d6060]">{t.completed_at ? formatDate(t.completed_at) : '—'}</span>
@@ -158,7 +158,7 @@ export default function PatientDetailPage() {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-[#DBDAD7] bg-white p-4">
+    <div className="crm-card">
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#8EBFBF]">{title}</p>
       {children}
     </div>

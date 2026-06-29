@@ -47,22 +47,22 @@ export default function FinancePage() {
   useEffect(() => { const t = setTimeout(() => { void load(); }, 0); return () => clearTimeout(t); }, [load]);
 
   return (
-    <div>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+    <div className="crm-page">
+      <div className="crm-page-header">
         <div className="flex items-center gap-2">
-          <button onClick={() => setMonth(shiftMonth(month, -1))} className="rounded-lg border border-[#DBDAD7] p-2 text-[#205251]"><ChevronLeft size={18} /></button>
-          <h2 className="font-display text-xl text-[#205251] sm:text-2xl">Finance · {monthLabel(month)}</h2>
-          <button onClick={() => setMonth(shiftMonth(month, 1))} className="rounded-lg border border-[#DBDAD7] p-2 text-[#205251]"><ChevronRight size={18} /></button>
+          <button onClick={() => setMonth(shiftMonth(month, -1))} className="crm-button-secondary h-10 w-10 p-0"><ChevronLeft size={18} /></button>
+          <h2 className="crm-page-title">Finance · {monthLabel(month)}</h2>
+          <button onClick={() => setMonth(shiftMonth(month, 1))} className="crm-button-secondary h-10 w-10 p-0"><ChevronRight size={18} /></button>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setExpOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-xl border border-[#DBDAD7] px-3 text-sm font-medium text-[#205251]"><Plus size={16} /> Pengeluaran</button>
-          <button onClick={() => setPayOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#205251] px-3 text-sm font-semibold text-white"><Plus size={16} /> Pembayaran</button>
+        <div className="crm-actions">
+          <button onClick={() => setExpOpen(true)} className="crm-button-secondary"><Plus size={16} /> Pengeluaran</button>
+          <button onClick={() => setPayOpen(true)} className="crm-button"><Plus size={16} /> Pembayaran</button>
         </div>
       </div>
 
       {loading ? <LoadingBlock /> : error ? <ErrorBlock message={error} onRetry={load} /> : stats ? (
         <>
-          <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
+          <div className="crm-stat-grid crm-stat-grid-five">
             <StatCard label="Omzet" value={formatRupiah(stats.omzet)} icon={CircleDollarSign} />
             <StatCard label="Paid" value={formatRupiah(stats.paid)} icon={TrendingUp} accent="#16a34a" />
             <StatCard label="Unpaid" value={formatRupiah(stats.unpaid)} icon={Wallet} accent="#dc2626" />
@@ -71,12 +71,12 @@ export default function FinancePage() {
           </div>
 
           <div className="grid gap-5 lg:grid-cols-2">
-            <div>
-              <h3 className="mb-2 font-display text-lg text-[#205251]">Pembayaran</h3>
+            <div className="space-y-3">
+              <h3 className="crm-section-title">Pembayaran</h3>
               {payments.length === 0 ? <EmptyState title="Belum ada pembayaran" /> : (
-                <div className="overflow-hidden rounded-2xl border border-[#DBDAD7] bg-white">
+                <div className="crm-list-panel overflow-hidden">
                   {payments.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between border-b border-[#F3F0E7] px-4 py-3 text-sm last:border-0">
+                    <div key={p.id} className="flex items-center justify-between border-b border-[#eef4f5] px-4 py-3 text-sm last:border-0">
                       <div>
                         <p className="font-medium text-[#205251]">{p.booking_code_display ?? '—'} · {p.customer_name}</p>
                         <p className="text-xs text-[#8EBFBF]">{p.method} · {p.paid_at ? formatDate(p.paid_at) : '—'}</p>
@@ -91,12 +91,12 @@ export default function FinancePage() {
               )}
             </div>
 
-            <div>
-              <h3 className="mb-2 font-display text-lg text-[#205251]">Pengeluaran</h3>
+            <div className="space-y-3">
+              <h3 className="crm-section-title">Pengeluaran</h3>
               {expenses.length === 0 ? <EmptyState title="Belum ada pengeluaran" /> : (
-                <div className="overflow-hidden rounded-2xl border border-[#DBDAD7] bg-white">
+                <div className="crm-list-panel overflow-hidden">
                   {expenses.map((e) => (
-                    <div key={e.id} className="flex items-center justify-between border-b border-[#F3F0E7] px-4 py-3 text-sm last:border-0">
+                    <div key={e.id} className="flex items-center justify-between border-b border-[#eef4f5] px-4 py-3 text-sm last:border-0">
                       <div>
                         <p className="font-medium text-[#205251]">{e.description}</p>
                         <p className="text-xs text-[#8EBFBF]">{e.category.replaceAll('_', ' ')} · {formatDate(e.expense_date)}</p>

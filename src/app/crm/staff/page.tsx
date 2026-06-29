@@ -33,18 +33,21 @@ export default function StaffPage() {
   useEffect(() => { const t = setTimeout(() => { void load(); }, 0); return () => clearTimeout(t); }, [load]);
 
   return (
-    <div>
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="font-display text-2xl text-[#205251]">Staff & Role</h2>
-        <button onClick={() => setModal('new')} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#205251] px-4 text-sm font-semibold text-white"><Plus size={18} /> Tambah Staff</button>
+    <div className="crm-page">
+      <div className="crm-page-header">
+        <div>
+          <h2 className="crm-page-title">Staff & Role</h2>
+          <p className="crm-page-subtitle">Kelola user internal, role, dan akses modul CRM.</p>
+        </div>
+        <button onClick={() => setModal('new')} className="crm-button"><Plus size={18} /> Tambah Staff</button>
       </div>
 
       {loading ? <LoadingBlock /> : error ? <ErrorBlock message={error} onRetry={load} /> : rows.length === 0 ? (
         <EmptyState title="Belum ada staff" />
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-[#DBDAD7] bg-white">
+        <div className="crm-list-panel overflow-hidden">
           {rows.map((s) => (
-            <button key={s.id} onClick={() => setModal(s)} className="flex w-full items-center justify-between border-b border-[#F3F0E7] px-4 py-3 text-left last:border-0 hover:bg-[#F3F0E7]/60">
+            <button key={s.id} onClick={() => setModal(s)} className="flex w-full items-center justify-between border-b border-[#eef4f5] px-4 py-3 text-left last:border-0 hover:bg-[#fbfdfd]">
               <div>
                 <p className="font-medium text-[#205251]">{s.name}</p>
                 <p className="text-xs text-[#8EBFBF]">{s.email} · Login terakhir {s.last_login_at ? formatDate(s.last_login_at) : '—'}</p>

@@ -1,4 +1,4 @@
-import { Inbox } from 'lucide-react';
+import { AlertCircle, Inbox } from 'lucide-react';
 
 export function Spinner({ className = '' }: { className?: string }) {
   return (
@@ -9,19 +9,21 @@ export function Spinner({ className = '' }: { className?: string }) {
   );
 }
 
-export function LoadingBlock({ label = 'Memuat…' }: { label?: string }) {
+export function LoadingBlock({ label = 'Memuat...' }: { label?: string }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 py-20 text-[#4d6060]">
+    <div className="crm-card flex min-h-[220px] flex-col items-center justify-center gap-4 text-center text-[#60727a]">
       <Spinner className="h-8 w-8" />
-      <p className="text-sm font-medium text-[#8EBFBF]">{label}</p>
+      <p className="text-sm font-semibold">{label}</p>
     </div>
   );
 }
 
 export function ErrorBlock({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div className="flex flex-col items-center gap-4 rounded-2xl border border-red-100 bg-red-50 px-6 py-14 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 text-red-500 text-2xl font-bold">!</span>
+    <div className="flex flex-col items-center gap-4 rounded-lg border border-red-100 bg-red-50 px-6 py-14 text-center shadow-sm">
+      <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-white text-red-600 shadow-sm">
+        <AlertCircle size={24} aria-hidden />
+      </span>
       <div>
         <p className="font-medium text-red-700">Terjadi kesalahan</p>
         <p className="mt-1 text-sm text-red-600">{message}</p>
@@ -29,7 +31,7 @@ export function ErrorBlock({ message, onRetry }: { message: string; onRetry?: ()
       {onRetry && (
         <button
           onClick={onRetry}
-          className="inline-flex h-10 items-center gap-2 rounded-xl bg-red-600 px-5 text-sm font-semibold text-white transition hover:bg-red-700 active:scale-95"
+          className="inline-flex h-10 items-center gap-2 rounded-lg bg-red-600 px-5 text-sm font-semibold text-white transition hover:bg-red-700 active:scale-95"
         >
           Coba lagi
         </button>
@@ -48,13 +50,13 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-[#8EBFBF] bg-white px-6 py-16 text-center">
-      <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#D6EAEA] text-[#205251]">
+    <div className="crm-empty-state flex flex-col items-center gap-4">
+      <span className="crm-empty-icon">
         <Inbox size={26} aria-hidden />
       </span>
       <div>
-        <p className="font-display text-base font-semibold text-[#205251]">{title}</p>
-        {description && <p className="mt-1.5 text-sm leading-relaxed text-[#4d6060]">{description}</p>}
+        <p className="font-display text-lg font-semibold text-[#174846]">{title}</p>
+        {description && <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-[#60727a]">{description}</p>}
       </div>
       {action && <div className="mt-1">{action}</div>}
     </div>

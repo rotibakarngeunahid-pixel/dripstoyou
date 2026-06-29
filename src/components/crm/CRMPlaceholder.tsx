@@ -8,18 +8,20 @@ export default function CRMPlaceholder({
   description?: string;
 }) {
   return (
-    <div className="mx-auto max-w-xl">
-      <div className="mb-6">
-        <h2 className="font-display text-2xl text-[#205251]">{title}</h2>
-        {description && <p className="mt-1 text-sm text-[#4d6060]">{description}</p>}
+    <div className="crm-page mx-auto max-w-xl">
+      <div className="crm-page-header">
+        <div>
+          <h2 className="crm-page-title">{title}</h2>
+          {description && <p className="crm-page-subtitle">{description}</p>}
+        </div>
       </div>
-      <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-[#8EBFBF] bg-white px-6 py-14 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#D6EAEA] text-[#205251]">
+      <div className="crm-empty-state flex flex-col items-center gap-4">
+        <span className="crm-empty-icon">
           <Hammer size={26} aria-hidden />
         </span>
         <div>
-          <p className="font-medium text-[#205251]">Modul sedang disiapkan</p>
-          <p className="mt-1 text-sm text-[#4d6060]">
+          <p className="font-medium text-[#174846]">Modul sedang disiapkan</p>
+          <p className="mt-1 text-sm text-[#60727a]">
             Fitur ini akan aktif pada tahap pembangunan berikutnya.
           </p>
         </div>

@@ -5,7 +5,7 @@ export default function StatusBadge({ status, className = '' }: { status: string
   const color = STATUS_COLORS[s] ?? 'bg-gray-100 text-gray-600';
   const label = STATUS_LABEL[s] ?? status;
   return (
-    <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${color} ${className}`}>
+    <span className={`crm-status-badge inline-flex items-center whitespace-nowrap px-2.5 py-1 ${color} ${className}`}>
       {label}
     </span>
   );

@@ -74,18 +74,18 @@ export default function BookingListPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="crm-page">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="crm-page-header">
         <div>
-          <h1 className="font-display text-2xl font-bold text-[#0f172a]">Booking</h1>
-          <p className="mt-0.5 text-sm text-[#64748b]">
+          <h1 className="crm-page-title">Booking</h1>
+          <p className="crm-page-subtitle">
             {total > 0 ? `${total} booking ditemukan` : 'Manajemen booking'}
           </p>
         </div>
         <button
           onClick={() => setShowAdd(true)}
-          className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[#205251] px-5 text-sm font-bold text-white shadow-sm transition hover:brightness-110 active:scale-95"
+          className="crm-button"
         >
           <Plus size={18} /> Tambah Booking
         </button>
@@ -123,7 +123,7 @@ export default function BookingListPage() {
 
       {/* Filter panel */}
       {showFilter && (
-        <div className="rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-sm">
+        <div className="crm-filter-card p-4">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-sm font-bold text-[#0f172a]">Filter</p>
             {hasFilter && (
@@ -191,8 +191,8 @@ export default function BookingListPage() {
       ) : (
         <>
           {/* Desktop table */}
-          <div className="hidden overflow-hidden rounded-2xl border border-[#e2e8f0] bg-white shadow-sm md:block">
-            <table className="w-full text-sm">
+          <div className="crm-table-card crm-table-scroll hidden md:block">
+            <table className="w-full min-w-[940px] text-sm">
               <thead>
                 <tr className="border-b border-[#f1f5f9] bg-[#f8fafc]">
                   <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Kode</th>
@@ -241,7 +241,7 @@ export default function BookingListPage() {
               <Link
                 key={b.id}
                 href={`/crm/booking/${b.booking_code_display ?? b.id}`}
-                className="block rounded-2xl border border-[#e2e8f0] bg-white p-4 shadow-sm transition hover:shadow-md"
+                className="crm-record-card block p-4"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5">

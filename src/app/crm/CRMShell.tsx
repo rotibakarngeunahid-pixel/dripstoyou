@@ -128,7 +128,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
 
   if (!authChecked || !sessionOk || !staff) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F3F0E7] font-ui">
+      <main className="crm-shell flex min-h-screen items-center justify-center font-ui">
         <div className="flex flex-col items-center gap-3 text-[#205251]">
           <span className="h-8 w-8 animate-spin rounded-full border-2 border-[#8EBFBF] border-t-[#205251]" />
           <p className="text-sm">Memverifikasi sesi…</p>
@@ -162,32 +162,31 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
 
   return (
     <CRMStaffContext.Provider value={staff}>
-      <div className="min-h-screen bg-[#f0f4f8] font-ui text-[#0f172a]">
+      <div className="crm-shell font-ui">
 
         {/* ── Sidebar (desktop) ── */}
-        <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-[#1a4342] text-white md:flex">
+        <aside className="crm-sidebar fixed inset-y-0 left-0 z-30 hidden w-[272px] flex-col text-white md:flex">
           {/* Brand */}
-          <div className="flex h-[72px] items-center gap-3 border-b border-white/8 px-5">
+          <div className="crm-sidebar-brand flex h-[76px] items-center gap-3 px-5">
             <span
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl font-display text-lg font-bold shadow-md"
-              style={{ background: 'linear-gradient(135deg, #EAD4AE, #C9944C)', color: '#103b3a' }}
+              className="crm-sidebar-mark flex h-10 w-10 flex-shrink-0 items-center justify-center font-display text-lg font-bold"
             >
               D
             </span>
             <div className="min-w-0">
-              <p className="truncate font-display text-[15px] font-semibold leading-tight text-white">Drips To You</p>
+              <p className="truncate font-display text-base font-semibold leading-tight text-white">Drips To You</p>
               <p className="text-[10px] font-bold uppercase tracking-[2px] text-white/50">CRM Internal</p>
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto px-3 py-4">
+          <nav className="flex-1 overflow-y-auto px-3 py-5">
             {visibleGroups.map((group) => (
-              <div key={group.label} className="mb-5">
-                <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-[2px] text-white/35">
+              <div key={group.label} className="mb-6">
+                <p className="crm-sidebar-section mb-2 px-3 text-[10px] font-bold uppercase">
                   {group.label}
                 </p>
-                <div className="space-y-0.5">
+                <div className="space-y-1">
                   {group.items.map((item) => {
                     const active = pathname.startsWith(item.href);
                     const Icon = item.icon;
@@ -196,11 +195,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
                         key={item.href}
                         href={item.href}
                         aria-current={active ? 'page' : undefined}
-                        className={`flex items-center gap-3 rounded-xl border-l-[3px] px-3 py-2.5 text-sm font-medium transition-all ${
-                          active
-                            ? 'border-[#C9944C] bg-white/12 text-white'
-                            : 'border-transparent text-white/65 hover:bg-white/7 hover:text-white/90'
-                        }`}
+                        className={`crm-sidebar-link flex items-center gap-3 px-3 py-2.5 text-sm font-semibold transition-all ${active ? 'is-active' : ''}`}
                       >
                         <Icon size={18} aria-hidden />
                         <span className="flex-1">{item.label}</span>
@@ -215,7 +210,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
 
           {/* User + logout */}
           <div className="border-t border-white/10 p-4">
-            <div className="mb-2 flex items-center gap-3">
+            <div className="mb-3 flex items-center gap-3 rounded-lg bg-white/7 p-2">
               <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${ROLE_BADGE[role]}`}>
                 {initials(staff.name)}
               </span>
@@ -228,7 +223,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
               type="button"
               onClick={handleLogout}
               disabled={loggingOut}
-              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-white/55 transition hover:bg-white/10 hover:text-white/90 disabled:opacity-50"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
             >
               <LogOut size={14} aria-hidden />
               {loggingOut ? 'Keluar…' : 'Logout'}
@@ -237,14 +232,13 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         {/* ── Main area ── */}
-        <div className="md:ml-64">
+        <div className="crm-layout">
           {/* Topbar */}
-          <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-[#e4e9ef] bg-white px-4 shadow-sm md:px-8">
+          <header className="crm-topbar sticky top-0 z-20 flex h-16 items-center justify-between px-4 md:px-6 lg:px-8">
             {/* Mobile: brand mark + page title */}
             <div className="flex items-center gap-2.5 md:hidden">
               <span
-                className="flex h-8 w-8 items-center justify-center rounded-lg font-display text-sm font-bold shadow-sm"
-                style={{ background: 'linear-gradient(135deg, #EAD4AE, #C9944C)', color: '#103b3a' }}
+                className="crm-sidebar-mark flex h-8 w-8 items-center justify-center font-display text-sm font-bold shadow-sm"
               >
                 D
               </span>
@@ -253,7 +247,8 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
 
             {/* Desktop: page title + date */}
             <div className="hidden md:block">
-              <h1 className="font-display text-lg font-bold text-[#0f172a] leading-tight">{pageTitle}</h1>
+              <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#7a9090]">CRM Internal</p>
+              <h1 className="font-display text-xl font-bold leading-tight text-[#0c2524]">{pageTitle}</h1>
             </div>
 
             {/* Account menu */}
@@ -261,7 +256,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => setAccountOpen((v) => !v)}
-                className="flex items-center gap-2 rounded-full py-1 pl-1 pr-2 transition hover:bg-[#F3F0E7]"
+                className="flex items-center gap-2 rounded-xl border border-transparent bg-white/80 py-1 pl-1 pr-2 shadow-sm transition hover:border-[#dcd9d0] hover:bg-white hover:shadow"
                 aria-haspopup="menu"
                 aria-expanded={accountOpen}
               >
@@ -269,24 +264,24 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
                   {initials(staff.name)}
                 </span>
                 <span className="hidden text-left leading-tight sm:block">
-                  <span className="block text-sm font-semibold text-[#205251]">{staff.name}</span>
-                  <span className="block text-[11px] text-[#4d6060]">{ROLE_LABEL[role]}</span>
+                  <span className="block max-w-[180px] truncate text-sm font-semibold text-[#174846]">{staff.name}</span>
+                  <span className="block text-[11px] text-[#60727a]">{ROLE_LABEL[role]}</span>
                 </span>
-                <ChevronDown size={15} className="text-[#8EBFBF]" aria-hidden />
+                <ChevronDown size={15} className="text-[#60727a]" aria-hidden />
               </button>
 
               {accountOpen && (
-                <div role="menu" className="absolute right-0 top-12 w-56 overflow-hidden rounded-2xl border border-[#DBDAD7] bg-white shadow-xl">
-                  <div className="border-b border-[#F3F0E7] px-4 py-3">
-                    <p className="truncate text-sm font-semibold text-[#205251]">{staff.name}</p>
-                    <p className="truncate text-xs text-[#8EBFBF]">{staff.email}</p>
+                <div role="menu" className="absolute right-0 top-12 w-60 overflow-hidden rounded-2xl border border-[#dcd9d0] bg-white shadow-2xl">
+                  <div className="border-b border-[#ebe8df] px-4 py-3">
+                    <p className="truncate text-sm font-semibold text-[#0c2524]">{staff.name}</p>
+                    <p className="truncate text-xs text-[#4d6060]">{staff.email}</p>
                   </div>
                   {staff.isWebsiteAdmin && (
                     <Link
                       href="/admin/dashboard"
                       role="menuitem"
                       onClick={() => setAccountOpen(false)}
-                      className="flex w-full items-center gap-2 border-b border-[#F3F0E7] px-4 py-3 text-sm text-[#205251] transition hover:bg-[#F3F0E7]"
+                      className="flex w-full items-center gap-2 border-b border-[#ebe8df] px-4 py-3 text-sm font-medium text-[#205251] transition hover:bg-[#f5f2eb]"
                     >
                       <Shield size={15} aria-hidden /> Panel Website Admin
                     </Link>
@@ -296,7 +291,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
                     onClick={handleLogout}
                     disabled={loggingOut}
                     role="menuitem"
-                    className="flex w-full items-center gap-2 px-4 py-3 text-sm text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                    className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-60"
                   >
                     <LogOut size={15} aria-hidden />
                     {loggingOut ? 'Keluar…' : 'Logout'}
@@ -306,11 +301,11 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          <main className="px-4 py-6 pb-28 md:px-8 md:py-8 md:pb-10">{children}</main>
+          <main className="crm-main mx-auto">{children}</main>
         </div>
 
         {/* ── Bottom nav (mobile) ── */}
-        <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#DBDAD7] bg-white/95 backdrop-blur-md md:hidden">
+        <nav className="crm-mobile-nav fixed inset-x-0 bottom-0 z-30 backdrop-blur-md md:hidden">
           <div className="flex items-stretch">
             {bottomItems.map((item) => {
               const active = pathname.startsWith(item.href);
@@ -322,7 +317,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
                   className="flex flex-1 flex-col items-center gap-0.5 py-2"
                 >
                   <span
-                    className={`flex h-9 w-14 items-center justify-center rounded-2xl transition-colors ${
+                    className={`flex h-9 w-14 items-center justify-center rounded-lg transition-colors ${
                       active ? 'bg-[#D6EAEA]' : ''
                     }`}
                   >
@@ -349,7 +344,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
                 onClick={() => setMoreOpen(true)}
                 className="flex flex-1 flex-col items-center gap-0.5 py-2"
               >
-                <span className="flex h-9 w-14 items-center justify-center rounded-2xl">
+                <span className="flex h-9 w-14 items-center justify-center rounded-lg">
                   <MoreHorizontal size={21} className="text-[#8EBFBF]" aria-hidden />
                 </span>
                 <span className="text-[10px] font-semibold leading-tight text-[#8EBFBF]">Lainnya</span>
@@ -367,7 +362,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
               aria-label="Tutup"
               onClick={() => setMoreOpen(false)}
             />
-            <div className="absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto rounded-t-3xl bg-white shadow-2xl">
+            <div className="crm-bottom-sheet absolute inset-x-0 bottom-0 max-h-[85vh] overflow-y-auto shadow-2xl">
               {/* Drag handle */}
               <div className="flex justify-center pb-1 pt-3">
                 <span className="h-1 w-10 rounded-full bg-[#DBDAD7]" />
@@ -379,7 +374,7 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
                   <button
                     onClick={() => setMoreOpen(false)}
                     aria-label="Tutup"
-                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F3F0E7] text-[#205251] transition hover:bg-[#D6EAEA]"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#eef4f5] text-[#205251] transition hover:bg-[#D6EAEA]"
                   >
                     <X size={18} />
                   </button>
@@ -399,10 +394,10 @@ export default function CRMShell({ children }: { children: React.ReactNode }) {
                             key={item.href}
                             href={item.href}
                             onClick={() => setMoreOpen(false)}
-                            className={`flex flex-col items-center gap-2 rounded-2xl p-3 text-center text-[11px] font-semibold leading-tight transition ${
+                            className={`flex flex-col items-center gap-2 rounded-xl p-3 text-center text-[11px] font-semibold leading-tight transition ${
                               active
                                 ? 'bg-[#D6EAEA] text-[#205251]'
-                                : 'bg-[#F3F0E7] text-[#4d6060]'
+                                : 'bg-white text-[#4d6060] shadow-sm'
                             }`}
                           >
                             <Icon size={20} aria-hidden />

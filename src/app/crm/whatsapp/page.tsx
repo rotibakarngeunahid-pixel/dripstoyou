@@ -80,10 +80,13 @@ export default function WhatsAppPage() {
   if (error) return <ErrorBlock message={error} onRetry={load} />;
 
   return (
-    <div>
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="font-display text-2xl text-[#205251]">WhatsApp Template</h2>
-        <button onClick={newTemplate} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#205251] px-4 text-sm font-semibold text-white"><Plus size={18} /> Template</button>
+    <div className="crm-page">
+      <div className="crm-page-header">
+        <div>
+          <h2 className="crm-page-title">WhatsApp Template</h2>
+          <p className="crm-page-subtitle">Kelola template pesan dan preview link WhatsApp.</p>
+        </div>
+        <button onClick={newTemplate} className="crm-button"><Plus size={18} /> Template</button>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[260px_1fr_300px]">
@@ -91,7 +94,7 @@ export default function WhatsAppPage() {
         <div className="space-y-2">
           {items.length === 0 && <EmptyState title="Belum ada template" />}
           {items.map((t) => (
-            <button key={t.id} onClick={() => setSelected(t)} className={`block w-full rounded-xl border p-3 text-left text-sm ${selected?.id === t.id ? 'border-[#205251] bg-[#D6EAEA]' : 'border-[#DBDAD7] bg-white'}`}>
+            <button key={t.id} onClick={() => setSelected(t)} className={`block w-full rounded-lg border p-3 text-left text-sm shadow-sm ${selected?.id === t.id ? 'border-[#205251] bg-[#D6EAEA]' : 'border-[#dce5ea] bg-white'}`}>
               <p className="font-medium text-[#205251]">{t.name}</p>
               <p className="text-xs text-[#8EBFBF]">{t.category.replaceAll('_', ' ')}</p>
             </button>
@@ -100,7 +103,7 @@ export default function WhatsAppPage() {
 
         {/* Editor */}
         {selected ? (
-          <div className="rounded-2xl border border-[#DBDAD7] bg-white p-4">
+          <div className="crm-card">
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="text-sm">Nama<input value={selected.name} onChange={(e) => setSelected({ ...selected, name: e.target.value })} className="h-11 w-full rounded-xl border border-[#DBDAD7] px-3 text-base outline-none focus:border-[#29808B]" /></label>
               <label className="text-sm">Kategori<select value={selected.category} onChange={(e) => setSelected({ ...selected, category: e.target.value })} className="h-11 w-full rounded-xl border border-[#DBDAD7] px-3 text-base outline-none focus:border-[#29808B]">{CATEGORIES.map((c) => <option key={c} value={c}>{c.replaceAll('_', ' ')}</option>)}</select></label>
@@ -118,15 +121,15 @@ export default function WhatsAppPage() {
               {toast && <span className="self-center text-sm text-[#29808B]">{toast}</span>}
             </div>
           </div>
-        ) : <div className="rounded-2xl border border-dashed border-[#8EBFBF] bg-white p-8 text-center text-sm text-[#4d6060]">Pilih atau buat template.</div>}
+        ) : <div className="crm-empty-state p-8 text-center text-sm text-[#60727a]">Pilih atau buat template.</div>}
 
         {/* Preview + generate link */}
         <div className="space-y-3">
-          <div className="rounded-2xl bg-[#205251] p-4">
+          <div className="rounded-lg bg-[#174846] p-4 shadow-sm">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-white/50">Preview</p>
             <div className="whitespace-pre-wrap rounded-xl rounded-tl-none bg-[#075E54] p-3 text-sm text-white">{preview || '—'}</div>
           </div>
-          <div className="rounded-2xl border border-[#DBDAD7] bg-white p-4">
+          <div className="crm-card">
             <label className="text-sm">Nomor tujuan
               <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0812… / 62812…" className="mt-1 h-11 w-full rounded-xl border border-[#DBDAD7] px-3 text-base outline-none focus:border-[#29808B]" />
             </label>

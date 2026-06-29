@@ -86,17 +86,17 @@ export default function BookingDetailPage() {
   };
 
   return (
-    <div>
+    <div className="crm-page">
       <Link href="/crm/booking" className="mb-4 inline-flex items-center gap-1 text-sm text-[#4d6060] hover:text-[#205251]">
         <ArrowLeft size={16} /> Kembali ke daftar booking
       </Link>
 
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+      <div className="crm-page-header">
         <div>
-          <h2 className="font-display text-2xl text-[#205251]">{b.booking_code_display ?? 'Booking'}</h2>
+          <h2 className="crm-page-title">{b.booking_code_display ?? 'Booking'}</h2>
           <div className="mt-1"><StatusBadge status={b.crm_status} /></div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="crm-actions">
           <a href={waLink()} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#25D366] px-3 text-sm font-medium text-white">
             <MessageCircle size={16} /> WhatsApp
           </a>
@@ -199,7 +199,7 @@ export default function BookingDetailPage() {
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-[#DBDAD7] bg-white p-4">
+    <div className="crm-card">
       <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#8EBFBF]">{title}</p>
       {children}
     </div>
@@ -215,7 +215,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 function ClinicalLink({ href, icon: Icon, label, done }: { href: string; icon: typeof Stethoscope; label: string; done: boolean }) {
   return (
-    <Link href={href} className={`flex flex-col items-center gap-1 rounded-xl border p-3 text-center text-xs ${done ? 'border-[#205251] bg-[#D6EAEA] text-[#205251]' : 'border-[#DBDAD7] text-[#4d6060]'}`}>
+    <Link href={href} className={`crm-record-card flex flex-col items-center gap-1 p-3 text-center text-xs ${done ? 'border-[#205251] bg-[#D6EAEA] text-[#205251]' : 'text-[#4d6060]'}`}>
       <Icon size={20} />
       <span>{label}</span>
       {done && <ClipboardCheck size={12} className="text-[#205251]" />}

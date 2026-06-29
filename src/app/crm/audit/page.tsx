@@ -48,10 +48,15 @@ export default function AuditPage() {
   const selCls = 'h-11 rounded-xl border border-[#DBDAD7] bg-white px-3 text-sm outline-none focus:border-[#29808B]';
 
   return (
-    <div>
-      <h2 className="mb-5 font-display text-2xl text-[#205251]">Audit Log</h2>
+    <div className="crm-page">
+      <div className="crm-page-header">
+        <div>
+          <h2 className="crm-page-title">Audit Log</h2>
+          <p className="crm-page-subtitle">{total} aktivitas tercatat</p>
+        </div>
+      </div>
 
-      <div className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="crm-filter-card grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-4">
         <select value={fStaff} onChange={(e) => { setPage(0); setFStaff(e.target.value); }} className={selCls}>
           <option value="">Semua User</option>
           {staff.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -68,9 +73,9 @@ export default function AuditPage() {
         <EmptyState title="Tidak ada aktivitas" description="Coba ubah filter." />
       ) : (
         <>
-          <div className="overflow-hidden rounded-2xl border border-[#DBDAD7] bg-white">
+          <div className="crm-list-panel overflow-hidden">
             {items.map((l) => (
-              <div key={l.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[#F3F0E7] px-4 py-3 text-sm last:border-0">
+              <div key={l.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[#eef4f5] px-4 py-3 text-sm last:border-0">
                 <span className="w-40 shrink-0 text-xs text-[#8EBFBF]">{formatDateTimeWITA(l.created_at)}</span>
                 <span className="font-medium text-[#205251]">{l.staff_name ?? 'Sistem'}<span className="ml-1 text-xs text-[#8EBFBF]">{l.staff_role ?? ''}</span></span>
                 <span className="rounded-full bg-[#F3F0E7] px-2 py-0.5 text-[10px] font-medium text-[#4d6060]">{l.module}</span>

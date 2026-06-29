@@ -89,13 +89,13 @@ export default function ConsentPage() {
   if (error || !booking) return <ErrorBlock message={error || 'Tidak ditemukan'} onRetry={load} />;
 
   return (
-    <div className="mx-auto max-w-xl">
+    <div className="crm-page mx-auto max-w-xl">
       <Link href={`/crm/booking/${booking.booking_code_display ?? bookingId}`} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
 
-      <div className="rounded-2xl border border-[#DBDAD7] bg-white p-6">
+      <div className="crm-card p-6">
         <div className="mb-5 text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#205251] text-xl font-bold text-[#EAD4AE]">D</div>
-          <h2 className="font-display text-xl text-[#205251]">Persetujuan Tindakan IV Therapy</h2>
+          <h2 className="crm-section-title">Persetujuan Tindakan IV Therapy</h2>
           <p className="text-xs text-[#8EBFBF]">Informed Consent — Mobile IV Therapy</p>
         </div>
 

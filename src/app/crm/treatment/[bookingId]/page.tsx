@@ -102,11 +102,11 @@ export default function TreatmentPage() {
   if (error || !booking) return <ErrorBlock message={error || 'Tidak ditemukan'} onRetry={load} />;
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="crm-page mx-auto max-w-2xl">
       <Link href={`/crm/booking/${booking.booking_code_display ?? bookingId}`} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
       <div className="mb-5 flex items-center justify-between gap-2">
         <div>
-          <h2 className="font-display text-2xl text-[#205251]">Treatment — {booking.customer_name}</h2>
+          <h2 className="crm-page-title">Treatment - {booking.customer_name}</h2>
           <p className="text-sm text-[#4d6060]">{booking.booking_code_display} · {booking.product_name}</p>
         </div>
         <StatusBadge status={booking.crm_status} />
@@ -174,8 +174,8 @@ export default function TreatmentPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mb-4 rounded-2xl border border-[#DBDAD7] bg-white p-4">
-      <h3 className="mb-3 font-display text-lg text-[#205251]">{title}</h3>
+    <section className="crm-card">
+      <h3 className="crm-section-title mb-3">{title}</h3>
       {children}
     </section>
   );

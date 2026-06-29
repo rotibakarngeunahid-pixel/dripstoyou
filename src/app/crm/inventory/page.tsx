@@ -47,15 +47,18 @@ export default function InventoryPage() {
   useEffect(() => { const t = setTimeout(() => { void load(); }, 0); return () => clearTimeout(t); }, [load]);
 
   return (
-    <div>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-2xl text-[#205251]">Inventory</h2>
-        <button onClick={() => setAddOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#205251] px-4 text-sm font-semibold text-white hover:brightness-110">
+    <div className="crm-page">
+      <div className="crm-page-header">
+        <div>
+          <h2 className="crm-page-title">Inventory</h2>
+          <p className="crm-page-subtitle">Pantau stok, expiry, dan pergerakan item medis.</p>
+        </div>
+        <button onClick={() => setAddOpen(true)} className="crm-button">
           <Plus size={18} /> Tambah Item
         </button>
       </div>
 
-      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="crm-stat-grid crm-stat-grid-four">
         <StatCard label="Total Item" value={stats.total} icon={Package} />
         <StatCard label="Stok Menipis" value={stats.low} icon={AlertTriangle} accent="#C9944C" />
         <StatCard label="Habis" value={stats.out} icon={XCircle} accent="#dc2626" />
@@ -65,7 +68,7 @@ export default function InventoryPage() {
       {loading ? <LoadingBlock /> : error ? <ErrorBlock message={error} onRetry={load} /> : items.length === 0 ? (
         <EmptyState title="Belum ada item" description="Tambahkan item medis pertama Anda." />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-[#DBDAD7] bg-white">
+        <div className="crm-table-card crm-table-scroll">
           <table className="w-full min-w-[640px] text-sm">
             <thead className="bg-[#F3F0E7] text-left text-xs uppercase tracking-wide text-[#4d6060]">
               <tr>

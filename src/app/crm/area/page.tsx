@@ -25,16 +25,19 @@ export default function AreaPage() {
   useEffect(() => { const t = setTimeout(() => { void load(); }, 0); return () => clearTimeout(t); }, [load]);
 
   return (
-    <div>
-      <div className="mb-5 flex items-center justify-between">
-        <h2 className="font-display text-2xl text-[#205251]">Area & Visit Fee</h2>
-        <button onClick={() => setModal('new')} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#205251] px-4 text-sm font-semibold text-white"><Plus size={18} /> Tambah Area</button>
+    <div className="crm-page">
+      <div className="crm-page-header">
+        <div>
+          <h2 className="crm-page-title">Area & Visit Fee</h2>
+          <p className="crm-page-subtitle">Atur area layanan, visit fee, estimasi, dan status aktif.</p>
+        </div>
+        <button onClick={() => setModal('new')} className="crm-button"><Plus size={18} /> Tambah Area</button>
       </div>
 
       {loading ? <LoadingBlock /> : error ? <ErrorBlock message={error} onRetry={load} /> : rows.length === 0 ? (
         <EmptyState title="Belum ada area" />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-[#DBDAD7] bg-white">
+        <div className="crm-table-card crm-table-scroll">
           <table className="w-full min-w-[560px] text-sm">
             <thead className="bg-[#F3F0E7] text-left text-xs uppercase tracking-wide text-[#4d6060]">
               <tr><th className="px-4 py-3">Area</th><th className="px-4 py-3">Visit Fee</th><th className="px-4 py-3">Estimasi</th><th className="px-4 py-3">Status</th></tr>

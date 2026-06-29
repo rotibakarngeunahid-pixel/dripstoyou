@@ -86,10 +86,12 @@ export default function ScreeningPage() {
   const num = 'min-h-[52px] w-full rounded-xl border border-[#DBDAD7] px-3 py-3 text-lg outline-none focus:border-[#29808B]';
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="crm-page mx-auto max-w-2xl">
       <Link href={`/crm/booking/${booking.booking_code_display ?? bookingId}`} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
-      <h2 className="font-display text-2xl text-[#205251]">Screening</h2>
-      <p className="mb-5 text-sm text-[#4d6060]">{booking.customer_name} · {booking.product_name}</p>
+      <div>
+        <h2 className="crm-page-title">Screening</h2>
+        <p className="crm-page-subtitle">{booking.customer_name} · {booking.product_name}</p>
+      </div>
 
       {/* Vitals */}
       <Section title="1. Tanda Vital">
@@ -152,8 +154,8 @@ export default function ScreeningPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mb-4 rounded-2xl border border-[#DBDAD7] bg-white p-4">
-      <h3 className="mb-3 font-display text-lg text-[#205251]">{title}</h3>
+    <section className="crm-card">
+      <h3 className="crm-section-title mb-3">{title}</h3>
       {children}
     </section>
   );

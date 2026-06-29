@@ -7243,3 +7243,650 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
     max-width: none;
   }
 }
+
+/* ---------------------------------------------
+   CRM REDESIGN SYSTEM
+--------------------------------------------- */
+
+.crm-shell {
+  --crm-bg: #F3F0E7;
+  --crm-surface: #ffffff;
+  --crm-surface-soft: #f5f2eb;
+  --crm-surface-strong: #ebe8df;
+  --crm-text: #111a1a;
+  --crm-heading: #0c2524;
+  --crm-muted: #4d6060;
+  --crm-subtle: #7a9090;
+  --crm-border: #dcd9d0;
+  --crm-border-strong: #c8c5bc;
+  --crm-primary: #205251;
+  --crm-primary-strong: #174846;
+  --crm-primary-soft: #D6EAEA;
+  --crm-accent: #C9944C;
+  --crm-accent-soft: #EAD4AE;
+  --crm-danger: #dc2626;
+  --crm-success: #15803d;
+  --crm-warning: #b7791f;
+  --crm-radius: 16px;
+  --crm-radius-sm: 10px;
+  --crm-shadow: 0 4px 24px rgba(32, 82, 81, 0.08);
+  --crm-shadow-soft: 0 2px 12px rgba(32, 82, 81, 0.05);
+  --crm-shadow-hover: 0 16px 40px rgba(32, 82, 81, 0.14);
+  min-height: 100vh;
+  background: var(--crm-bg);
+  color: var(--crm-text);
+}
+
+.crm-shell *,
+.crm-shell *::before,
+.crm-shell *::after {
+  min-width: 0;
+}
+
+.crm-shell a,
+.crm-shell button,
+.crm-shell input,
+.crm-shell select,
+.crm-shell textarea {
+  font-family: inherit;
+}
+
+.crm-shell a:focus-visible,
+.crm-shell button:focus-visible,
+.crm-shell input:focus-visible,
+.crm-shell select:focus-visible,
+.crm-shell textarea:focus-visible {
+  outline: 2px solid rgba(41, 128, 139, .35);
+  outline-offset: 2px;
+}
+
+.crm-shell input:not([type="checkbox"]):not([type="radio"]),
+.crm-shell select,
+.crm-shell textarea {
+  min-width: 0;
+  border-color: var(--crm-border) !important;
+  border-radius: var(--crm-radius-sm) !important;
+  background: #fff !important;
+  color: var(--crm-text) !important;
+  box-shadow: inset 0 1px 0 rgba(32, 82, 81, .03);
+  transition: border-color .16s ease, box-shadow .16s ease, background .16s ease;
+}
+
+.crm-shell input:not([type="checkbox"]):not([type="radio"]):focus,
+.crm-shell select:focus,
+.crm-shell textarea:focus {
+  border-color: var(--crm-primary) !important;
+  box-shadow: 0 0 0 3px rgba(23, 72, 70, .12);
+}
+
+.crm-shell input[type="checkbox"],
+.crm-shell input[type="radio"] {
+  accent-color: var(--crm-primary);
+}
+
+.crm-sidebar {
+  border-right: 1px solid rgba(255, 255, 255, .06);
+  background: linear-gradient(180deg, #1a4e4c 0%, #122e2d 100%);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, .15);
+}
+
+.crm-sidebar-brand {
+  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.crm-sidebar nav {
+  padding: 20px 12px;
+}
+
+.crm-sidebar-mark {
+  border-radius: 10px;
+  background: linear-gradient(135deg, #EAD4AE 0%, #C9944C 100%);
+  color: #0c2d2c;
+  font-family: var(--font-playfair, Georgia, serif);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .22);
+}
+
+.crm-sidebar-section {
+  color: rgba(255, 255, 255, .45);
+  letter-spacing: .16em;
+  margin-bottom: 8px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.crm-sidebar-link {
+  border-radius: 10px;
+  border: 1px solid transparent;
+  color: rgba(255, 255, 255, .65);
+  padding: 10px 12px;
+}
+
+.crm-sidebar-link:hover {
+  border-color: rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, .09);
+  color: #fff;
+}
+
+.crm-sidebar-link.is-active {
+  border-color: rgba(201, 148, 76, .38);
+  background: rgba(255, 255, 255, .14);
+  color: #fff;
+  box-shadow: inset 3px 0 0 var(--crm-accent);
+}
+
+.crm-shell .crm-topbar {
+  border-bottom: 1px solid var(--crm-border);
+  background: rgba(243, 240, 231, .92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  padding-left: 16px;
+  padding-right: 16px;
+  box-shadow: 0 1px 0 rgba(32, 82, 81, .06);
+}
+
+.crm-layout {
+  min-height: 100vh;
+}
+
+.crm-main {
+  width: 100%;
+  max-width: 1500px;
+  padding: 20px 16px 112px;
+}
+
+.crm-page {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.crm-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.crm-page-title {
+  color: var(--crm-heading);
+  font-family: var(--font-playfair, Georgia, serif);
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.crm-page-subtitle {
+  margin-top: 5px;
+  color: var(--crm-muted);
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+.crm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.crm-button,
+.crm-button-secondary,
+.crm-button-danger {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: var(--crm-radius-sm);
+  padding: 0 16px;
+  font-size: .86rem;
+  font-weight: 700;
+  line-height: 1;
+  transition: background .18s ease, border-color .18s ease, color .18s ease, transform .16s ease, box-shadow .18s ease;
+}
+
+.crm-button {
+  border: 1px solid var(--crm-primary);
+  background: var(--crm-primary);
+  color: #fff;
+  box-shadow: 0 8px 22px rgba(32, 82, 81, .22);
+}
+
+.crm-button:hover {
+  background: var(--crm-primary-strong);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(32, 82, 81, .28);
+}
+
+.crm-button-secondary {
+  border: 1px solid var(--crm-border);
+  background: #fff;
+  color: var(--crm-primary);
+  box-shadow: 0 2px 8px rgba(32, 82, 81, .06);
+}
+
+.crm-button-secondary:hover {
+  border-color: var(--crm-primary);
+  background: var(--crm-primary-soft);
+}
+
+.crm-button-danger {
+  border: 1px solid rgba(220, 38, 38, .2);
+  background: #fff;
+  color: var(--crm-danger);
+}
+
+.crm-button-danger:hover {
+  background: #fef2f2;
+}
+
+.crm-card,
+.crm-section,
+.crm-table-card,
+.crm-list-panel,
+.crm-shell :where(.rounded-2xl.border.bg-white, .rounded-xl.border.bg-white) {
+  border-color: rgba(32, 82, 81, .1) !important;
+  border-radius: var(--crm-radius) !important;
+  background: var(--crm-surface) !important;
+  box-shadow: var(--crm-shadow);
+}
+
+.crm-card,
+.crm-section {
+  padding: 24px;
+}
+
+.crm-card.p-0 {
+  padding: 0;
+}
+
+.crm-card.p-6 {
+  padding: 24px;
+}
+
+.crm-button.p-0,
+.crm-button-secondary.p-0,
+.crm-button-danger.p-0 {
+  padding: 0;
+}
+
+.crm-card-title,
+.crm-section-title {
+  color: var(--crm-heading);
+  font-family: var(--font-playfair, Georgia, serif);
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.crm-card-kicker {
+  color: var(--crm-subtle);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+
+.crm-filter-card {
+  border: 1px solid rgba(32, 82, 81, .1);
+  border-radius: var(--crm-radius);
+  background: rgba(255, 255, 255, .88);
+  box-shadow: var(--crm-shadow-soft);
+}
+
+.crm-stat-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.crm-stat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border: 1px solid rgba(32, 82, 81, .1);
+  border-radius: var(--crm-radius);
+  background: #fff;
+  padding: 22px 22px 18px;
+  box-shadow: var(--crm-shadow);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.crm-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--crm-shadow-hover);
+}
+
+.crm-stat-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.crm-stat-label {
+  color: var(--crm-muted);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.crm-stat-value {
+  margin-top: 12px;
+  color: var(--crm-heading);
+  font-family: var(--font-playfair, Georgia, serif);
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.crm-stat-hint {
+  margin-top: 10px;
+  color: var(--crm-muted);
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+.crm-stat-icon {
+  display: flex;
+  height: 46px;
+  width: 46px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--stat-accent, var(--crm-primary)) 14%, #fff);
+  color: var(--stat-accent, var(--crm-primary));
+}
+
+.crm-table-card {
+  overflow: hidden;
+}
+
+.crm-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.crm-shell table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.crm-shell thead {
+  background: var(--crm-surface-soft) !important;
+}
+
+.crm-shell th {
+  border-bottom: 1px solid rgba(32, 82, 81, .1) !important;
+  color: var(--crm-muted) !important;
+  font-size: .7rem !important;
+  font-weight: 700 !important;
+  letter-spacing: .1em !important;
+  line-height: 1.2 !important;
+  padding: 14px 18px !important;
+  text-transform: uppercase !important;
+  white-space: nowrap;
+}
+
+.crm-shell td {
+  border-bottom: 1px solid rgba(32, 82, 81, .06) !important;
+  color: var(--crm-text);
+  padding: 16px 18px !important;
+  vertical-align: middle;
+}
+
+.crm-shell tbody tr:last-child td {
+  border-bottom: 0 !important;
+}
+
+.crm-shell tbody tr:hover td {
+  background: rgba(214, 234, 234, .18);
+}
+
+.crm-record-card,
+.crm-list-item {
+  border: 1px solid rgba(32, 82, 81, .1) !important;
+  border-radius: var(--crm-radius) !important;
+  background: #fff !important;
+  box-shadow: var(--crm-shadow);
+  transition: border-color .18s ease, box-shadow .18s ease, transform .16s ease, background .18s ease;
+}
+
+.crm-record-card:hover,
+.crm-list-item:hover {
+  border-color: rgba(32, 82, 81, .18) !important;
+  background: #fff !important;
+  box-shadow: var(--crm-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.crm-empty-state {
+  position: relative;
+  overflow: hidden;
+  border: 1.5px dashed rgba(32, 82, 81, .2);
+  border-radius: var(--crm-radius);
+  background:
+    linear-gradient(135deg, rgba(214, 234, 234, .5) 0%, rgba(255, 255, 255, .9) 42%, rgba(234, 212, 174, .35) 100%),
+    #fff;
+  padding: 56px 20px;
+  text-align: center;
+  box-shadow: var(--crm-shadow-soft);
+}
+
+.crm-empty-icon {
+  display: inline-flex;
+  height: 56px;
+  width: 56px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(32, 82, 81, .14);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--crm-primary);
+  box-shadow: 0 8px 20px rgba(32, 82, 81, .1);
+}
+
+.crm-status-badge {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .01em;
+  line-height: 1;
+}
+
+.crm-mobile-nav {
+  border-top: 1px solid var(--crm-border);
+  background: rgba(243, 240, 231, .96);
+  box-shadow: 0 -8px 24px rgba(32, 82, 81, .1);
+}
+
+.crm-bottom-sheet {
+  border-top: 1px solid var(--crm-border);
+  border-radius: 18px 18px 0 0;
+  background: var(--crm-bg) !important;
+}
+
+.crm-shell :where(.m-0) { margin: 0 !important; }
+.crm-shell :where(.m-4) { margin: 1rem !important; }
+.crm-shell :where(.m-20) { margin: 5rem !important; }
+.crm-shell :where(.mx-auto) { margin-left: auto !important; margin-right: auto !important; }
+.crm-shell :where(.mt-0\.5) { margin-top: .125rem !important; }
+.crm-shell :where(.mt-1) { margin-top: .25rem !important; }
+.crm-shell :where(.mt-1\.5) { margin-top: .375rem !important; }
+.crm-shell :where(.mt-2) { margin-top: .5rem !important; }
+.crm-shell :where(.mt-3) { margin-top: .75rem !important; }
+.crm-shell :where(.mt-4) { margin-top: 1rem !important; }
+.crm-shell :where(.mb-1) { margin-bottom: .25rem !important; }
+.crm-shell :where(.mb-1\.5) { margin-bottom: .375rem !important; }
+.crm-shell :where(.mb-2) { margin-bottom: .5rem !important; }
+.crm-shell :where(.mb-3) { margin-bottom: .75rem !important; }
+.crm-shell :where(.mb-4) { margin-bottom: 1rem !important; }
+.crm-shell :where(.mb-5) { margin-bottom: 1.25rem !important; }
+.crm-shell :where(.mb-6) { margin-bottom: 1.5rem !important; }
+.crm-shell :where(.ml-1) { margin-left: .25rem !important; }
+.crm-shell :where(.ml-2) { margin-left: .5rem !important; }
+.crm-shell :where(.ml-4) { margin-left: 1rem !important; }
+
+.crm-shell :where(.p-0) { padding: 0 !important; }
+.crm-shell :where(.p-0\.5) { padding: .125rem !important; }
+.crm-shell :where(.p-1) { padding: .25rem !important; }
+.crm-shell :where(.p-1\.5) { padding: .375rem !important; }
+.crm-shell :where(.p-2) { padding: .5rem !important; }
+.crm-shell :where(.p-2\.5) { padding: .625rem !important; }
+.crm-shell :where(.p-3) { padding: .75rem !important; }
+.crm-shell :where(.p-4) { padding: 1rem !important; }
+.crm-shell :where(.p-5) { padding: 1.25rem !important; }
+.crm-shell :where(.p-6) { padding: 1.5rem !important; }
+.crm-shell :where(.p-8) { padding: 2rem !important; }
+.crm-shell :where(.p-12) { padding: 3rem !important; }
+.crm-shell :where(.px-2) { padding-left: .5rem !important; padding-right: .5rem !important; }
+.crm-shell :where(.px-2\.5) { padding-left: .625rem !important; padding-right: .625rem !important; }
+.crm-shell :where(.px-3) { padding-left: .75rem !important; padding-right: .75rem !important; }
+.crm-shell :where(.px-4) { padding-left: 1rem !important; padding-right: 1rem !important; }
+.crm-shell :where(.px-5) { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+.crm-shell :where(.px-6) { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+.crm-shell :where(.py-0\.5) { padding-top: .125rem !important; padding-bottom: .125rem !important; }
+.crm-shell :where(.py-1) { padding-top: .25rem !important; padding-bottom: .25rem !important; }
+.crm-shell :where(.py-1\.5) { padding-top: .375rem !important; padding-bottom: .375rem !important; }
+.crm-shell :where(.py-2) { padding-top: .5rem !important; padding-bottom: .5rem !important; }
+.crm-shell :where(.py-2\.5) { padding-top: .625rem !important; padding-bottom: .625rem !important; }
+.crm-shell :where(.py-3) { padding-top: .75rem !important; padding-bottom: .75rem !important; }
+.crm-shell :where(.py-3\.5) { padding-top: .875rem !important; padding-bottom: .875rem !important; }
+.crm-shell :where(.py-4) { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+.crm-shell :where(.py-5) { padding-top: 1.25rem !important; padding-bottom: 1.25rem !important; }
+.crm-shell :where(.py-12) { padding-top: 3rem !important; padding-bottom: 3rem !important; }
+.crm-shell :where(.py-14) { padding-top: 3.5rem !important; padding-bottom: 3.5rem !important; }
+.crm-shell :where(.pt-2) { padding-top: .5rem !important; }
+.crm-shell :where(.pt-3) { padding-top: .75rem !important; }
+.crm-shell :where(.pt-4) { padding-top: 1rem !important; }
+.crm-shell :where(.pb-1) { padding-bottom: .25rem !important; }
+.crm-shell :where(.pb-2) { padding-bottom: .5rem !important; }
+.crm-shell :where(.pb-6) { padding-bottom: 1.5rem !important; }
+.crm-shell :where(.pb-28) { padding-bottom: 7rem !important; }
+.crm-shell :where(.pl-1) { padding-left: .25rem !important; }
+.crm-shell :where(.pl-9) { padding-left: 2.25rem !important; }
+.crm-shell :where(.pl-10) { padding-left: 2.5rem !important; }
+.crm-shell :where(.pr-2) { padding-right: .5rem !important; }
+.crm-shell :where(.pr-3) { padding-right: .75rem !important; }
+.crm-shell :where(.pr-4) { padding-right: 1rem !important; }
+
+.crm-shell :where(.space-y-1 > :not([hidden]) ~ :not([hidden])) { margin-top: .25rem !important; }
+.crm-shell :where(.space-y-2 > :not([hidden]) ~ :not([hidden])) { margin-top: .5rem !important; }
+.crm-shell :where(.space-y-3 > :not([hidden]) ~ :not([hidden])) { margin-top: .75rem !important; }
+.crm-shell :where(.space-y-4 > :not([hidden]) ~ :not([hidden])) { margin-top: 1rem !important; }
+
+@media (min-width: 480px) {
+  .crm-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 640px) {
+  .crm-main {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .crm-shell :where(.sm\:p-4) { padding: 1rem !important; }
+  .crm-shell :where(.sm\:px-5) { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+}
+
+@media (min-width: 768px) {
+  .crm-layout {
+    padding-left: 272px;
+  }
+
+  .crm-shell .crm-topbar {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .crm-main {
+    padding: 32px 24px 48px;
+  }
+
+  .crm-shell :where(.md\:px-6) { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
+  .crm-shell :where(.md\:py-7) { padding-top: 1.75rem !important; padding-bottom: 1.75rem !important; }
+  .crm-shell :where(.md\:pb-10) { padding-bottom: 2.5rem !important; }
+
+  .crm-stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .crm-shell .crm-topbar {
+    padding-left: 36px;
+    padding-right: 36px;
+  }
+
+  .crm-main {
+    padding-left: 36px;
+    padding-right: 36px;
+  }
+
+  .crm-shell :where(.lg\:px-8) { padding-left: 2rem !important; padding-right: 2rem !important; }
+
+  .crm-stat-grid.crm-stat-grid-five,
+  .crm-stat-grid.crm-stat-grid-four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1440px) {
+  .crm-stat-grid.crm-stat-grid-five {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .crm-stat-grid.crm-stat-grid-four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .crm-page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crm-page-title {
+    font-size: 1.5rem;
+  }
+
+  .crm-actions {
+    justify-content: stretch;
+  }
+
+  .crm-actions > * {
+    flex: 1 1 auto;
+  }
+
+  .crm-card,
+  .crm-section {
+    padding: 18px;
+  }
+
+  .crm-stat-card {
+    padding: 18px 18px 14px;
+  }
+
+  .crm-stat-value {
+    font-size: 1.75rem;
+  }
+
+  .crm-shell table {
+    min-width: 620px;
+  }
+}

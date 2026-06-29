@@ -31,26 +31,26 @@ export default function Modal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
-      <button className="absolute inset-0 bg-black/50 backdrop-blur-sm" aria-label="Tutup" onClick={onClose} />
-      <div className="relative z-10 flex w-full flex-col bg-white sm:max-h-[90vh] sm:max-w-lg sm:rounded-2xl rounded-t-3xl shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#F3F0E7] px-5 py-4">
-          <h2 className="font-display text-lg font-semibold text-[#205251]">{title}</h2>
+      <button className="absolute inset-0 bg-slate-950/55 backdrop-blur-sm" aria-label="Tutup" onClick={onClose} />
+      <div className="relative z-10 flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-xl border border-[#dce5ea] bg-white shadow-2xl sm:max-w-xl sm:rounded-lg">
+        <div className="flex items-center justify-between border-b border-[#eef4f5] px-5 py-4">
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold uppercase tracking-[2px] text-[#8a9aa3]">CRM Form</p>
+            <h2 className="truncate font-display text-lg font-semibold text-[#174846]">{title}</h2>
+          </div>
           <button
             onClick={onClose}
             aria-label="Tutup"
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F3F0E7] text-[#4d6060] transition hover:bg-[#D6EAEA] hover:text-[#205251]"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#eef4f5] text-[#60727a] transition hover:bg-[#D6EAEA] hover:text-[#174846]"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-4">{children}</div>
 
-        {/* Footer */}
         {footer && (
-          <div className="border-t border-[#F3F0E7] px-5 py-4">
+          <div className="border-t border-[#eef4f5] bg-[#f8fafc] px-5 py-4">
             {footer}
           </div>
         )}
