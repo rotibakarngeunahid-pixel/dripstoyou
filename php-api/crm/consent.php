@@ -21,7 +21,7 @@ if ($method === 'GET') {
     $booking = $b->fetch();
     if (!$booking) jsonError('Booking tidak ditemukan', 404);
 
-    $c = $db->prepare('SELECT id, patient_name, patient_name_signed, agreed_at, created_at FROM consents WHERE booking_id = ? LIMIT 1');
+    $c = $db->prepare('SELECT id, patient_name, patient_name_signed, consent_language, agreed_at, created_at FROM consents WHERE booking_id = ? LIMIT 1');
     $c->execute([$bookingId]);
     jsonSuccess(['booking' => $booking, 'consent' => $c->fetch() ?: null]);
 }
@@ -45,6 +45,8 @@ if ($method === 'POST') {
 
     $nameSigned = str_clean($body['patient_name_signed'], 100);
     $sig        = !empty($body['signature_data']) ? encryptField((string)$body['signature_data']) : null;
+    // Language of the consent text the patient actually read — legal evidence.
+    $lang       = in_array(($body['language'] ?? ''), ['en', 'id'], true) ? $body['language'] : null;
     $now        = date('Y-m-d H:i:s');
     $ipHash     = getIpHash();
 
@@ -53,18 +55,18 @@ if ($method === 'POST') {
     $row = $exists->fetch();
 
     if ($row) {
-        $db->prepare('UPDATE consents SET patient_name=?, patient_name_signed=?, signature_data_encrypted=?, agreed_at=?, ip_address_hash=? WHERE id=?')
-           ->execute([$booking['customer_name'], $nameSigned, $sig, $now, $ipHash, $row['id']]);
+        $db->prepare('UPDATE consents SET patient_name=?, patient_name_signed=?, signature_data_encrypted=?, consent_language=?, agreed_at=?, ip_address_hash=? WHERE id=?')
+           ->execute([$booking['customer_name'], $nameSigned, $sig, $lang, $now, $ipHash, $row['id']]);
         $cid = $row['id'];
     } else {
         $cid = generateId();
-        $db->prepare('INSERT INTO consents (id, booking_id, patient_name, patient_name_signed, signature_data_encrypted, agreed_at, ip_address_hash, created_at)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-           ->execute([$cid, $bookingId, $booking['customer_name'], $nameSigned, $sig, $now, $ipHash, $now]);
+        $db->prepare('INSERT INTO consents (id, booking_id, patient_name, patient_name_signed, signature_data_encrypted, consent_language, agreed_at, ip_address_hash, created_at)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+           ->execute([$cid, $bookingId, $booking['customer_name'], $nameSigned, $sig, $lang, $now, $ipHash, $now]);
     }
 
     crmAdvanceBookingStatus($db, $bookingId, 'CONSENT_SIGNED');
-    crmAuditLog($staff, 'CONSENT', 'SIGN', $bookingId, "Consent ditandatangani: $nameSigned");
+    crmAuditLog($staff, 'CONSENT', 'SIGN', $bookingId, "Consent ditandatangani: $nameSigned" . ($lang ? " (bahasa: $lang)" : ''));
 
     jsonSuccess(['id' => $cid], 'Consent tersimpan');
 }

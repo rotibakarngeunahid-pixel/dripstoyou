@@ -149,6 +149,7 @@ CREATE TABLE IF NOT EXISTS `consents` (
     `patient_name`             VARCHAR(100) NOT NULL,
     `patient_name_signed`      VARCHAR(100) NOT NULL,
     `signature_data_encrypted` TEXT         NULL,
+    `consent_language`         VARCHAR(5)   NULL, -- 'en' / 'id' — versi teks yang dibaca pasien
     `agreed_at`                DATETIME(3)  NOT NULL,
     `ip_address_hash`          VARCHAR(255) NULL,
     `created_at`               DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
