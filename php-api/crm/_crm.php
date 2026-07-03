@@ -256,20 +256,26 @@ function crmDeductInventory(PDO $db, array $itemsUsed, string $treatmentId, ?str
     }
 }
 
-// Advance a booking's crm_status to $target only if it is currently earlier in
-// the lifecycle (and not terminal). Keeps legacy bookings.status in sync.
-function crmAdvanceBookingStatus(PDO $db, string $bookingId, string $target): void {
-    $rank = [
+// Lifecycle position of a crm_status (mirrors STATUS_RANK in src/lib/crm-status.ts).
+// Negative = terminal, unknown statuses rank 0.
+function crmStatusRank(string $status): int {
+    static $rank = [
         'PENDING'=>0,'NEED_CONFIRMATION'=>1,'CONFIRMED'=>2,'NURSE_ASSIGNED'=>3,'NURSE_ON_THE_WAY'=>4,
         'SCREENING_STARTED'=>5,'SCREENING_COMPLETED'=>6,'CONSENT_SIGNED'=>7,'TREATMENT_IN_PROGRESS'=>8,
         'TREATMENT_COMPLETED'=>9,'PAYMENT_COMPLETED'=>10,'FOLLOW_UP'=>11,'CLOSED'=>12,
         'CANCELLED'=>-1,'RESCHEDULED'=>1,'NOT_ELIGIBLE'=>-1,'NO_SHOW'=>-1,
     ];
+    return $rank[$status] ?? 0;
+}
+
+// Advance a booking's crm_status to $target only if it is currently earlier in
+// the lifecycle (and not terminal). Keeps legacy bookings.status in sync.
+function crmAdvanceBookingStatus(PDO $db, string $bookingId, string $target): void {
     $s = $db->prepare('SELECT crm_status FROM bookings WHERE id = ? LIMIT 1');
     $s->execute([$bookingId]);
     $cur = (string)($s->fetchColumn() ?: 'PENDING');
-    if (($rank[$cur] ?? 0) < 0) return; // terminal — don't override
-    if (($rank[$target] ?? 0) <= ($rank[$cur] ?? 0)) {
+    if (crmStatusRank($cur) < 0) return; // terminal — don't override
+    if (crmStatusRank($target) <= crmStatusRank($cur)) {
         // still keep legacy status synced
         $db->prepare('UPDATE bookings SET status = ?, updated_at = NOW() WHERE id = ?')
            ->execute([crmStatusToLegacy($cur), $bookingId]);

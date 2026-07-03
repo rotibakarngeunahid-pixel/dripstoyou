@@ -95,6 +95,8 @@ if ($method === 'POST') {
         }
         crmAuditLog($staff, 'SCREENING', 'SUBMIT', $bookingId, "Screening submit: $conclusion");
     } else {
+        // A saved draft means screening has begun — reflect it on the timeline.
+        crmAdvanceBookingStatus($db, $bookingId, 'SCREENING_STARTED');
         crmAuditLog($staff, 'SCREENING', 'SAVE_DRAFT', $bookingId, 'Screening draft disimpan');
     }
 

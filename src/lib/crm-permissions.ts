@@ -68,3 +68,17 @@ export function crmHomePath(role: CRMRole, modules?: string[]): string {
   for (const h of HOME_PRIORITY) if (m.includes(h.module)) return h.path;
   return '/crm/dashboard';
 }
+
+// "Back to booking" target from the clinical pages (screening/consent/treatment):
+// the booking detail for staff who may open it, otherwise the user's own home —
+// NURSE lacks the `booking` module, so linking them there would 403.
+export function crmBookingHref(
+  staff: { role: CRMRole; modules?: string[] } | null,
+  codeOrId: string,
+): string {
+  if (!staff) return '/crm/nurse';
+  if (staff.role === 'OWNER' || (staff.modules ?? []).includes('booking')) {
+    return `/crm/booking/${codeOrId}`;
+  }
+  return crmHomePath(staff.role, staff.modules);
+}

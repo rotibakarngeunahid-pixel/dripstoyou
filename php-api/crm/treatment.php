@@ -30,13 +30,29 @@ if ($method === 'GET') {
         $tr['nurse_notes'] = crmTryDecrypt($tr['nurse_notes_encrypted'] ?? null, null);
         unset($tr['checklist_json'], $tr['items_used_json'], $tr['nurse_notes_encrypted']);
     }
-    jsonSuccess(['booking' => $booking, 'treatment' => $tr ?: null]);
+
+    $c = $db->prepare('SELECT id, agreed_at FROM consents WHERE booking_id = ? LIMIT 1');
+    $c->execute([$bookingId]);
+    jsonSuccess(['booking' => $booking, 'treatment' => $tr ?: null, 'consent' => $c->fetch() ?: null]);
 }
 
 if ($method === 'POST') {
     $body = getBodyJson();
     $bookingId = str_clean($body['booking_id'] ?? $bookingId ?? '', 191);
     if (!$bookingId) jsonError('booking_id wajib diisi', 400);
+
+    $b = $db->prepare('SELECT id FROM bookings WHERE id = ? LIMIT 1');
+    $b->execute([$bookingId]);
+    if (!$b->fetch()) jsonError('Booking tidak ditemukan', 404);
+
+    // Flow guard: informed consent must be signed before any treatment record
+    // is created or updated (screening → consent → treatment).
+    $c = $db->prepare('SELECT agreed_at FROM consents WHERE booking_id = ? LIMIT 1');
+    $c->execute([$bookingId]);
+    $consent = $c->fetch();
+    if (!$consent || empty($consent['agreed_at'])) {
+        jsonError('Informed consent belum ditandatangani. Lengkapi consent pasien terlebih dahulu sebelum treatment.', 409);
+    }
 
     $checklist  = isset($body['checklist']) && is_array($body['checklist']) ? $body['checklist'] : [];
     $itemsUsed  = isset($body['items_used']) && is_array($body['items_used']) ? $body['items_used'] : [];
@@ -68,6 +84,10 @@ if ($method === 'POST') {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
            ->execute([$tid, $bookingId, $nurseId, $checklistJson, $itemsJson, $nurseNotes, $condAfter, $followUp, $completedAt, $now, $now]);
     }
+
+    // A saved draft means the nurse is at the patient's side working — reflect
+    // it on the timeline. Rank-based advance, so it never regresses a booking.
+    if (!$complete) crmAdvanceBookingStatus($db, $bookingId, 'TREATMENT_IN_PROGRESS');
 
     if ($complete && !$alreadyCompleted) {
         // Deduct inventory once, at completion. Roll back the completion on failure.

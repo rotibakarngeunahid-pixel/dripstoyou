@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Eraser } from 'lucide-react';
+import { ArrowLeft, Eraser, Stethoscope } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { formatDateTimeWITA } from '@/lib/crm-format';
+import { crmBookingHref } from '@/lib/crm-permissions';
+import { STATUS_RANK, type CRMBookingStatus } from '@/lib/crm-status';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
+import { useCRMStaff } from '../../CRMShell';
 
 type Booking = { id: string; booking_code_display: string | null; customer_name: string; product_name: string; crm_status: string };
 type Consent = { patient_name_signed: string; agreed_at: string | null } | null;
@@ -18,6 +21,7 @@ const STATEMENT =
 export default function ConsentPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const router = useRouter();
+  const staff = useCRMStaff();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [existing, setExisting] = useState<Consent>(null);
   const [loading, setLoading] = useState(true);
@@ -88,9 +92,34 @@ export default function ConsentPage() {
   if (loading) return <LoadingBlock />;
   if (error || !booking) return <ErrorBlock message={error || 'Tidak ditemukan'} onRetry={load} />;
 
+  const backHref = crmBookingHref(staff, booking.booking_code_display ?? bookingId);
+  const screeningDone = (STATUS_RANK[booking.crm_status as CRMBookingStatus] ?? 0) >= STATUS_RANK.SCREENING_COMPLETED;
+
+  // Flow guard (mirrors consent.php): consent may only be taken after screening.
+  if (!screeningDone && !existing?.agreed_at) {
+    const notEligible = booking.crm_status === 'NOT_ELIGIBLE';
+    return (
+      <div className="crm-page mx-auto max-w-xl">
+        <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
+        <div className="crm-card p-6 text-center">
+          <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3F0E7] text-[#C9944C]"><Stethoscope size={24} /></span>
+          <h2 className="crm-section-title mb-1">{notEligible ? 'Pasien Tidak Memenuhi Syarat' : 'Screening Belum Selesai'}</h2>
+          <p className="mx-auto mb-4 max-w-sm text-sm text-[#4d6060]">
+            {notEligible
+              ? 'Hasil screening menyatakan treatment tidak disarankan, sehingga informed consent tidak dapat diambil untuk booking ini.'
+              : 'Informed consent hanya bisa diambil setelah screening pasien disubmit. Selesaikan screening terlebih dahulu.'}
+          </p>
+          <Link href={`/crm/screening/${bookingId}`} className="inline-flex h-12 items-center justify-center rounded-xl bg-[#205251] px-6 text-sm font-semibold text-white">
+            {notEligible ? 'Lihat Hasil Screening' : 'Buka Screening →'}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="crm-page mx-auto max-w-xl">
-      <Link href={`/crm/booking/${booking.booking_code_display ?? bookingId}`} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
+      <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
 
       <div className="crm-card p-6">
         <div className="mb-5 text-center">

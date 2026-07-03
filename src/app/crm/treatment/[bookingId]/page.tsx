@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, FileSignature, Plus, Trash2 } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
+import { crmBookingHref } from '@/lib/crm-permissions';
 import StatusBadge from '@/components/crm/StatusBadge';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
+import { useCRMStaff } from '../../CRMShell';
 
 type Booking = { id: string; booking_code_display: string | null; customer_name: string; product_name: string; crm_status: string };
 type ChecklistItem = { step: string; done: boolean };
@@ -15,6 +17,7 @@ type Treatment = {
   checklist: ChecklistItem[]; items_used: UsedItem[]; nurse_notes: string | null;
   patient_condition_after: string | null; follow_up_recommendation: string | null; completed_at: string | null;
 } | null;
+type ConsentInfo = { id: string; agreed_at: string | null } | null;
 type InvItem = { id: string; name: string; unit: string; stock_current: number };
 
 const DEFAULT_CHECKLIST: ChecklistItem[] = [
@@ -30,7 +33,9 @@ const FOLLOWUP_CHIPS = ['Hidrasi cukup 24 jam', 'Reminder sesi berikutnya 2 ming
 export default function TreatmentPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const router = useRouter();
+  const staff = useCRMStaff();
   const [booking, setBooking] = useState<Booking | null>(null);
+  const [consent, setConsent] = useState<ConsentInfo>(null);
   const [inventory, setInventory] = useState<InvItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -49,10 +54,11 @@ export default function TreatmentPage() {
     setLoading(true); setError('');
     try {
       const [d, opt] = await Promise.all([
-        crmGet<{ booking: Booking; treatment: Treatment }>(`/api/crm/treatment/${bookingId}`),
+        crmGet<{ booking: Booking; treatment: Treatment; consent: ConsentInfo }>(`/api/crm/treatment/${bookingId}`),
         crmGet<{ inventory: InvItem[] }>('/api/crm/options'),
       ]);
       setBooking(d.booking);
+      setConsent(d.consent ?? null);
       setInventory(opt.inventory ?? []);
       const t = d.treatment;
       if (t) {
@@ -78,6 +84,9 @@ export default function TreatmentPage() {
   function setItem(i: number, patch: Partial<UsedItem>) { setItems((x) => x.map((it, idx) => idx === i ? { ...it, ...patch } : it)); }
   function toggleChip(c: string) { setFollowups((f) => f.includes(c) ? f.filter((x) => x !== c) : [...f, c]); }
 
+  const backHref = crmBookingHref(staff, booking?.booking_code_display ?? bookingId);
+  const consentSigned = !!consent?.agreed_at;
+
   async function save(complete: boolean) {
     setSaving(complete ? 'complete' : 'save'); setMsg('');
     const allFollowups = [...followups];
@@ -92,7 +101,7 @@ export default function TreatmentPage() {
         follow_up_recommendation: allFollowups.join(' · '),
         complete,
       });
-      if (complete) { router.push(`/crm/booking/${booking?.booking_code_display ?? bookingId}`); return; }
+      if (complete) { router.push(backHref); return; }
       setMsg('Treatment tersimpan.');
     } catch (e) { setMsg(e instanceof Error ? e.message : 'Gagal menyimpan'); }
     finally { setSaving(''); }
@@ -101,9 +110,35 @@ export default function TreatmentPage() {
   if (loading) return <LoadingBlock />;
   if (error || !booking) return <ErrorBlock message={error || 'Tidak ditemukan'} onRetry={load} />;
 
+  // Flow guard (mirrors treatment.php): no treatment before informed consent.
+  if (!consentSigned && !completed) {
+    return (
+      <div className="crm-page mx-auto max-w-2xl">
+        <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
+        <div className="crm-page-header mb-5">
+          <div className="min-w-0">
+            <h2 className="crm-page-title">Treatment</h2>
+            <p className="crm-page-subtitle">{booking.customer_name} · {booking.product_name}</p>
+          </div>
+          <StatusBadge status={booking.crm_status} />
+        </div>
+        <div className="crm-card p-6 text-center">
+          <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3F0E7] text-[#C9944C]"><FileSignature size={24} /></span>
+          <h3 className="crm-section-title mb-1">Informed Consent Belum Ditandatangani</h3>
+          <p className="mx-auto mb-4 max-w-sm text-sm text-[#4d6060]">
+            Sesuai prosedur, pasien wajib menandatangani informed consent setelah screening dan sebelum treatment dimulai.
+          </p>
+          <Link href={`/crm/consent/${bookingId}`} className="inline-flex h-12 items-center justify-center rounded-xl bg-[#205251] px-6 text-sm font-semibold text-white">
+            Buka Informed Consent →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="crm-page mx-auto max-w-2xl">
-      <Link href={`/crm/booking/${booking.booking_code_display ?? bookingId}`} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
+      <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
       <div className="crm-page-header mb-5">
         <div className="min-w-0">
           <h2 className="crm-page-title">Treatment</h2>
@@ -113,6 +148,7 @@ export default function TreatmentPage() {
       </div>
 
       {completed && <div className="mb-4 rounded-xl bg-[#D6EAEA] px-4 py-2 text-sm text-[#205251]">Treatment ini sudah ditandai selesai. Perubahan tetap bisa disimpan, namun stok hanya dikurangi sekali.</div>}
+      {completed && !consentSigned && <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">Booking ini belum memiliki informed consent, sehingga perubahan tidak dapat disimpan sebelum consent ditandatangani.</div>}
 
       <Section title="Checklist Treatment">
         <div className="space-y-2">

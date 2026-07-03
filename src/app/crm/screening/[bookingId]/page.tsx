@@ -5,7 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
+import { crmBookingHref } from '@/lib/crm-permissions';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
+import { useCRMStaff } from '../../CRMShell';
 
 type Booking = { id: string; booking_code_display: string | null; customer_name: string; product_name: string; crm_status: string };
 type Screening = {
@@ -24,6 +26,7 @@ const CONCLUSIONS = [
 export default function ScreeningPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
   const router = useRouter();
+  const staff = useCRMStaff();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -62,6 +65,8 @@ export default function ScreeningPage() {
     return () => clearTimeout(t);
   }, [load]);
 
+  const backHref = crmBookingHref(staff, booking?.booking_code_display ?? bookingId);
+
   async function save(submit: boolean) {
     setSaving(submit ? 'submit' : 'draft'); setMsg('');
     try {
@@ -74,7 +79,9 @@ export default function ScreeningPage() {
         taking_medication: f.taking_medication, medication_notes: f.medication_notes,
         is_pregnant: f.is_pregnant, nurse_notes: f.nurse_notes, conclusion: f.conclusion, submit,
       });
-      if (submit) { router.push(`/crm/booking/${booking?.booking_code_display ?? bookingId}`); return; }
+      // Eligible screening flows straight into informed consent;
+      // NOT_RECOMMENDED ends the visit (booking becomes NOT_ELIGIBLE).
+      if (submit) { router.push(f.conclusion === 'NOT_RECOMMENDED' ? backHref : `/crm/consent/${bookingId}`); return; }
       setMsg('Draft tersimpan.');
     } catch (e) { setMsg(e instanceof Error ? e.message : 'Gagal menyimpan'); }
     finally { setSaving(''); }
@@ -87,7 +94,7 @@ export default function ScreeningPage() {
 
   return (
     <div className="crm-page mx-auto max-w-2xl">
-      <Link href={`/crm/booking/${booking.booking_code_display ?? bookingId}`} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
+      <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
       <div>
         <h2 className="crm-page-title">Screening</h2>
         <p className="crm-page-subtitle">{booking.customer_name} · {booking.product_name}</p>
