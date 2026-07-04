@@ -310,6 +310,19 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
     hapusBookingGagal: 'Gagal menghapus booking.',
     alasanWajib: 'Alasan penghapusan wajib diisi.',
 
+    // Reset semua transaksi (SUPER_ADMIN only)
+    resetTransaksi: 'Reset Transaksi',
+    resetTransaksiTitle: 'Reset Semua Transaksi?',
+    resetTransaksiCountLabel: 'Booking yang akan dihapus',
+    resetTransaksiWarning: '⚠️ Tindakan ini permanen dan tidak bisa dibatalkan. Semua data screening, informed consent, treatment, dan pembayaran yang terkait booking ini akan ikut terhapus. Data pasien (nama, kontak) tetap aman.',
+    alasanReset: 'Alasan reset',
+    alasanResetPlaceholder: 'Contoh: Bersihkan data uji-coba sebelum go-live.',
+    konfirmasiTeksLabel: 'Ketik teks berikut untuk konfirmasi:',
+    yaResetSemua: 'Ya, Reset Semua Transaksi',
+    sedangMereset: 'Mereset...',
+    transaksiBerhasilDireset: 'transaksi berhasil direset',
+    gagalResetTransaksi: 'Gagal mereset transaksi.',
+
     // Log Penghapusan page (SUPER_ADMIN only)
     logPenghapusanMenu: 'Log Penghapusan',
     logPenghapusanTitle: 'Log Penghapusan Booking',
@@ -685,6 +698,19 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
     bookingBerhasilDihapus: 'Booking deleted successfully',
     hapusBookingGagal: 'Failed to delete booking.',
     alasanWajib: 'Deletion reason is required.',
+
+    // Reset all transactions (SUPER_ADMIN only)
+    resetTransaksi: 'Reset Transactions',
+    resetTransaksiTitle: 'Reset All Transactions?',
+    resetTransaksiCountLabel: 'Bookings that will be deleted',
+    resetTransaksiWarning: '⚠️ This action is permanent and cannot be undone. All screening, informed consent, treatment, and payment records tied to these bookings will also be deleted. Patient data (name, contact) stays intact.',
+    alasanReset: 'Reason for reset',
+    alasanResetPlaceholder: 'E.g. Clear test data before go-live.',
+    konfirmasiTeksLabel: 'Type the phrase below to confirm:',
+    yaResetSemua: 'Yes, Reset All Transactions',
+    sedangMereset: 'Resetting...',
+    transaksiBerhasilDireset: 'transactions successfully reset',
+    gagalResetTransaksi: 'Failed to reset transactions.',
 
     // Deletion log page (SUPER_ADMIN only)
     logPenghapusanMenu: 'Deletion Log',

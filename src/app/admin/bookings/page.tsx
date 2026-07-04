@@ -6,6 +6,7 @@ import { Search } from 'lucide-react';
 import { useAdminLang } from '@/app/admin/AdminLayoutClient';
 import { ADMIN_T } from '@/lib/admin-i18n';
 import { DeleteBookingModal, type DeleteModalBooking } from '@/components/admin/DeleteBookingModal';
+import { ResetBookingsModal } from '@/components/admin/ResetBookingsModal';
 
 type BookingStatus = 'BARU' | 'KONFIRMASI' | 'DIPROSES' | 'SELESAI' | 'DIBATALKAN';
 type TabKey = 'semua' | 'aktif' | 'selesai' | 'dibatalkan' | 'dihapus';
@@ -211,6 +212,13 @@ export default function BookingsPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  /* Reset ALL bookings (SUPER_ADMIN only) */
+  const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [resetReason, setResetReason] = useState('');
+  const [resetConfirmText, setResetConfirmText] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
+
   /* Toast */
   const [toast, setToast] = useState<Toast | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -342,6 +350,50 @@ export default function BookingsPage() {
     }
   }
 
+  /* ── Reset ALL bookings ── */
+  function openResetModal() {
+    setResetReason('');
+    setResetConfirmText('');
+    setResetError('');
+    setResetModalOpen(true);
+  }
+
+  function closeResetModal() {
+    if (resetLoading) return;
+    setResetModalOpen(false);
+    setResetReason('');
+    setResetConfirmText('');
+    setResetError('');
+  }
+
+  async function handleConfirmReset() {
+    setResetLoading(true);
+    setResetError('');
+    try {
+      const res = await fetch('/api/admin/bookings/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: resetReason.trim(), confirmation: resetConfirmText }),
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        const count = json.data?.count ?? 0;
+        setBookings([]);
+        setResetModalOpen(false);
+        setResetReason('');
+        setResetConfirmText('');
+        setLogsLoaded(false); // reset so logs reload fresh on next visit
+        showToast(`${count} ${t.transaksiBerhasilDireset}`, 'success');
+      } else {
+        setResetError(json.message ?? json.error ?? t.gagalResetTransaksi);
+      }
+    } catch {
+      setResetError(t.gagalResetTransaksi);
+    } finally {
+      setResetLoading(false);
+    }
+  }
+
   /* ── Helpers ── */
   const statusLabel = (s: BookingStatus) => t[`status${s}` as keyof typeof t] ?? s;
 
@@ -422,6 +474,20 @@ export default function BookingsPage() {
               <Link href="/api/admin/bookings/export" className="button button-secondary">
                 {t.exportCSV}
               </Link>
+              {isSuperAdmin && bookings.length > 0 && (
+                <button
+                  type="button"
+                  onClick={openResetModal}
+                  style={{
+                    padding: '7px 16px', fontSize: 13, fontWeight: 600,
+                    background: 'transparent', color: '#dc2626',
+                    border: '1.5px solid #dc2626', borderRadius: 8,
+                    cursor: 'pointer', whiteSpace: 'nowrap',
+                  }}
+                >
+                  {t.resetTransaksi}
+                </button>
+              )}
             </>
           )}
           {activeTab === 'dihapus' && isSuperAdmin && (
@@ -683,6 +749,21 @@ export default function BookingsPage() {
         onReasonChange={setDeleteReason}
         onConfirm={() => { void handleConfirmDelete(); }}
         onCancel={closeDeleteModal}
+        t={t}
+      />
+
+      {/* ── Reset ALL bookings confirm modal ── */}
+      <ResetBookingsModal
+        open={resetModalOpen}
+        count={bookings.length}
+        loading={resetLoading}
+        error={resetError}
+        reason={resetReason}
+        confirmText={resetConfirmText}
+        onReasonChange={setResetReason}
+        onConfirmTextChange={setResetConfirmText}
+        onConfirm={() => { void handleConfirmReset(); }}
+        onCancel={closeResetModal}
         t={t}
       />
 
