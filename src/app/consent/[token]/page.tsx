@@ -80,6 +80,7 @@ export default function PublicConsentPage() {
       }
       setBooking(json.data.booking);
       setExisting(json.data.consent ?? null);
+      setName(json.data.consent?.patient_name_signed ?? json.data.booking?.customer_name ?? '');
     } catch {
       setNotFound('Koneksi bermasalah. Silakan coba lagi.');
     } finally {

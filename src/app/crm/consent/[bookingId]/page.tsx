@@ -63,7 +63,7 @@ export default function ConsentPage() {
       const d = await crmGet<{ booking: Booking; consent: Consent }>(`/api/crm/consent/${bookingId}`);
       setBooking(d.booking);
       setExisting(d.consent ?? null);
-      if (d.consent) setName(d.consent.patient_name_signed);
+      setName(d.consent?.patient_name_signed ?? d.booking?.customer_name ?? '');
     } catch (e) { setError(e instanceof Error ? e.message : 'Gagal memuat'); }
     finally { setLoading(false); }
   }, [bookingId]);
