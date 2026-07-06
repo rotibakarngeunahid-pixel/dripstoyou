@@ -38,10 +38,15 @@ if ($method === 'GET') {
     $booking = $b->fetch();
     if (!$booking) jsonError('Booking tidak ditemukan', 404);
 
-    $c = $db->prepare('SELECT patient_name_signed, agreed_at FROM consents WHERE booking_id = ? LIMIT 1');
+    $c = $db->prepare('SELECT patient_name_signed, agreed_at, consent_language, signature_data_encrypted FROM consents WHERE booking_id = ? LIMIT 1');
     $c->execute([$link['booking_id']]);
+    $consent = $c->fetch() ?: null;
+    if ($consent) {
+        $consent['signature_data'] = crmTryDecrypt($consent['signature_data_encrypted'] ?? null, null);
+        unset($consent['signature_data_encrypted']);
+    }
 
-    jsonSuccess(['booking' => $booking, 'consent' => $c->fetch() ?: null]);
+    jsonSuccess(['booking' => $booking, 'consent' => $consent]);
 }
 
 if ($method === 'POST') {

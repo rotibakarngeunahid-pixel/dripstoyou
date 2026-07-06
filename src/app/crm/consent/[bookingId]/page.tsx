@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Copy, Eraser, ExternalLink, Link2, Stethoscope, XCircle } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowLeft, Copy, Download, Eraser, ExternalLink, Link2, Stethoscope, XCircle } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
+import { downloadConsentPdf } from '@/lib/consent-pdf';
 import { formatDateTimeWITA } from '@/lib/crm-format';
 import { crmBookingHref } from '@/lib/crm-permissions';
 import { STATUS_RANK, type CRMBookingStatus } from '@/lib/crm-status';
@@ -17,7 +19,10 @@ type Booking = {
   id: string; booking_code_display: string | null; customer_name: string; phone: string | null;
   product_name: string; crm_status: string;
 };
-type Consent = { patient_name_signed: string; agreed_at: string | null; filled_by?: 'NURSE' | 'CLIENT' } | null;
+type Consent = {
+  patient_name_signed: string; agreed_at: string | null; filled_by?: 'NURSE' | 'CLIENT';
+  consent_language?: Lang | null; signature_data?: string | null;
+} | null;
 type LinkStatus = { expires_at: string; used_at: string | null; created_at: string } | null;
 
 export default function ConsentPage() {
@@ -33,6 +38,7 @@ export default function ConsentPage() {
   const [agree, setAgree] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   const [linkStatus, setLinkStatus] = useState<LinkStatus>(null);
   const [linkUrl, setLinkUrl] = useState('');
@@ -136,12 +142,30 @@ export default function ConsentPage() {
     catch { setLinkMsg('Gagal menyalin link'); }
   }
 
+  async function handleDownloadPdf() {
+    if (!booking || !existing?.agreed_at) return;
+    setPdfBusy(true);
+    try {
+      await downloadConsentPdf({
+        lang: existing.consent_language ?? lang,
+        bookingCode: booking.booking_code_display,
+        patientName: booking.customer_name,
+        serviceName: booking.product_name,
+        patientNameSigned: existing.patient_name_signed,
+        agreedOnLabel: formatDateTimeWITA(existing.agreed_at),
+        signatureDataUrl: existing.signature_data,
+      });
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   if (loading) return <LoadingBlock />;
   if (error || !booking) return <ErrorBlock message={error || 'Tidak ditemukan'} onRetry={load} />;
 
   const backHref = crmBookingHref(staff, booking.booking_code_display ?? bookingId);
   const screeningDone = (STATUS_RANK[booking.crm_status as CRMBookingStatus] ?? 0) >= STATUS_RANK.SCREENING_COMPLETED;
-  const waMessage = `Halo ${booking.customer_name} 👋\n\nSebelum treatment ${booking.product_name} dimulai, mohon isi formulir persetujuan tindakan medis (informed consent) melalui link berikut:\n${linkUrl}\n\nLink berlaku 48 jam. Terima kasih — Drips To You Bali 🌿`;
+  const waMessage = `Halo ${booking.customer_name} 👋\n\nSebelum treatment ${booking.product_name} dimulai, mohon isi formulir persetujuan tindakan medis (informed consent) melalui link berikut:\n${linkUrl}\n\nLink berlaku 48 jam. Terima kasih — Drips To You - Bali 🌿`;
 
   // Flow guard (mirrors consent.php): consent may only be taken after screening.
   if (!screeningDone && !existing?.agreed_at) {
@@ -235,15 +259,31 @@ export default function ConsentPage() {
         </div>
 
         <div className="mb-5 text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#205251] text-xl font-bold text-[#EAD4AE]">D</div>
+          <Image
+            src="https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp?tr=bg-remove"
+            alt="Drips To You - Bali"
+            width={48}
+            height={48}
+            className="mx-auto mb-2"
+          />
           <h2 className="crm-section-title">{t.title}</h2>
           <p className="text-xs text-[#8EBFBF]">{t.subtitle}</p>
         </div>
 
         {existing?.agreed_at && (
-          <div className="mb-4 rounded-xl bg-[#D6EAEA] px-4 py-2 text-sm text-[#205251]">
-            {t.alreadyAgreed(formatDateTimeWITA(existing.agreed_at), existing.patient_name_signed)}
-            {existing.filled_by === 'CLIENT' && ' Diisi mandiri oleh pasien via link.'}
+          <div className="mb-4 rounded-xl bg-[#D6EAEA] px-4 py-3 text-sm text-[#205251]">
+            <p>
+              {t.alreadyAgreed(formatDateTimeWITA(existing.agreed_at), existing.patient_name_signed)}
+              {existing.filled_by === 'CLIENT' && ' Diisi mandiri oleh pasien via link.'}
+            </p>
+            <button
+              type="button"
+              disabled={pdfBusy}
+              onClick={() => { void handleDownloadPdf(); }}
+              className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#205251] px-3 text-xs font-semibold text-[#205251] disabled:opacity-60"
+            >
+              <Download size={14} /> {pdfBusy ? 'Menyiapkan PDF…' : 'Download PDF'}
+            </button>
           </div>
         )}
 

@@ -2,15 +2,20 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { CheckCircle2, Eraser, MessageCircle, ShieldAlert, Stethoscope } from 'lucide-react';
+import Image from 'next/image';
+import { CheckCircle2, Download, Eraser, MessageCircle, ShieldAlert, Stethoscope } from 'lucide-react';
 import { CONSENT_COPY as COPY, type ConsentLang as Lang } from '@/lib/consent-copy';
+import { downloadConsentPdf } from '@/lib/consent-pdf';
 import { formatDateTimeWITA } from '@/lib/crm-format';
 import { STATUS_RANK, type CRMBookingStatus } from '@/lib/crm-status';
 import { waGeneralUrl } from '@/lib/whatsapp';
 import { Spinner } from '@/components/crm/states';
 
 type Booking = { id: string; booking_code_display: string | null; customer_name: string; product_name: string; crm_status: string };
-type Consent = { patient_name_signed: string; agreed_at: string | null } | null;
+type Consent = {
+  patient_name_signed: string; agreed_at: string | null;
+  consent_language?: Lang | null; signature_data?: string | null;
+} | null;
 
 async function readEnvelope(res: Response) {
   try { return await res.json(); } catch { return { success: false, message: 'Respons server tidak valid' }; }
@@ -33,8 +38,14 @@ function Shell({ children }: { children: React.ReactNode }) {
 function Brand() {
   return (
     <div className="mb-5 text-center">
-      <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#205251] text-xl font-bold text-[#EAD4AE]">D</div>
-      <p className="font-display text-sm font-bold tracking-wide text-[#205251]">DRIP TO YOU BALI</p>
+      <Image
+        src="https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp?tr=bg-remove"
+        alt="Drips To You - Bali"
+        width={48}
+        height={48}
+        className="mx-auto mb-2"
+      />
+      <p className="font-display text-sm font-bold tracking-wide text-[#205251]">DRIPS TO YOU - BALI</p>
     </div>
   );
 }
@@ -51,6 +62,8 @@ export default function PublicConsentPage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
   const [done, setDone] = useState(false);
+  const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
@@ -121,10 +134,31 @@ export default function PublicConsentPage() {
       });
       const json = await readEnvelope(res);
       if (!res.ok || json.success === false) throw new Error(json.message ?? 'Gagal menyimpan consent');
+      setSignatureDataUrl(sig ?? null);
       setDone(true);
     } catch (e) {
       setMsg(e instanceof Error ? e.message : 'Gagal menyimpan');
       setSaving(false);
+    }
+  }
+
+  async function handleDownloadPdf(opts: {
+    lang: Lang; patientNameSigned: string; agreedOnLabel: string; signature?: string | null;
+  }) {
+    if (!booking) return;
+    setPdfBusy(true);
+    try {
+      await downloadConsentPdf({
+        lang: opts.lang,
+        bookingCode: booking.booking_code_display,
+        patientName: booking.customer_name,
+        serviceName: booking.product_name,
+        patientNameSigned: opts.patientNameSigned,
+        agreedOnLabel: opts.agreedOnLabel,
+        signatureDataUrl: opts.signature,
+      });
+    } finally {
+      setPdfBusy(false);
     }
   }
 
@@ -169,9 +203,17 @@ export default function PublicConsentPage() {
         <div className="crm-card p-6 text-center">
           <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#D6EAEA] text-[#205251]"><CheckCircle2 size={24} /></span>
           <h2 className="crm-section-title mb-1">Terima Kasih!</h2>
-          <p className="mx-auto max-w-sm text-sm text-[#4d6060]">
+          <p className="mx-auto mb-4 max-w-sm text-sm text-[#4d6060]">
             Consent Anda sudah kami terima. Tim medis kami akan segera melanjutkan proses treatment.
           </p>
+          <button
+            type="button"
+            disabled={pdfBusy}
+            onClick={() => handleDownloadPdf({ lang, patientNameSigned: name.trim(), agreedOnLabel: formatDateTimeWITA(new Date()), signature: signatureDataUrl })}
+            className="mx-auto inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#205251] px-5 text-sm font-semibold text-[#205251] disabled:opacity-60"
+          >
+            <Download size={16} /> {pdfBusy ? 'Menyiapkan PDF…' : 'Download PDF'}
+          </button>
         </div>
       </Shell>
     );
@@ -186,9 +228,22 @@ export default function PublicConsentPage() {
         <div className="crm-card p-6 text-center">
           <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#D6EAEA] text-[#205251]"><CheckCircle2 size={24} /></span>
           <h2 className="crm-section-title mb-1">Consent Sudah Ditandatangani</h2>
-          <p className="mx-auto max-w-sm text-sm text-[#4d6060]">
+          <p className="mx-auto mb-4 max-w-sm text-sm text-[#4d6060]">
             {t.alreadyAgreed(formatDateTimeWITA(existing.agreed_at), existing.patient_name_signed)}
           </p>
+          <button
+            type="button"
+            disabled={pdfBusy}
+            onClick={() => handleDownloadPdf({
+              lang: existing.consent_language ?? lang,
+              patientNameSigned: existing.patient_name_signed,
+              agreedOnLabel: formatDateTimeWITA(existing.agreed_at!),
+              signature: existing.signature_data,
+            })}
+            className="mx-auto inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#205251] px-5 text-sm font-semibold text-[#205251] disabled:opacity-60"
+          >
+            <Download size={16} /> {pdfBusy ? 'Menyiapkan PDF…' : 'Download PDF'}
+          </button>
         </div>
       </Shell>
     );
