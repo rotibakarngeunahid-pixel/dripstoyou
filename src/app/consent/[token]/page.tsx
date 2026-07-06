@@ -17,8 +17,14 @@ async function readEnvelope(res: Response) {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
+  // `crm-shell` isn't just a name here — it's what defines the --crm-* CSS
+  // variables (surface, radius, shadow, heading color, ...) that .crm-card /
+  // .crm-section-title / .crm-button rely on. This page lives outside the
+  // authenticated CRM layout (the only other place that class is applied), so
+  // without it those variables are undefined and the card renders flat: no
+  // background contrast, no rounded corners, no shadow.
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#F3F0E7] px-4 py-10">
+    <div className="crm-shell flex min-h-screen items-center justify-center bg-[#F3F0E7] px-4 py-10 font-ui">
       <div className="w-full max-w-xl">{children}</div>
     </div>
   );
