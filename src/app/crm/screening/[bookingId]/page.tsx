@@ -32,6 +32,7 @@ export default function ScreeningPage() {
   const [error, setError] = useState('');
   const [saving, setSaving] = useState<'' | 'draft' | 'submit'>('');
   const [msg, setMsg] = useState('');
+  const [draftSaved, setDraftSaved] = useState(false);
 
   const [f, setF] = useState({
     bp1: '', bp2: '', temperature: '', pulse: '',
@@ -67,8 +68,20 @@ export default function ScreeningPage() {
 
   const backHref = crmBookingHref(staff, booking?.booking_code_display ?? bookingId);
 
+  function validate(): string {
+    if (!f.bp1.trim() || !f.bp2.trim()) return 'Tekanan darah wajib diisi.';
+    if (!f.temperature.trim()) return 'Suhu wajib diisi.';
+    if (!f.pulse.trim()) return 'Nadi wajib diisi.';
+    return '';
+  }
+
   async function save(submit: boolean) {
-    setSaving(submit ? 'submit' : 'draft'); setMsg('');
+    setMsg(''); setDraftSaved(false);
+    if (submit) {
+      const err = validate();
+      if (err) { setMsg(err); return; }
+    }
+    setSaving(submit ? 'submit' : 'draft');
     try {
       await crmSend(`/api/crm/screening/${bookingId}`, 'POST', {
         booking_id: bookingId,
@@ -82,7 +95,7 @@ export default function ScreeningPage() {
       // Eligible screening flows straight into informed consent;
       // NOT_RECOMMENDED ends the visit (booking becomes NOT_ELIGIBLE).
       if (submit) { router.push(f.conclusion === 'NOT_RECOMMENDED' ? backHref : `/crm/consent/${bookingId}`); return; }
-      setMsg('Draft tersimpan.');
+      setDraftSaved(true);
     } catch (e) { setMsg(e instanceof Error ? e.message : 'Gagal menyimpan'); }
     finally { setSaving(''); }
   }
@@ -150,10 +163,18 @@ export default function ScreeningPage() {
         </div>
       </Section>
 
-      {msg && <p className="mb-3 text-sm text-[#29808B]">{msg}</p>}
+      {msg && <p className="mb-3 text-sm text-[#dc2626]">{msg}</p>}
+      {draftSaved && !msg && <p className="mb-3 text-sm text-[#29808B]">Draft tersimpan.</p>}
       <div className="sticky bottom-20 flex gap-2 md:bottom-4">
         <button onClick={() => save(false)} disabled={!!saving} className="h-12 flex-1 rounded-xl border border-[#205251] bg-white text-sm font-semibold text-[#205251] disabled:opacity-60">{saving === 'draft' ? 'Menyimpan…' : 'Simpan Draft'}</button>
-        <button onClick={() => save(true)} disabled={!!saving} className="h-12 flex-1 rounded-xl bg-[#205251] text-sm font-semibold text-white disabled:opacity-60">{saving === 'submit' ? 'Mengirim…' : 'Submit Screening →'}</button>
+        <button
+          onClick={() => save(true)}
+          disabled={!!saving || !!validate()}
+          title={validate() || undefined}
+          className="h-12 flex-1 rounded-xl bg-[#205251] text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {saving === 'submit' ? 'Mengirim…' : 'Submit Screening →'}
+        </button>
       </div>
     </div>
   );

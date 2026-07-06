@@ -53,6 +53,13 @@ if ($method === 'POST') {
     $conclusion   = in_array(($body['conclusion'] ?? 'NEEDS_REVIEW'), ['SAFE','NEEDS_REVIEW','NOT_RECOMMENDED'], true) ? $body['conclusion'] : 'NEEDS_REVIEW';
     $submit       = !empty($body['submit']);
 
+    // Vitals are optional while drafting, but a final submit must actually
+    // record them — the UI previously let nurses submit a completely empty
+    // form since nothing here required it.
+    if ($submit && ($bp === null || $temp === null || $pulse === null)) {
+        jsonError('Tanda vital (tekanan darah, suhu, nadi) wajib diisi sebelum submit screening', 422);
+    }
+
     $allergyNotes = $hasAllergy && !empty($body['allergy_notes']) ? encryptField(str_clean($body['allergy_notes'], 1000)) : null;
     $illnessNotes = $hasIllness && !empty($body['illness_notes']) ? encryptField(str_clean($body['illness_notes'], 1000)) : null;
     $medNotes     = $takingMed && !empty($body['medication_notes']) ? encryptField(str_clean($body['medication_notes'], 1000)) : null;
