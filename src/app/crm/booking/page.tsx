@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronRight, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { formatRupiah, formatDayTime } from '@/lib/crm-format';
 import { STATUS_LABEL, type CRMBookingStatus } from '@/lib/crm-status';
@@ -202,6 +202,7 @@ export default function BookingListPage() {
                   <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Nurse</th>
                   <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Bayar</th>
                   <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Status</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-widest text-[#94a3b8]">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#f8fafc]">
@@ -229,6 +230,14 @@ export default function BookingListPage() {
                       <p className="text-xs text-[#94a3b8]">/ {formatRupiah(b.total_fee)}</p>
                     </td>
                     <td className="px-4 py-3.5"><StatusBadge status={b.crm_status} /></td>
+                    <td className="px-4 py-3.5">
+                      <Link
+                        href={`/crm/booking/${b.booking_code_display ?? b.id}`}
+                        className="inline-flex h-8 items-center rounded-lg border border-[#e2e8f0] bg-white px-3 text-xs font-semibold text-[#205251] transition hover:border-[#205251] hover:bg-[#f0f9f9]"
+                      >
+                        Detail
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -260,6 +269,9 @@ export default function BookingListPage() {
                   <div className="mt-1.5 flex items-center justify-between text-xs text-[#64748b]">
                     <span>{formatDayTime(b.booking_date, b.booking_time)}</span>
                     <span className="font-semibold text-[#0f172a]">{formatRupiah(b.total_fee)}</span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-end gap-1 text-xs font-semibold text-[#205251]">
+                    Lihat Detail <ChevronRight size={14} />
                   </div>
                 </div>
               </Link>
