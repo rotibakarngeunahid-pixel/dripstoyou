@@ -15,13 +15,15 @@ $bookingId = !empty($_GET['bookingId']) ? str_clean($_GET['bookingId'], 191) : n
 
 if ($method === 'GET') {
     if (!$bookingId) jsonError('bookingId wajib diisi', 400);
-    $b = $db->prepare('SELECT b.id, b.booking_code_display, b.customer_name, b.crm_status, p.name AS product_name
+    $b = $db->prepare('SELECT b.id, b.booking_code_display, b.customer_name, b.customer_phone_encrypted, b.crm_status, p.name AS product_name
                        FROM bookings b JOIN products p ON p.id = b.product_id WHERE b.id = ? LIMIT 1');
     $b->execute([$bookingId]);
     $booking = $b->fetch();
     if (!$booking) jsonError('Booking tidak ditemukan', 404);
+    $booking['phone'] = crmTryDecrypt($booking['customer_phone_encrypted'] ?? null, null);
+    unset($booking['customer_phone_encrypted']);
 
-    $c = $db->prepare('SELECT id, patient_name, patient_name_signed, consent_language, agreed_at, created_at FROM consents WHERE booking_id = ? LIMIT 1');
+    $c = $db->prepare('SELECT id, patient_name, patient_name_signed, consent_language, filled_by, agreed_at, created_at FROM consents WHERE booking_id = ? LIMIT 1');
     $c->execute([$bookingId]);
     jsonSuccess(['booking' => $booking, 'consent' => $c->fetch() ?: null]);
 }
@@ -55,13 +57,16 @@ if ($method === 'POST') {
     $row = $exists->fetch();
 
     if ($row) {
-        $db->prepare('UPDATE consents SET patient_name=?, patient_name_signed=?, signature_data_encrypted=?, consent_language=?, agreed_at=?, ip_address_hash=? WHERE id=?')
+        // filled_by/consent_link_id reset to NURSE/NULL: a staff submission through
+        // this endpoint always supersedes a prior client self-fill as the record of
+        // who is currently vouching for this document.
+        $db->prepare('UPDATE consents SET patient_name=?, patient_name_signed=?, signature_data_encrypted=?, consent_language=?, filled_by="NURSE", consent_link_id=NULL, agreed_at=?, ip_address_hash=? WHERE id=?')
            ->execute([$booking['customer_name'], $nameSigned, $sig, $lang, $now, $ipHash, $row['id']]);
         $cid = $row['id'];
     } else {
         $cid = generateId();
-        $db->prepare('INSERT INTO consents (id, booking_id, patient_name, patient_name_signed, signature_data_encrypted, consent_language, agreed_at, ip_address_hash, created_at)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        $db->prepare('INSERT INTO consents (id, booking_id, patient_name, patient_name_signed, signature_data_encrypted, consent_language, filled_by, agreed_at, ip_address_hash, created_at)
+                      VALUES (?, ?, ?, ?, ?, ?, "NURSE", ?, ?, ?)')
            ->execute([$cid, $bookingId, $booking['customer_name'], $nameSigned, $sig, $lang, $now, $ipHash, $now]);
     }
 

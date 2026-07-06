@@ -3,102 +3,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Eraser, Stethoscope } from 'lucide-react';
+import { ArrowLeft, Copy, Eraser, ExternalLink, Link2, Stethoscope, XCircle } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { formatDateTimeWITA } from '@/lib/crm-format';
 import { crmBookingHref } from '@/lib/crm-permissions';
 import { STATUS_RANK, type CRMBookingStatus } from '@/lib/crm-status';
+import { CONSENT_COPY as COPY, type ConsentLang as Lang } from '@/lib/consent-copy';
+import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
 import { useCRMStaff } from '../../CRMShell';
 
-type Booking = { id: string; booking_code_display: string | null; customer_name: string; product_name: string; crm_status: string };
-type Consent = { patient_name_signed: string; agreed_at: string | null } | null;
-type Lang = 'en' | 'id';
-
-// Nama rumah sakit / mitra klinis — tampil di klausul 1.
-// TODO: ganti '……..' dengan nama mitra klinis resmi begitu kontraknya final.
-const CLINICAL_PARTNER = '……..';
-
-type ConsentCopy = {
-  flag: string; langName: string;
-  title: string; subtitle: string; intro: string;
-  clauses: { title: string; body: string }[];
-  patient: string; service: string;
-  agreeCheckbox: string; nameLabel: string;
-  signatureLabel: string; clear: string; signatureHint: string;
-  agreedOn: string; submit: string; saving: string;
-  alreadyAgreed: (date: string, name: string) => string;
-  errName: string; errAgree: string;
+type Booking = {
+  id: string; booking_code_display: string | null; customer_name: string; phone: string | null;
+  product_name: string; crm_status: string;
 };
-
-const COPY: Record<Lang, ConsentCopy> = {
-  en: {
-    flag: '🇬🇧', langName: 'English',
-    title: 'Informed Consent',
-    subtitle: 'IV Therapy / Vitamin Injection — Mobile Service',
-    intro: 'By signing this document, I acknowledge, understand, and agree to the following terms:',
-    clauses: [
-      {
-        title: 'Authorization of Treatment',
-        body: `I voluntarily request and authorize the fully licensed healthcare professionals from Drips to You (operating under the clinical partnership with ${CLINICAL_PARTNER}) to administer Intravenous (IV) Therapy / Vitamin Injections to me.`,
-      },
-      {
-        title: 'Acknowledgement of Risks',
-        body: 'I have been fully informed of the intended benefits as well as the minor potential risks associated with IV cannulation, including but not limited to: mild bruising (hematoma), localized swelling, temporary soreness/redness at the injection site, or mild dizziness.',
-      },
-      {
-        title: 'Accuracy of Medical History',
-        body: 'I certify that all information provided regarding my health status, medical history, and allergies is true and complete. Drips to You and its partner hospital shall be fully released from any liability regarding adverse reactions caused by undisclosed or inaccurate medical info.',
-      },
-      {
-        title: 'Right to Refuse',
-        body: 'I understand that I retain the right to refuse, delay, or terminate the medical procedure at any point during the session at my own discretion.',
-      },
-    ],
-    patient: 'Patient', service: 'Service',
-    agreeCheckbox: 'I have read, understood, and agree to all the terms above.',
-    nameLabel: 'Patient Full Name',
-    signatureLabel: 'Digital Signature', clear: 'Clear',
-    signatureHint: 'Signature is optional — full name is required.',
-    agreedOn: 'Agreed on', submit: 'Sign & Submit Consent', saving: 'Submitting…',
-    alreadyAgreed: (date, name) => `Already signed on ${date} by ${name}.`,
-    errName: 'Patient full name is required.',
-    errAgree: 'Please tick the agreement checkbox first.',
-  },
-  id: {
-    flag: '🇮🇩', langName: 'Indonesia',
-    title: 'Persetujuan Tindakan Medis',
-    subtitle: 'Informed Consent — IV Therapy / Injeksi Vitamin',
-    intro: 'Dengan menandatangani dokumen ini, saya mengakui, memahami, dan menyetujui ketentuan-ketentuan berikut:',
-    clauses: [
-      {
-        title: 'Otorisasi Tindakan',
-        body: `Saya secara sukarela meminta dan memberikan wewenang kepada tenaga kesehatan berlisensi penuh dari Drips to You (yang beroperasi dalam kemitraan klinis dengan ${CLINICAL_PARTNER}) untuk memberikan Terapi Intravena (IV) / Injeksi Vitamin kepada saya.`,
-      },
-      {
-        title: 'Pemahaman Risiko',
-        body: 'Saya telah diberi informasi lengkap mengenai manfaat yang diharapkan serta potensi risiko ringan yang terkait dengan pemasangan kanula IV, termasuk namun tidak terbatas pada: memar ringan (hematoma), pembengkakan lokal, nyeri/kemerahan sementara di area suntikan, atau pusing ringan.',
-      },
-      {
-        title: 'Keakuratan Riwayat Medis',
-        body: 'Saya menyatakan bahwa seluruh informasi yang saya berikan mengenai kondisi kesehatan, riwayat medis, dan alergi saya adalah benar dan lengkap. Drips to You beserta rumah sakit mitranya dibebaskan sepenuhnya dari segala tanggung jawab atas reaksi merugikan yang disebabkan oleh informasi medis yang tidak diungkapkan atau tidak akurat.',
-      },
-      {
-        title: 'Hak untuk Menolak',
-        body: 'Saya memahami bahwa saya tetap berhak menolak, menunda, atau menghentikan prosedur medis kapan pun selama sesi berlangsung atas pertimbangan saya sendiri.',
-      },
-    ],
-    patient: 'Pasien', service: 'Layanan',
-    agreeCheckbox: 'Saya telah membaca, memahami, dan menyetujui seluruh ketentuan di atas.',
-    nameLabel: 'Nama Lengkap Pasien',
-    signatureLabel: 'Tanda Tangan Digital', clear: 'Hapus',
-    signatureHint: 'Tanda tangan opsional — nama wajib diisi.',
-    agreedOn: 'Disetujui', submit: 'Tandatangani & Kirim', saving: 'Menyimpan…',
-    alreadyAgreed: (date, name) => `Sudah disetujui pada ${date} oleh ${name}.`,
-    errName: 'Nama lengkap pasien wajib diisi.',
-    errAgree: 'Centang persetujuan terlebih dahulu.',
-  },
-};
+type Consent = { patient_name_signed: string; agreed_at: string | null; filled_by?: 'NURSE' | 'CLIENT' } | null;
+type LinkStatus = { expires_at: string; used_at: string | null; created_at: string } | null;
 
 export default function ConsentPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
@@ -114,9 +34,22 @@ export default function ConsentPage() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
 
+  const [linkStatus, setLinkStatus] = useState<LinkStatus>(null);
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [linkMsg, setLinkMsg] = useState('');
+  const [copied, setCopied] = useState(false);
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const hasDrawn = useRef(false);
+
+  const loadLinkStatus = useCallback(async () => {
+    try {
+      const d = await crmGet<{ active: LinkStatus }>(`/api/crm/consent-link/${bookingId}`);
+      setLinkStatus(d.active ?? null);
+    } catch { /* non-critical — panel just shows "no active link" */ }
+  }, [bookingId]);
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -130,9 +63,9 @@ export default function ConsentPage() {
   }, [bookingId]);
 
   useEffect(() => {
-    const t = setTimeout(() => { void load(); }, 0);
+    const t = setTimeout(() => { void load(); void loadLinkStatus(); }, 0);
     return () => clearTimeout(t);
-  }, [load]);
+  }, [load, loadLinkStatus]);
 
   function pos(e: React.PointerEvent<HTMLCanvasElement>) {
     const c = canvasRef.current!;
@@ -176,11 +109,39 @@ export default function ConsentPage() {
     } catch (e) { setMsg(e instanceof Error ? e.message : 'Gagal menyimpan'); setSaving(false); }
   }
 
+  async function generateLink() {
+    setLinkMsg(''); setLinkBusy(true); setCopied(false);
+    try {
+      const res = await crmSend<{ token: string; expiresAt: string }>(`/api/crm/consent-link/${bookingId}`, 'POST', {});
+      const url = `${window.location.origin}/consent/${res.data?.token}`;
+      setLinkUrl(url);
+      await loadLinkStatus();
+    } catch (e) { setLinkMsg(e instanceof Error ? e.message : 'Gagal membuat link'); }
+    finally { setLinkBusy(false); }
+  }
+
+  async function revokeLink() {
+    setLinkMsg(''); setLinkBusy(true);
+    try {
+      await crmSend(`/api/crm/consent-link/${bookingId}`, 'POST', { action: 'revoke' });
+      setLinkUrl('');
+      await loadLinkStatus();
+    } catch (e) { setLinkMsg(e instanceof Error ? e.message : 'Gagal mencabut link'); }
+    finally { setLinkBusy(false); }
+  }
+
+  async function copyLink() {
+    if (!linkUrl) return;
+    try { await navigator.clipboard.writeText(linkUrl); setCopied(true); setTimeout(() => setCopied(false), 1500); }
+    catch { setLinkMsg('Gagal menyalin link'); }
+  }
+
   if (loading) return <LoadingBlock />;
   if (error || !booking) return <ErrorBlock message={error || 'Tidak ditemukan'} onRetry={load} />;
 
   const backHref = crmBookingHref(staff, booking.booking_code_display ?? bookingId);
   const screeningDone = (STATUS_RANK[booking.crm_status as CRMBookingStatus] ?? 0) >= STATUS_RANK.SCREENING_COMPLETED;
+  const waMessage = `Halo ${booking.customer_name} 👋\n\nSebelum treatment ${booking.product_name} dimulai, mohon isi formulir persetujuan tindakan medis (informed consent) melalui link berikut:\n${linkUrl}\n\nLink berlaku 48 jam. Terima kasih — Drips To You Bali 🌿`;
 
   // Flow guard (mirrors consent.php): consent may only be taken after screening.
   if (!screeningDone && !existing?.agreed_at) {
@@ -208,6 +169,54 @@ export default function ConsentPage() {
     <div className="crm-page mx-auto max-w-xl">
       <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
 
+      {!existing?.agreed_at && (
+        <div className="crm-card mb-4 p-5">
+          <div className="mb-3 flex items-center gap-2">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-[#D6EAEA] text-[#205251]"><Link2 size={18} /></span>
+            <div>
+              <h3 className="text-sm font-bold text-[#111a1a]">Kirim Link ke Pasien</h3>
+              <p className="text-xs text-[#4d6060]">Pasien mengisi &amp; menandatangani consent sendiri lewat HP-nya.</p>
+            </div>
+          </div>
+
+          {linkStatus && !linkUrl && (
+            <p className="mb-3 text-xs text-[#4d6060]">
+              Link aktif dibuat {formatDateTimeWITA(linkStatus.created_at)}, berlaku sampai {formatDateTimeWITA(linkStatus.expires_at)}.
+            </p>
+          )}
+
+          {linkUrl ? (
+            <>
+              <div className="mb-3 rounded-xl border border-[#DBDAD7] bg-[#F3F0E7] px-3 py-2">
+                <code className="block truncate text-xs text-[#205251]">{linkUrl}</code>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={copyLink} type="button" className="inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl border border-[#DBDAD7] text-sm font-medium text-[#205251]">
+                  <Copy size={16} /> {copied ? 'Tersalin' : 'Salin'}
+                </button>
+                <a
+                  href={booking.phone ? buildWhatsAppUrl(booking.phone, waMessage) : '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl text-sm font-semibold text-white ${booking.phone ? 'bg-[#25D366]' : 'pointer-events-none bg-[#8EBFBF]'}`}
+                >
+                  <ExternalLink size={16} /> Kirim WhatsApp
+                </a>
+              </div>
+              <button onClick={revokeLink} disabled={linkBusy} type="button" className="mt-2 inline-flex items-center gap-1 text-xs text-red-600 disabled:opacity-50">
+                <XCircle size={14} /> Cabut link
+              </button>
+            </>
+          ) : (
+            <button onClick={generateLink} disabled={linkBusy} type="button" className="crm-button w-full py-2.5 text-sm">
+              {linkBusy ? 'Membuat link…' : linkStatus ? 'Buat Link Baru' : 'Buat Link Consent'}
+            </button>
+          )}
+
+          {linkMsg && <p className="mt-2 text-xs text-red-600">{linkMsg}</p>}
+        </div>
+      )}
+
       <div className="crm-card p-6">
         {/* Language switch — patient picks before reading */}
         <div className="mb-5 flex justify-center gap-2">
@@ -234,6 +243,7 @@ export default function ConsentPage() {
         {existing?.agreed_at && (
           <div className="mb-4 rounded-xl bg-[#D6EAEA] px-4 py-2 text-sm text-[#205251]">
             {t.alreadyAgreed(formatDateTimeWITA(existing.agreed_at), existing.patient_name_signed)}
+            {existing.filled_by === 'CLIENT' && ' Diisi mandiri oleh pasien via link.'}
           </div>
         )}
 

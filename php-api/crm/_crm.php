@@ -284,3 +284,39 @@ function crmAdvanceBookingStatus(PDO $db, string $bookingId, string $target): vo
     $db->prepare('UPDATE bookings SET crm_status = ?, status = ?, updated_at = NOW() WHERE id = ?')
        ->execute([$target, crmStatusToLegacy($target), $bookingId]);
 }
+
+// ── Public (unauthenticated) link helpers — consent-public.php ────────────────
+
+// Short, URL-safe, alphanumeric-only token for public consent links. No '-'/'_'
+// so it can never be misread as WhatsApp italic/markdown when pasted into a chat.
+// 14 chars over a 62-char alphabet ≈ 83 bits of entropy — plenty given the link
+// also expires and is rate-limited.
+function crmGenerateShortToken(int $length = 14): string {
+    $alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    $max = strlen($alphabet) - 1;
+    $token = '';
+    for ($i = 0; $i < $length; $i++) {
+        $token .= $alphabet[random_int(0, $max)];
+    }
+    return $token;
+}
+
+// Rate limit for endpoints with no staff session (public consent link). Keyed by
+// IP + a named action; backed by crm_audit_logs under module "CONSENT_LINK" so no
+// extra table is needed (mirrors checkBookingRateLimit() in helpers.php, which
+// counts audit_logs the same way). Every call — pass or fail — is itself logged
+// so it counts toward the window.
+function crmCheckPublicRateLimit(string $ipHash, string $action, int $windowMinutes, int $maxAttempts): void {
+    $db = getDb();
+    $windowStart = date('Y-m-d H:i:s', strtotime("-{$windowMinutes} minutes"));
+    $stmt = $db->prepare(
+        'SELECT COUNT(*) AS cnt FROM crm_audit_logs
+         WHERE module = "CONSENT_LINK" AND action = ? AND ip_address_hash = ? AND created_at > ?'
+    );
+    $stmt->execute([$action, $ipHash, $windowStart]);
+    $row = $stmt->fetch();
+    if ((int)($row['cnt'] ?? 0) >= $maxAttempts) {
+        jsonError('Terlalu banyak percobaan. Silakan coba lagi beberapa saat lagi.', 429);
+    }
+    crmAuditLog(null, 'CONSENT_LINK', $action, null, null);
+}
