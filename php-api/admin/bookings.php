@@ -5,6 +5,7 @@
 // POST   /api/admin/bookings.php?id=xxx&_method=DELETE — hard delete (method override for hosts that block DELETE)
 
 require_once __DIR__ . '/../helpers.php';
+require_once __DIR__ . '/../crm/_crm.php'; // for crmEnsurePatientForBooking()
 handleCors();
 
 $admin  = requireAuth();
@@ -141,6 +142,7 @@ if ($method === 'PATCH') {
     $db->prepare('UPDATE bookings SET status = ?, updated_at = ? WHERE id = ?')
        ->execute([$newStatus, $now, $id]);
     syncCrmStatusFromLegacy($db, $id, $newStatus, $now);
+    crmEnsurePatientForBooking($db, $id);
 
     $db->prepare(
         'INSERT INTO booking_status_history (id, booking_id, old_status, new_status, changed_by_admin_id, note, created_at)

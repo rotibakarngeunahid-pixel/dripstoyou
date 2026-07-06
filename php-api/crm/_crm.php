@@ -279,10 +279,70 @@ function crmAdvanceBookingStatus(PDO $db, string $bookingId, string $target): vo
         // still keep legacy status synced
         $db->prepare('UPDATE bookings SET status = ?, updated_at = NOW() WHERE id = ?')
            ->execute([crmStatusToLegacy($cur), $bookingId]);
+        crmEnsurePatientForBooking($db, $bookingId);
         return;
     }
     $db->prepare('UPDATE bookings SET crm_status = ?, status = ?, updated_at = NOW() WHERE id = ?')
        ->execute([$target, crmStatusToLegacy($target), $bookingId]);
+    crmEnsurePatientForBooking($db, $bookingId);
+}
+
+// Bookings placed from the public website never set `patient_id` (only CRM's
+// own "create booking" form resolves/creates a patient). Once a booking has
+// been confirmed, auto-link it to a patient record so it shows up under
+// Pasien — matching an existing patient by phone when possible instead of
+// creating a duplicate, otherwise creating a new one from the booking's data.
+// No-op if already linked, not yet confirmed, or `patients` doesn't exist.
+function crmEnsurePatientForBooking(PDO $db, string $bookingId): void {
+    if (!tableExists($db, 'patients')) return;
+
+    $stmt = $db->prepare(
+        'SELECT patient_id, crm_status, customer_name, customer_phone_encrypted,
+                customer_phone_last4, address_encrypted, service_area_id
+         FROM   bookings WHERE id = ? LIMIT 1'
+    );
+    $stmt->execute([$bookingId]);
+    $b = $stmt->fetch();
+    if (!$b || !empty($b['patient_id'])) return;
+    if (crmStatusRank($b['crm_status'] ?? 'PENDING') < crmStatusRank('CONFIRMED')) return;
+
+    $now = date('Y-m-d H:i:s');
+
+    // Dedup: match an existing patient with the same last-4 whose decrypted
+    // phone equals the booking's — avoids creating a new patient row every
+    // time a repeat customer's booking gets confirmed.
+    $patientId = null;
+    $bookingPhone = null;
+    try { $bookingPhone = decryptField($b['customer_phone_encrypted']); } catch (Exception $e) {}
+
+    if ($bookingPhone !== null) {
+        $cand = $db->prepare('SELECT id, phone_encrypted FROM patients WHERE phone_last4 = ?');
+        $cand->execute([$b['customer_phone_last4']]);
+        foreach ($cand->fetchAll() as $p) {
+            try {
+                if (decryptField($p['phone_encrypted']) === $bookingPhone) {
+                    $patientId = $p['id'];
+                    break;
+                }
+            } catch (Exception $e) {}
+        }
+    }
+
+    if (!$patientId) {
+        $patientId = generateId();
+        $db->prepare(
+            'INSERT INTO patients (id, name, phone_encrypted, phone_last4, address_encrypted, area_id, booking_count, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)'
+        )->execute([
+            $patientId, $b['customer_name'], $b['customer_phone_encrypted'], $b['customer_phone_last4'],
+            $b['address_encrypted'], $b['service_area_id'], $now, $now,
+        ]);
+    }
+
+    $db->prepare('UPDATE bookings SET patient_id = ?, updated_at = ? WHERE id = ?')
+       ->execute([$patientId, $now, $bookingId]);
+    $db->prepare('UPDATE patients SET booking_count = booking_count + 1, is_repeat = (booking_count + 1 >= 2), updated_at = ? WHERE id = ?')
+       ->execute([$now, $patientId]);
 }
 
 // ── Public (unauthenticated) link helpers — consent-public.php ────────────────

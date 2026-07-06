@@ -29,10 +29,13 @@ if ($method === 'GET' && ($id || $code)) {
             LEFT JOIN service_areas sa ON sa.id = b.service_area_id
             LEFT JOIN patients pt ON pt.id = b.patient_id
             LEFT JOIN nurses n ON n.id = b.nurse_id
-            WHERE  ' . ($id ? 'b.id = ?' : 'b.booking_code_display = ?') . '
+            WHERE  ' . ($id ? 'b.id = ?' : '(b.booking_code_display = ? OR b.id = ?)') . '
             LIMIT 1';
     $stmt = $db->prepare($sql);
-    $stmt->execute([$id ?: $code]);
+    // Bookings without a display code (placed via the public website, not CRM)
+    // are linked to by raw id instead — the frontend falls back to `b.id` when
+    // `booking_code_display` is null, so `code` may actually be an id here too.
+    $stmt->execute($id ? [$id] : [$code, $code]);
     $b = $stmt->fetch();
     if (!$b) jsonError('Booking tidak ditemukan', 404);
 
@@ -229,6 +232,7 @@ if ($method === 'PATCH') {
     $now = date('Y-m-d H:i:s');
     $db->prepare('UPDATE bookings SET crm_status = ?, status = ?, updated_at = ? WHERE id = ?')
        ->execute([$newStatus, crmStatusToLegacy($newStatus), $now, $id]);
+    crmEnsurePatientForBooking($db, $id);
 
     crmAuditLog($staff, 'BOOKING', 'STATUS_CHANGE', $id, "{$row['booking_code_display']}: $from → $newStatus" . ($note ? " ($note)" : ''));
 
