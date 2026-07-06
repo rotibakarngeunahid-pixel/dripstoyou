@@ -15,7 +15,11 @@ requireCRMPermission($staff, 'booking');
 $method = strtoupper($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? getMethod());
 $db     = getDb();
 $id     = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
-$code   = isset($_GET['code']) ? str_clean($_GET['code'], 20) : null;
+// 191, not 20: `code` may be a real display code (DTY-####, short) OR the raw
+// 30-char booking id used as a fallback when booking_code_display is NULL
+// (see the lookup below) — a short cap here silently truncated the id and
+// broke that fallback.
+$code   = isset($_GET['code']) ? str_clean($_GET['code'], 191) : null;
 
 // ── Detail ──────────────────────────────────────────────────────────────────
 if ($method === 'GET' && ($id || $code)) {
