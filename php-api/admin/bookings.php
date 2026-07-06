@@ -140,6 +140,7 @@ if ($method === 'PATCH') {
 
     $db->prepare('UPDATE bookings SET status = ?, updated_at = ? WHERE id = ?')
        ->execute([$newStatus, $now, $id]);
+    syncCrmStatusFromLegacy($db, $id, $newStatus, $now);
 
     $db->prepare(
         'INSERT INTO booking_status_history (id, booking_id, old_status, new_status, changed_by_admin_id, note, created_at)

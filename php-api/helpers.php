@@ -515,6 +515,57 @@ function ensureBookingDeletionLogsTable(PDO $db): void {
     $done = true;
 }
 
+// The legacy /admin/bookings panel writes `bookings.status` (BARU/KONFIRMASI/
+// DIPROSES/SELESAI/DIBATALKAN). The newer CRM panel (/crm/booking) reads
+// `bookings.crm_status` (PENDING..CLOSED) instead — the two columns are only
+// kept in sync one direction (crm_status -> status, via crmStatusToLegacy() in
+// php-api/crm/_crm.php). Without this, confirming a booking in the old admin
+// panel leaves the CRM panel showing "Pending" forever. Call this right after
+// any legacy `status` write so both panels agree.
+function syncCrmStatusFromLegacy(PDO $db, string $bookingId, string $legacyStatus, string $now): void {
+    if (!columnExists($db, 'bookings', 'crm_status')) return; // CRM migration not applied yet
+
+    $rank = [
+        'PENDING' => 0, 'NEED_CONFIRMATION' => 1, 'CONFIRMED' => 2, 'NURSE_ASSIGNED' => 3,
+        'NURSE_ON_THE_WAY' => 4, 'SCREENING_STARTED' => 5, 'SCREENING_COMPLETED' => 6,
+        'CONSENT_SIGNED' => 7, 'TREATMENT_IN_PROGRESS' => 8, 'TREATMENT_COMPLETED' => 9,
+        'PAYMENT_COMPLETED' => 10, 'FOLLOW_UP' => 11, 'CLOSED' => 12,
+        'CANCELLED' => -1, 'RESCHEDULED' => 1, 'NOT_ELIGIBLE' => -1, 'NO_SHOW' => -1,
+    ];
+
+    $stmt = $db->prepare('SELECT crm_status FROM bookings WHERE id = ? LIMIT 1');
+    $stmt->execute([$bookingId]);
+    $cur = (string)($stmt->fetchColumn() ?: 'PENDING');
+
+    if ($legacyStatus === 'DIBATALKAN') {
+        // Cancellation always wins, even over a booking that has already
+        // progressed further in the CRM pipeline.
+        if ($cur !== 'CANCELLED') {
+            $db->prepare('UPDATE bookings SET crm_status = ?, updated_at = ? WHERE id = ?')
+               ->execute(['CANCELLED', $now, $bookingId]);
+        }
+        return;
+    }
+
+    if (($rank[$cur] ?? 0) < 0) return; // already terminal (cancelled/not eligible/no-show) — don't resurrect
+
+    switch ($legacyStatus) {
+        case 'BARU':       $target = 'PENDING';             break;
+        case 'KONFIRMASI': $target = 'CONFIRMED';            break;
+        case 'DIPROSES':   $target = 'SCREENING_STARTED';    break;
+        case 'SELESAI':    $target = 'TREATMENT_COMPLETED';  break;
+        default:           $target = null;
+    }
+    if ($target === null) return;
+
+    // Only advance — never regress a booking the CRM panel has already moved
+    // further along (e.g. don't knock NURSE_ASSIGNED back down to CONFIRMED).
+    if (($rank[$target] ?? 0) > ($rank[$cur] ?? 0)) {
+        $db->prepare('UPDATE bookings SET crm_status = ?, updated_at = ? WHERE id = ?')
+           ->execute([$target, $now, $bookingId]);
+    }
+}
+
 function tableExists(PDO $db, string $table): bool {
     $stmt = $db->prepare(
         'SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES
