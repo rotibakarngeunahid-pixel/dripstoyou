@@ -100,8 +100,8 @@ try {
     $db->commit();
     jsonSuccess(['count' => count($ids)], count($ids) . ' transaksi berhasil direset');
 
-} catch (Exception $e) {
-    $db->rollBack();
-    error_log('[RESET_ALL_BOOKINGS] ' . $e->getMessage());
+} catch (Throwable $e) {
+    if ($db->inTransaction()) $db->rollBack();
+    error_log('[RESET_ALL_BOOKINGS] ' . get_class($e) . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
     jsonError('Gagal mereset transaksi.', 500);
 }

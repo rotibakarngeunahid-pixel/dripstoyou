@@ -184,7 +184,14 @@ function encryptField(string $plaintext): string {
     return base64_encode($iv . $tag . $ciphertext);
 }
 
-function decryptField(string $b64): string {
+function decryptField(?string $b64): string {
+    // Accepts null/empty (some legacy or manually-seeded rows have blank
+    // encrypted columns) and turns it into a normal catchable RuntimeException
+    // instead of a TypeError -- every call site wraps this in
+    // `catch (Exception $e)`, which does NOT catch \TypeError (a \Error, not
+    // an \Exception), so a bare `string $b64` signature crashed the whole
+    // request uncaught whenever the column was NULL.
+    if ($b64 === null || $b64 === '') throw new RuntimeException('Empty ciphertext');
     $key        = hex2bin(FIELD_ENCRYPTION_KEY);
     $raw        = base64_decode($b64, true);
     if ($raw === false) throw new RuntimeException('Invalid base64');

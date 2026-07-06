@@ -61,11 +61,18 @@ $ip  = getClientIp();
 $now = date('Y-m-d H:i:s');
 $result = [];
 
+// CREATE TABLE is DDL -- MySQL implicitly commits the current transaction
+// when it runs, even with IF NOT EXISTS and even if the table already
+// exists. Must happen before beginTransaction(), or everything after it
+// silently stops being atomic (same reason bookings-reset.php calls this
+// before its transaction too).
+if (in_array('bookings', $targets, true)) {
+    ensureBookingDeletionLogsTable($db);
+}
+
 $db->beginTransaction();
 try {
     if (in_array('bookings', $targets, true)) {
-        ensureBookingDeletionLogsTable($db);
-
         $stmt = $db->query(
             'SELECT b.*, p.name AS product_name, p.price_label, sa.name AS service_area_name
              FROM   bookings b
@@ -148,8 +155,8 @@ try {
     $db->commit();
     jsonSuccess($result, 'Reset data berhasil dilakukan');
 
-} catch (Exception $e) {
-    $db->rollBack();
-    error_log('[HARD_RESET] ' . $e->getMessage());
+} catch (Throwable $e) {
+    if ($db->inTransaction()) $db->rollBack();
+    error_log('[HARD_RESET] ' . get_class($e) . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
     jsonError('Gagal melakukan reset data.', 500);
 }
