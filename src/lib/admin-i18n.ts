@@ -131,7 +131,7 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
 
     // Coverage
     coverageTitle: 'Kelola Area Layanan',
-    coverageSubtitle: 'Area yang bisa dilayani oleh DRIP TO YOU — klik kartu untuk mengedit.',
+    coverageSubtitle: 'Area yang bisa dilayani oleh Drips To You - Bali — klik kartu untuk mengedit.',
     tambahArea: '+ Tambah Area',
     editAreaTitle: 'Edit Area',
     tambahAreaBaru: 'Tambah Area Baru',
@@ -296,7 +296,7 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
 
     // Guide
     guideTitle: 'Panduan Admin',
-    guideSubtitle: 'Panduan penggunaan CMS untuk tim non-teknis Drips To You Bali.',
+    guideSubtitle: 'Panduan penggunaan CMS untuk tim non-teknis Drips To You - Bali.',
     tipsTitle: 'Tips Penting',
 
     // Booking hard-delete (SUPER_ADMIN only)
@@ -541,7 +541,7 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
 
     // Coverage
     coverageTitle: 'Manage Service Areas',
-    coverageSubtitle: 'Areas served by DRIP TO YOU — click a card to edit.',
+    coverageSubtitle: 'Areas served by Drips To You - Bali — click a card to edit.',
     tambahArea: '+ Add Area',
     editAreaTitle: 'Edit Area',
     tambahAreaBaru: 'Add New Area',
@@ -706,7 +706,7 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
 
     // Guide
     guideTitle: 'Admin Guide',
-    guideSubtitle: 'CMS usage guide for the Drips To You Bali team.',
+    guideSubtitle: 'CMS usage guide for the Drips To You - Bali team.',
     tipsTitle: 'Important Tips',
 
     // Booking hard-delete (SUPER_ADMIN only)

@@ -1,6 +1,6 @@
 <?php
 // ─────────────────────────────────────────────────────────────────────────────
-// DRIP TO YOU Bali — Shared PHP API Helpers
+// Drips To You - Bali — Shared PHP API Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
 if (!defined('DB_HOST')) {

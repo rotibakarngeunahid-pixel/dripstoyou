@@ -29,7 +29,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
     clauses: [
       {
         title: 'Authorization of Treatment',
-        body: `I voluntarily request and authorize the fully licensed healthcare professionals from Drips to You (operating under the clinical partnership with ${CLINICAL_PARTNER}) to administer Intravenous (IV) Therapy / Vitamin Injections to me.`,
+        body: `I voluntarily request and authorize the fully licensed healthcare professionals from Drips To You - Bali (operating under the clinical partnership with ${CLINICAL_PARTNER}) to administer Intravenous (IV) Therapy / Vitamin Injections to me.`,
       },
       {
         title: 'Acknowledgement of Risks',
@@ -37,7 +37,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
       },
       {
         title: 'Accuracy of Medical History',
-        body: 'I certify that all information provided regarding my health status, medical history, and allergies is true and complete. Drips to You and its partner hospital shall be fully released from any liability regarding adverse reactions caused by undisclosed or inaccurate medical info.',
+        body: 'I certify that all information provided regarding my health status, medical history, and allergies is true and complete. Drips To You - Bali and its partner hospital shall be fully released from any liability regarding adverse reactions caused by undisclosed or inaccurate medical info.',
       },
       {
         title: 'Right to Refuse',
@@ -62,7 +62,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
     clauses: [
       {
         title: 'Otorisasi Tindakan',
-        body: `Saya secara sukarela meminta dan memberikan wewenang kepada tenaga kesehatan berlisensi penuh dari Drips to You (yang beroperasi dalam kemitraan klinis dengan ${CLINICAL_PARTNER}) untuk memberikan Terapi Intravena (IV) / Injeksi Vitamin kepada saya.`,
+        body: `Saya secara sukarela meminta dan memberikan wewenang kepada tenaga kesehatan berlisensi penuh dari Drips To You - Bali (yang beroperasi dalam kemitraan klinis dengan ${CLINICAL_PARTNER}) untuk memberikan Terapi Intravena (IV) / Injeksi Vitamin kepada saya.`,
       },
       {
         title: 'Pemahaman Risiko',
@@ -70,7 +70,7 @@ export const CONSENT_COPY: Record<ConsentLang, ConsentCopy> = {
       },
       {
         title: 'Keakuratan Riwayat Medis',
-        body: 'Saya menyatakan bahwa seluruh informasi yang saya berikan mengenai kondisi kesehatan, riwayat medis, dan alergi saya adalah benar dan lengkap. Drips to You beserta rumah sakit mitranya dibebaskan sepenuhnya dari segala tanggung jawab atas reaksi merugikan yang disebabkan oleh informasi medis yang tidak diungkapkan atau tidak akurat.',
+        body: 'Saya menyatakan bahwa seluruh informasi yang saya berikan mengenai kondisi kesehatan, riwayat medis, dan alergi saya adalah benar dan lengkap. Drips To You - Bali beserta rumah sakit mitranya dibebaskan sepenuhnya dari segala tanggung jawab atas reaksi merugikan yang disebabkan oleh informasi medis yang tidak diungkapkan atau tidak akurat.',
       },
       {
         title: 'Hak untuk Menolak',

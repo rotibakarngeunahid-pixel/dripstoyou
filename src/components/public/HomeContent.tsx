@@ -122,7 +122,7 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
 ───────────────────────────────────────────── */
 function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLanguage>['t']; waUrl: (s: string) => string; waBookingMsg: string }) {
   return (
-    <section className="hero landing-hero" id="hero" aria-label="Drips To You Bali">
+    <section className="hero landing-hero" id="hero" aria-label="Drips To You - Bali">
       {/* Text content — left column */}
       <div className="hero-content landing-hero-content">
         <h1 className="hero-title landing-hero-title">
@@ -157,7 +157,7 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
       <div className="hero-photo-wrap landing-hero-media" aria-hidden="true">
         <Image
           src={BRAND.photo1}
-          alt="Perawat Drips To You Bali di villa"
+          alt="Perawat Drips To You - Bali di villa"
           fill
           priority
           quality={100}
@@ -166,7 +166,7 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
         />
         <Image
           src={BRAND.photo1Mobile}
-          alt="Perawat Drips To You Bali"
+          alt="Perawat Drips To You - Bali"
           fill
           priority
           quality={100}
@@ -272,7 +272,7 @@ function ExperienceGallerySection({ t }: { t: ReturnType<typeof useLanguage>['t'
         <div className="gallery-grid">
           {images.map((src, i) => (
             <div key={i} className="gallery-item reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
-              <Image src={src} alt="Drips To You Bali Experience" fill sizes="(max-width: 768px) 50vw, 25vw" className="gallery-img" />
+              <Image src={src} alt="Drips To You - Bali Experience" fill sizes="(max-width: 768px) 50vw, 25vw" className="gallery-img" />
             </div>
           ))}
         </div>
@@ -329,7 +329,7 @@ function WhyChooseUsSection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
         </div>
 
         <div className="why-img-banner reveal" style={{ position: 'relative', width: '100%', aspectRatio: '16/9', maxHeight: '560px', minHeight: '220px', borderRadius: '20px', overflow: 'hidden', marginBottom: '48px', boxShadow: 'var(--shadow-card)' }}>
-          <Image src={BRAND.photoWhy} alt="Drips To You Bali - Mobile IV Therapy Service" fill style={{ objectFit: 'cover', objectPosition: 'center center' }} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1200px" />
+          <Image src={BRAND.photoWhy} alt="Drips To You - Bali - Mobile IV Therapy Service" fill style={{ objectFit: 'cover', objectPosition: 'center center' }} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1200px" />
         </div>
 
         <div className="why-grid">

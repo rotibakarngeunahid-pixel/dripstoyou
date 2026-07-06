@@ -1,6 +1,6 @@
 <?php
 // ─────────────────────────────────────────────────────────────────────────────
-// DRIP TO YOU Bali — PHP API Configuration Template
+// Drips To You - Bali — PHP API Configuration Template
 // Salin file ini ke config.php, lalu isi dengan credential asli Anda.
 // JANGAN commit config.php ke Git — sudah ada di .gitignore.
 // ─────────────────────────────────────────────────────────────────────────────

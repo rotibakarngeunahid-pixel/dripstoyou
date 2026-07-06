@@ -218,7 +218,7 @@ export const translations: Record<Lang, Translations> = {
       ctaSub: 'Tim medis kami siap hadir ke lokasi Anda di Bali. Pesan sekarang atau konsultasikan kebutuhan Anda dengan kami.',
       ctaBookBtn: 'Pesan Sekarang',
       ctaWaBtn: 'Chat di WhatsApp',
-      waMessage: 'Halo, saya ingin tahu lebih lanjut tentang Drips To You Bali',
+      waMessage: 'Halo, saya ingin tahu lebih lanjut tentang Drips To You - Bali',
       values: [
         { label: 'Medis', title: 'Tenaga Medis Profesional', desc: 'Treatment dilakukan oleh perawat dan dokter berlisensi dengan pengalaman klinis.' },
         { label: 'On-call', title: 'Datang ke Lokasi Anda', desc: 'Tim datang ke villa, hotel, Airbnb, atau rumah di area utama Bali.' },
@@ -395,7 +395,7 @@ export const translations: Record<Lang, Translations> = {
       ctaSub: 'Our medical team is ready to come to your location in Bali. Book now or consult us about your needs.',
       ctaBookBtn: 'Book Now',
       ctaWaBtn: 'Chat on WhatsApp',
-      waMessage: "Hi, I'd like to learn more about Drips To You Bali",
+      waMessage: "Hi, I'd like to learn more about Drips To You - Bali",
       values: [
         { label: 'Medical', title: 'Professional Medical Staff', desc: 'Treatments are performed by licensed nurses and doctors with clinical experience.' },
         { label: 'On-call', title: 'We Come to You', desc: 'Team arrives at your villa, hotel, Airbnb, or home in key Bali areas.' },

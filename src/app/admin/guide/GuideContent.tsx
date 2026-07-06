@@ -1004,8 +1004,8 @@ export default function GuideContent() {
 
   const title    = lang === 'en' ? 'Admin Guide' : 'Panduan Admin';
   const subtitle = lang === 'en'
-    ? 'Comprehensive visual guide for the Drips To You Bali admin panel.'
-    : 'Panduan visual lengkap penggunaan admin panel Drips To You Bali.';
+    ? 'Comprehensive visual guide for the Drips To You - Bali admin panel.'
+    : 'Panduan visual lengkap penggunaan admin panel Drips To You - Bali.';
 
   return (
     <div className="admin-page wide">

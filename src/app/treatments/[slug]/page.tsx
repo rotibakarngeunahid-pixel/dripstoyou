@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${product.name} | Mobile IV Therapy Bali`,
     description: product.short_description ?? `Book ${product.name} mobile IV therapy in Bali. Certified medical team delivered to your villa, hotel or home.`,
     openGraph: {
-      title: `${product.name} - Drips To You Bali`,
+      title: `${product.name} - Drips To You - Bali`,
       description: product.short_description ?? undefined,
       url,
       images: ogImages,

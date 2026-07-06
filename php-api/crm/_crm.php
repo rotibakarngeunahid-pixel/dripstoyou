@@ -1,6 +1,6 @@
 <?php
 // ─────────────────────────────────────────────────────────────────────────────
-// DRIP TO YOU Bali — CRM Internal shared bootstrap
+// Drips To You - Bali — CRM Internal shared bootstrap
 //
 // Provides CRM-specific auth (crm_sessions / crm_staff), RBAC, and audit logging.
 // Reuses the website's core helpers (DB, encryption, password hashing, rate limit)

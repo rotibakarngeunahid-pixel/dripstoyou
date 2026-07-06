@@ -120,7 +120,7 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     termsLabel: 'Terms & Conditions',
     privacyLabel: 'Privacy Policy',
     agree: (terms: React.ReactNode, privacy: React.ReactNode) => (
-      <>I agree to the {terms} and {privacy} of Drips To You Bali.</>
+      <>I agree to the {terms} and {privacy} of Drips To You - Bali.</>
     ),
     btnBack: 'Back',
     btnNext2: 'Next: Details',
@@ -216,7 +216,7 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     termsLabel: 'Syarat & Ketentuan',
     privacyLabel: 'Kebijakan Privasi',
     agree: (terms: React.ReactNode, privacy: React.ReactNode) => (
-      <>Saya menyetujui {terms} dan {privacy} Drips To You Bali.</>
+      <>Saya menyetujui {terms} dan {privacy} Drips To You - Bali.</>
     ),
     btnBack: 'Kembali',
     btnNext2: 'Lanjut ke Detail',

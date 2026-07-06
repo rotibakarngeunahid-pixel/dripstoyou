@@ -96,7 +96,7 @@ export default function UnifiedLoginPage() {
           <div style={{ width: 64, height: 64, borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#205251', color: '#EAD4AE', boxShadow: '0 8px 20px rgba(32,82,81,0.35)', marginBottom: 16 }}>
             <span style={{ ...serif, fontSize: 30, fontWeight: 700, lineHeight: 1 }}>D</span>
           </div>
-          <h1 style={{ ...serif, fontSize: 26, color: '#205251', margin: 0 }}>Drips To You</h1>
+          <h1 style={{ ...serif, fontSize: 26, color: '#205251', margin: 0 }}>Drips To You - Bali</h1>
           <p style={{ margin: '6px 0 0', fontSize: 12, letterSpacing: 2, color: '#8EBFBF', fontWeight: 600 }}>
             {isSetup ? 'SETUP AKUN OWNER' : 'PORTAL INTERNAL'}
           </p>
@@ -138,7 +138,7 @@ export default function UnifiedLoginPage() {
         )}
 
         <p style={{ marginTop: 24, textAlign: 'center', fontSize: 12, color: '#9ab' }}>
-          Admin · Nurse · Finance — satu portal &nbsp;·&nbsp; Drips To You Bali
+          Admin · Nurse · Finance — satu portal &nbsp;·&nbsp; Drips To You - Bali
         </p>
       </section>
     </main>
