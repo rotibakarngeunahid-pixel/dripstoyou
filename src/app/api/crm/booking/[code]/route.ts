@@ -16,5 +16,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ co
   const g = await crmGuard('booking');
   if ('error' in g) return g.error;
   if (!code) return NextResponse.json({ error: 'Booking code wajib diisi.' }, { status: 400 });
-  return crmProxyForward(req, g.session, 'booking.php', `?code=${encodeURIComponent(code)}`);
+  const id = req.nextUrl.searchParams.get('id');
+  if (!id) return NextResponse.json({ error: 'Booking ID wajib diisi.' }, { status: 400 });
+  return crmProxyForward(req, g.session, 'booking.php', `?id=${encodeURIComponent(id)}`);
 }
