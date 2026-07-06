@@ -6,7 +6,7 @@
 import { jsPDF } from 'jspdf';
 import { CONSENT_COPY, type ConsentLang } from './consent-copy';
 
-const LOGO_URL = 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp?tr=bg-remove';
+const LOGO_URL = '/img/drips-to-you-bali-icon.webp';
 
 async function loadLogoDataUrl(): Promise<string | null> {
   try {

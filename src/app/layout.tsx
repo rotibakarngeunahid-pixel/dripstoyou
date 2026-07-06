@@ -36,8 +36,8 @@ export const metadata: Metadata = {
   publisher: 'Drips To You - Bali',
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   icons: {
-    icon: 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp',
-    apple: 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp',
+    icon: '/img/drips-to-you-bali-icon.webp',
+    apple: '/img/drips-to-you-bali-icon.webp',
   },
   openGraph: {
     title: 'Drips To You - Bali | Mobile IV Therapy',

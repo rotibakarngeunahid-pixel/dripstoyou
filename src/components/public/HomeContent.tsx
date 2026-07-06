@@ -36,7 +36,7 @@ interface Props {
 /* ── Brand image URLs ── */
 const IK = 'https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image';
 const BRAND = {
-  logo:         `${IK}/drips-to-you-bali-icon.webp`,
+  logo:         '/img/drips-to-you-bali-icon.webp',
   photo1:       '/img/home-section-dripstoyou.webp',
   photo1Mobile: '/img/hero-section-mobile.webp',
   photoWhy:     '/img/widescreen-dripstoyoubali.webp',

@@ -212,7 +212,7 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
 
           <div className="footer-bottom">
             <p className="footer-copy">
-              © {new Date().getFullYear()} Drips To You – Bali. {t.footer.copyright}
+              © {new Date().getFullYear()} Drips To You - Bali. {t.footer.copyright}
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
               <div className="footer-social">

@@ -54,7 +54,7 @@ export default function Header() {
         <Link href="/" className="hdr-logo" aria-label="Drips To You - Bali — Home">
           <span className="hdr-logo-img-wrap">
             <Image
-              src="https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp?tr=bg-remove"
+              src="/img/drips-to-you-bali-icon.webp"
               alt=""
               width={44}
               height={44}
@@ -63,7 +63,7 @@ export default function Header() {
             />
           </span>
           <div className="hdr-logo-text">
-            Drips To You – Bali
+            Drips To You - Bali
             <small>Mobile IV Therapy</small>
           </div>
         </Link>

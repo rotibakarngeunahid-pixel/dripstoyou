@@ -260,7 +260,7 @@ export default function ConsentPage() {
 
         <div className="mb-5 text-center">
           <Image
-            src="https://ik.imagekit.io/raocx4xwl/Drips%20To%20You%20-%20Image/drips-to-you-bali-icon.webp?tr=bg-remove"
+            src="/img/drips-to-you-bali-icon.webp"
             alt="Drips To You - Bali"
             width={48}
             height={48}
