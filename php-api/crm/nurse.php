@@ -62,6 +62,12 @@ if ($method === 'POST') {
     $booking = $bchk->fetch();
     if (!$booking) jsonError('Booking tidak ditemukan', 404);
 
+    // Booking wajib dikonfirmasi dulu sebelum nurse ditugaskan — jangan biarkan
+    // assign nurse melompati status CONFIRMED (mis. booking masih PENDING).
+    if (crmStatusRank($booking['crm_status'] ?? 'PENDING') < crmStatusRank('CONFIRMED')) {
+        jsonError('Booking harus dikonfirmasi terlebih dahulu sebelum nurse ditugaskan', 400);
+    }
+
     $now = date('Y-m-d H:i:s');
     $db->prepare('UPDATE bookings SET nurse_id = ?, updated_at = ? WHERE id = ?')->execute([$nurseId, $now, $bookingId]);
     crmAdvanceBookingStatus($db, $bookingId, 'NURSE_ASSIGNED');

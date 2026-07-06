@@ -71,6 +71,7 @@ export default function BookingDetailPage() {
   if (error || !b) return <ErrorBlock message={error || 'Tidak ditemukan'} onRetry={load} />;
 
   const rank = STATUS_RANK[b.crm_status] ?? 0;
+  const canAssignNurse = rank >= STATUS_RANK.CONFIRMED;
   const remaining = Math.max(0, b.payment.total - b.payment.paid);
 
   function waLink() {
@@ -102,7 +103,16 @@ export default function BookingDetailPage() {
           </a>
           {!isNurse && (
             <>
-              <button onClick={() => setShowAssign(true)} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#DBDAD7] bg-white px-3 text-sm font-medium text-[#205251]">
+              <button
+                onClick={() => setShowAssign(true)}
+                disabled={!canAssignNurse}
+                title={canAssignNurse ? undefined : 'Konfirmasi booking dulu sebelum assign nurse'}
+                className={`inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-sm font-medium ${
+                  canAssignNurse
+                    ? 'border-[#DBDAD7] bg-white text-[#205251]'
+                    : 'cursor-not-allowed border-[#DBDAD7] bg-[#F3F0E7] text-[#8EBFBF]'
+                }`}
+              >
                 <UserPlus size={16} /> Assign Nurse
               </button>
               <button onClick={() => setShowStatus(true)} className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#205251] px-3 text-sm font-medium text-white">
