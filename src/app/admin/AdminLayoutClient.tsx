@@ -19,6 +19,7 @@ import {
   Settings,
   Share2,
   Stethoscope,
+  Trash2,
   Users,
   X,
   type LucideIcon,
@@ -45,7 +46,7 @@ const ADMIN_LABELS: Record<AdminLang, {
   services: string; treatment: string; schedule: string; coverage: string;
   content: string; faq: string; socialLinks: string;
   settings: string; generalSettings: string; waTemplate: string;
-  help: string; adminGuide: string; adminUsers: string;
+  help: string; adminGuide: string; adminUsers: string; resetData: string;
   crmGroup: string; crmInternal: string;
   verifying: string; livePanelLabel: string;
   langToggle: string; logout: string; loggingOut: string;
@@ -56,7 +57,7 @@ const ADMIN_LABELS: Record<AdminLang, {
     services: 'Layanan', treatment: 'Treatment', schedule: 'Jadwal', coverage: 'Area Layanan',
     content: 'Konten Website', faq: 'FAQ', socialLinks: 'Social Links',
     settings: 'Pengaturan', generalSettings: 'Pengaturan Umum', waTemplate: 'WhatsApp Template',
-    help: 'Bantuan', adminGuide: 'Panduan Admin', adminUsers: 'Manajemen Admin',
+    help: 'Bantuan', adminGuide: 'Panduan Admin', adminUsers: 'Manajemen Admin', resetData: 'Reset Data',
     crmGroup: 'CRM Internal', crmInternal: 'Buka CRM',
     verifying: 'Memverifikasi sesi admin...', livePanelLabel: 'Live panel',
     langToggle: 'EN', logout: 'Logout', loggingOut: 'Keluar...',
@@ -67,7 +68,7 @@ const ADMIN_LABELS: Record<AdminLang, {
     services: 'Services', treatment: 'Treatments', schedule: 'Schedule', coverage: 'Service Areas',
     content: 'Website Content', faq: 'FAQ', socialLinks: 'Social Links',
     settings: 'Settings', generalSettings: 'General Settings', waTemplate: 'WhatsApp Template',
-    help: 'Help', adminGuide: 'Admin Guide', adminUsers: 'Admin Management',
+    help: 'Help', adminGuide: 'Admin Guide', adminUsers: 'Admin Management', resetData: 'Reset Data',
     crmGroup: 'CRM Internal', crmInternal: 'Open CRM',
     verifying: 'Verifying admin session...', livePanelLabel: 'Live panel',
     langToggle: 'ID', logout: 'Logout', loggingOut: 'Logging out...',
@@ -95,6 +96,7 @@ function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang], role?: string | nul
   ];
   if (role === 'SUPER_ADMIN') {
     settingsItems.push({ href: '/admin/users', label: lbl.adminUsers, icon: Users });
+    settingsItems.push({ href: '/admin/settings/reset-data', label: lbl.resetData, icon: Trash2 });
   }
   return [
     {
