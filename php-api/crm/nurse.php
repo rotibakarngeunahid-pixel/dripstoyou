@@ -2,6 +2,7 @@
 // CRM Nurse endpoint
 //   GET  /php-api/crm/nurse.php                       — list nurses (+ workload for ?date=)
 //   GET  /php-api/crm/nurse.php?portal=1&date=YYYY-MM-DD — bookings assigned to the logged-in nurse
+//   GET  /php-api/crm/nurse.php?portal=1&calendar=1&month=YYYY-MM — dates in the month the nurse is assigned to
 //   POST /php-api/crm/nurse.php  {action:'assign', booking_id, nurse_id} — assign nurse to booking
 
 require_once __DIR__ . '/_crm.php';
@@ -15,6 +16,30 @@ if (!$canPortal) jsonError('Forbidden', 403);
 $method = strtoupper($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? getMethod());
 $db     = getDb();
 $date   = !empty($_GET['date']) ? str_clean($_GET['date'], 10) : date('Y-m-d');
+
+// ── Nurse portal: which dates this month am I assigned to ──────────────────────
+if ($method === 'GET' && !empty($_GET['portal']) && !empty($_GET['calendar'])) {
+    $nurseId = crmNurseIdForStaff($db, $staff['staff_id']);
+    if (!$nurseId) jsonSuccess(['items' => [], 'nurse_id' => null]);
+
+    $month = !empty($_GET['month']) ? str_clean($_GET['month'], 7) : date('Y-m');
+    if (!preg_match('/^\d{4}-\d{2}$/', $month)) jsonError('Format bulan tidak valid', 422);
+    $monthStart = $month . '-01';
+    $monthEnd   = date('Y-m-t', strtotime($monthStart));
+
+    $stmt = $db->prepare(
+        "SELECT b.booking_date,
+                COUNT(*) AS total,
+                SUM(CASE WHEN b.crm_status IN ('TREATMENT_COMPLETED','PAYMENT_COMPLETED','FOLLOW_UP','CLOSED') THEN 1 ELSE 0 END) AS done,
+                SUM(CASE WHEN b.crm_status IN ('CANCELLED','NOT_ELIGIBLE','NO_SHOW') THEN 1 ELSE 0 END) AS cancelled
+         FROM bookings b
+         WHERE b.nurse_id = ? AND b.booking_date BETWEEN ? AND ?
+         GROUP BY b.booking_date
+         ORDER BY b.booking_date ASC"
+    );
+    $stmt->execute([$nurseId, $monthStart, $monthEnd]);
+    jsonSuccess(['items' => $stmt->fetchAll(), 'nurse_id' => $nurseId, 'month' => $month]);
+}
 
 // ── Nurse portal: my bookings for a date ───────────────────────────────────────
 if ($method === 'GET' && !empty($_GET['portal'])) {

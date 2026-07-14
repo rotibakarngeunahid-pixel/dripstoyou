@@ -3,14 +3,21 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { crmGet } from '@/lib/crm-client';
-import { formatDate } from '@/lib/crm-format';
+import { formatDate, formatMonthYear } from '@/lib/crm-format';
 import { STATUS_RANK, type CRMBookingStatus } from '@/lib/crm-status';
 import StatusBadge from '@/components/crm/StatusBadge';
 import { LoadingBlock, ErrorBlock, EmptyState } from '@/components/crm/states';
 import { useCRMStaff } from '../CRMShell';
-import { Stethoscope, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Stethoscope, CheckCircle2, ChevronRight, ChevronLeft, CalendarDays } from 'lucide-react';
 
 const today = () => new Date().toISOString().slice(0, 10);
+const monthOf = (isoDate: string) => isoDate.slice(0, 7);
+
+function shiftMonth(month: string, delta: number): string {
+  const [y, m] = month.split('-').map(Number);
+  const d = new Date(y, (m - 1) + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
 
 export default function NursePage() {
   const staff = useCRMStaff();
@@ -35,6 +42,7 @@ function nurseCTA(status: CRMBookingStatus, id: string, code: string | null) {
 function NursePortal() {
   const staff = useCRMStaff();
   const [date, setDate] = useState(today());
+  const [month, setMonth] = useState(monthOf(today()));
   const [items, setItems] = useState<PortalBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -53,6 +61,11 @@ function NursePortal() {
     return () => clearTimeout(t);
   }, [load]);
 
+  const selectDate = useCallback((d: string) => {
+    setDate(d);
+    setMonth(monthOf(d));
+  }, []);
+
   const doneCount = items.filter((b) => (STATUS_RANK[b.crm_status] ?? 0) >= STATUS_RANK.TREATMENT_COMPLETED).length;
   const firstName = staff?.name?.split(' ')[0] ?? 'Nurse';
 
@@ -67,10 +80,18 @@ function NursePortal() {
         <input
           type="date"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={(e) => selectDate(e.target.value)}
           className="h-11 rounded-2xl border border-[#e2e8f0] bg-white px-4 text-sm font-medium text-[#0f172a] shadow-sm outline-none focus:border-[#205251] focus:ring-2 focus:ring-[#205251]/10"
         />
       </div>
+
+      {/* Calendar: at-a-glance view of every date this nurse is assigned to */}
+      <NurseCalendar
+        month={month}
+        onMonthChange={setMonth}
+        selectedDate={date}
+        onSelectDate={selectDate}
+      />
 
       {/* Summary cards */}
       {items.length > 0 && (
@@ -134,6 +155,125 @@ function NursePortal() {
             );
           })}
         </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Calendar: every date this month the nurse is assigned to, at a glance ── */
+type CalendarDay = { booking_date: string; total: number | string; done: number | string; cancelled: number | string };
+
+function NurseCalendar({
+  month, onMonthChange, selectedDate, onSelectDate,
+}: {
+  month: string;
+  onMonthChange: (month: string) => void;
+  selectedDate: string;
+  onSelectDate: (date: string) => void;
+}) {
+  const [days, setDays] = useState<CalendarDay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
+    try {
+      const d = await crmGet<{ items: CalendarDay[] }>(`/api/crm/nurse?portal=1&calendar=1&month=${month}`);
+      setDays(d.items ?? []);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Gagal memuat kalender'); }
+    finally { setLoading(false); }
+  }, [month]);
+
+  useEffect(() => {
+    const t = setTimeout(() => { void load(); }, 0);
+    return () => clearTimeout(t);
+  }, [load]);
+
+  const byDate = new Map(days.map((d) => [d.booking_date.slice(0, 10), d]));
+  const [year, mon] = month.split('-').map(Number);
+  const daysInMonth = new Date(year, mon, 0).getDate();
+  const leadingBlanks = (new Date(year, mon - 1, 1).getDay() + 6) % 7; // Monday-first offset
+  const assignedDays = days.length;
+  const totalBookings = days.reduce((sum, d) => sum + Number(d.total), 0);
+
+  return (
+    <div className="crm-card">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <CalendarDays size={18} className="text-[#205251]" />
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#94a3b8]">Kalender Tugas</p>
+            <p className="mt-0.5 text-sm text-[#64748b]">
+              {assignedDays > 0 ? `${assignedDays} hari · ${totalBookings} booking bulan ini` : 'Belum ada jadwal bulan ini'}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => onMonthChange(shiftMonth(month, -1))}
+            aria-label="Bulan sebelumnya"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e2e8f0] text-[#205251] transition hover:bg-[#D6EAEA]/50"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <span className="min-w-[8.5rem] text-center text-sm font-semibold text-[#0f172a]">{formatMonthYear(month)}</span>
+          <button
+            type="button"
+            onClick={() => onMonthChange(shiftMonth(month, 1))}
+            aria-label="Bulan berikutnya"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e2e8f0] text-[#205251] transition hover:bg-[#D6EAEA]/50"
+          >
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+
+      {error ? <ErrorBlock message={error} onRetry={load} /> : (
+        <>
+          <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold uppercase tracking-wide text-[#94a3b8]">
+            {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map((d) => <div key={d} className="py-1">{d}</div>)}
+          </div>
+          <div className={`grid grid-cols-7 gap-1 transition-opacity ${loading ? 'opacity-50' : ''}`}>
+            {Array.from({ length: leadingBlanks }).map((_, i) => <div key={`blank-${i}`} />)}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const dayNum = i + 1;
+              const iso = `${year}-${String(mon).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+              const info = byDate.get(iso);
+              const total = info ? Number(info.total) : 0;
+              const done = info ? Number(info.done) : 0;
+              const assigned = total > 0;
+              const allDone = assigned && done >= total;
+              const isSelected = iso === selectedDate;
+              const isToday = iso === today();
+              return (
+                <button
+                  key={iso}
+                  type="button"
+                  onClick={() => onSelectDate(iso)}
+                  className={`relative flex aspect-square flex-col items-center justify-center rounded-lg text-sm transition ${
+                    isSelected
+                      ? 'bg-[#205251] font-bold text-white'
+                      : allDone
+                      ? 'bg-[#d1fae5] font-semibold text-[#10b981]'
+                      : assigned
+                      ? 'bg-[#D6EAEA] font-semibold text-[#205251]'
+                      : 'text-[#64748b] hover:bg-[#f1f5f9]'
+                  } ${isToday && !isSelected ? 'ring-2 ring-inset ring-[#C9944C]' : ''}`}
+                >
+                  {dayNum}
+                  {assigned && (
+                    <span className={`mt-0.5 text-[9px] font-bold leading-none ${
+                      isSelected ? 'text-white/80' : allDone ? 'text-[#10b981]' : 'text-[#205251]'
+                    }`}>
+                      {total}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

@@ -10,6 +10,17 @@ export function formatRupiah(value: number | string | null | undefined): string 
 }
 
 const MONTHS_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+const MONTHS_ID_FULL = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
+
+/** "YYYY-MM" -> "Juli 2026" */
+export function formatMonthYear(month: string): string {
+  const [y, m] = month.split('-').map(Number);
+  if (!y || !m) return month;
+  return `${MONTHS_ID_FULL[m - 1] ?? ''} ${y}`;
+}
 
 function parseDate(input: string | Date | null | undefined): Date | null {
   if (!input) return null;
