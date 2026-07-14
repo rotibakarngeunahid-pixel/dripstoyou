@@ -47,6 +47,32 @@ function crmCan(array $staff, string $module): bool {
     return in_array($module, crmEffectiveModules($staff), true);
 }
 
+// The module(s) that give a role a reachable "home" page (mirrors
+// crmLandingModules() in src/lib/crm-permissions.ts). NURSE always lands on
+// the nurse portal, which 403s without 'nurse_portal' (or manager-level
+// 'nurse') — so that's the one checkbox a custom-access nurse can't skip.
+function crmLandingModules(string $role): array {
+    if ($role === 'NURSE') return ['nurse_portal', 'nurse'];
+    return ['dashboard', 'nurse_portal', 'booking', 'patient', 'finance', 'purchase_order', 'inventory', 'area', 'whatsapp'];
+}
+
+// Final trust-boundary validation for a custom-permission module list (the
+// Next.js UI enforces the same rule, but this is the check that actually
+// matters). Returns an error message if the staff would end up locked out of
+// every page, or null if the selection is fine.
+function crmValidateCustomModules(string $role, array $modules): ?string {
+    if ($role === 'OWNER') return null;
+    if (count($modules) === 0) {
+        return 'Pilih minimal satu modul akses — tanpa itu staff tidak akan bisa masuk ke akunnya.';
+    }
+    if (!array_intersect(crmLandingModules($role), $modules)) {
+        return $role === 'NURSE'
+            ? "Modul 'Portal Nurse' wajib dicentang — itu satu-satunya halaman yang bisa diakses akun nurse."
+            : 'Wajib centang minimal satu modul utama (mis. Dashboard, Booking, Pasien, Finance, dll) agar staff punya halaman yang bisa diakses.';
+    }
+    return null;
+}
+
 // Single sign-on bridge: map an existing website `admins` role to a CRM role.
 // Returns null if that admin role has no CRM access.
 function crmRoleForAdmin(string $adminRole): ?string {

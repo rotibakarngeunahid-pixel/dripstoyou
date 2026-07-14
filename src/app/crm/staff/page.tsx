@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Plus, Copy, Check } from 'lucide-react';
+import { Plus, Copy, Check, Trash2 } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { formatDate } from '@/lib/crm-format';
-import { CRM_MODULE_LABELS, crmEffectiveModules } from '@/lib/crm-permissions';
+import { CRM_MODULE_LABELS, crmEffectiveModules, crmValidateCustomModules } from '@/lib/crm-permissions';
 import type { CRMRole } from '@/lib/crm-session';
 import Modal from '@/components/crm/Modal';
 import { LoadingBlock, ErrorBlock, EmptyState } from '@/components/crm/states';
@@ -61,12 +61,19 @@ export default function StaffPage() {
         </div>
       )}
 
-      {modal && <StaffModal staff={modal === 'new' ? null : modal} onClose={() => setModal(null)} onSaved={() => { setModal(null); load(); }} />}
+      {modal && (
+        <StaffModal
+          staff={modal === 'new' ? null : modal}
+          onClose={() => setModal(null)}
+          onSaved={() => { setModal(null); load(); }}
+          onDeleted={() => { setModal(null); load(); }}
+        />
+      )}
     </div>
   );
 }
 
-function StaffModal({ staff, onClose, onSaved }: { staff: Staff | null; onClose: () => void; onSaved: () => void }) {
+function StaffModal({ staff, onClose, onSaved, onDeleted }: { staff: Staff | null; onClose: () => void; onSaved: () => void; onDeleted: () => void }) {
   const [name, setName] = useState(staff?.name ?? '');
   const [email, setEmail] = useState(staff?.email ?? '');
   const [role, setRole] = useState(staff?.role ?? 'ADMIN');
@@ -80,14 +87,29 @@ function StaffModal({ staff, onClose, onSaved }: { staff: Staff | null; onClose:
   const [selectedModules, setSelectedModules] = useState<string[]>(
     staff?.permissions && staff.permissions.length ? staff.permissions : crmEffectiveModules((staff?.role ?? 'ADMIN') as CRMRole, null),
   );
+  const [deleting, setDeleting] = useState(false);
   const inputCls = 'h-11 w-full rounded-xl border border-[#DBDAD7] px-3 text-base outline-none focus:border-[#29808B]';
 
+  // NURSE always lands on the nurse portal after login — without this checked,
+  // the account can log in but every page 403s. Force it on and non-removable.
+  const requiredModule = role === 'NURSE' ? 'nurse_portal' : null;
+
+  function withRequiredModule(mods: string[], forRole: string): string[] {
+    const req = forRole === 'NURSE' ? 'nurse_portal' : null;
+    return req && !mods.includes(req) ? [...mods, req] : mods;
+  }
+
   function toggleModule(k: string) {
+    if (k === requiredModule) return; // wajib, tidak bisa dilepas
     setSelectedModules((m) => m.includes(k) ? m.filter((x) => x !== k) : [...m, k]);
   }
 
   async function submit() {
     if (!name || (!staff && !email)) { setErr('Nama dan email wajib diisi.'); return; }
+    if (useCustom && role !== 'OWNER') {
+      const permErr = crmValidateCustomModules(role as CRMRole, selectedModules);
+      if (permErr) { setErr(permErr); return; }
+    }
     setSaving(true); setErr('');
     try {
       const res = await crmSend<{ generated_password?: string | null }>('/api/crm/staff', 'POST', {
@@ -98,6 +120,16 @@ function StaffModal({ staff, onClose, onSaved }: { staff: Staff | null; onClose:
       if (gp) { setGenerated(gp); setSaving(false); return; } // keep modal open to show password once
       onSaved();
     } catch (e) { setErr(e instanceof Error ? e.message : 'Gagal'); setSaving(false); }
+  }
+
+  async function del() {
+    if (!staff) return;
+    if (!confirm(`Hapus akun staff "${staff.name}" secara permanen? Tindakan ini tidak bisa dibatalkan.`)) return;
+    setDeleting(true); setErr('');
+    try {
+      await crmSend(`/api/crm/staff?id=${encodeURIComponent(staff.id)}`, 'DELETE');
+      onDeleted();
+    } catch (e) { setErr(e instanceof Error ? e.message : 'Gagal menghapus'); setDeleting(false); }
   }
 
   if (generated) {
@@ -114,9 +146,16 @@ function StaffModal({ staff, onClose, onSaved }: { staff: Staff | null; onClose:
 
   return (
     <Modal open onClose={onClose} title={staff ? 'Edit Staff' : 'Tambah Staff'} footer={
-      <div className="flex justify-end gap-2">
-        <button onClick={onClose} className="h-11 rounded-xl border border-[#DBDAD7] px-4 text-sm">Batal</button>
-        <button onClick={submit} disabled={saving} className="h-11 rounded-xl bg-[#205251] px-5 text-sm font-semibold text-white disabled:opacity-70">{saving ? 'Menyimpan…' : 'Simpan'}</button>
+      <div className="flex items-center justify-between gap-2">
+        {staff ? (
+          <button onClick={del} disabled={deleting || saving} className="flex h-11 items-center gap-1.5 rounded-xl border border-red-200 px-4 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-70">
+            <Trash2 size={16} /> {deleting ? 'Menghapus…' : 'Hapus'}
+          </button>
+        ) : <span />}
+        <div className="flex gap-2">
+          <button onClick={onClose} className="h-11 rounded-xl border border-[#DBDAD7] px-4 text-sm">Batal</button>
+          <button onClick={submit} disabled={saving || deleting} className="h-11 rounded-xl bg-[#205251] px-5 text-sm font-semibold text-white disabled:opacity-70">{saving ? 'Menyimpan…' : 'Simpan'}</button>
+        </div>
       </div>
     }>
       <div className="space-y-3">
@@ -124,7 +163,11 @@ function StaffModal({ staff, onClose, onSaved }: { staff: Staff | null; onClose:
         <label className="block text-sm">Nama*<input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} /></label>
         <label className="block text-sm">Email*<input type="email" className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} disabled={!!staff} /></label>
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm">Role<select className={inputCls} value={role} onChange={(e) => setRole(e.target.value)}>{ROLES.map((r) => <option key={r} value={r}>{r}</option>)}</select></label>
+          <label className="text-sm">Role<select className={inputCls} value={role} onChange={(e) => {
+            const newRole = e.target.value;
+            setRole(newRole);
+            if (useCustom) setSelectedModules((m) => withRequiredModule(m, newRole));
+          }}>{ROLES.map((r) => <option key={r} value={r}>{r}</option>)}</select></label>
           <label className="text-sm">Status<select className={inputCls} value={active ? '1' : '0'} onChange={(e) => setActive(e.target.value === '1')}><option value="1">Aktif</option><option value="0">Nonaktif</option></select></label>
         </div>
         {role !== 'OWNER' && (
@@ -136,19 +179,24 @@ function StaffModal({ staff, onClose, onSaved }: { staff: Staff | null; onClose:
                 onChange={(e) => {
                   const on = e.target.checked;
                   setUseCustom(on);
-                  if (on && selectedModules.length === 0) setSelectedModules(crmEffectiveModules(role as CRMRole, null));
+                  if (on) {
+                    setSelectedModules((m) => withRequiredModule(m.length === 0 ? crmEffectiveModules(role as CRMRole, null) : m, role));
+                  }
                 }}
               />
               Akses kustom (pilih modul yang boleh diakses)
             </label>
             {useCustom ? (
               <div className="mt-3 grid grid-cols-2 gap-1.5">
-                {CRM_MODULE_LABELS.map((m) => (
-                  <label key={m.key} className="flex items-center gap-2 text-sm text-[#111a1a]">
-                    <input type="checkbox" checked={selectedModules.includes(m.key)} onChange={() => toggleModule(m.key)} />
-                    {m.label}
-                  </label>
-                ))}
+                {CRM_MODULE_LABELS.map((m) => {
+                  const required = m.key === requiredModule;
+                  return (
+                    <label key={m.key} className={`flex items-center gap-2 text-sm ${required ? 'font-medium text-[#205251]' : 'text-[#111a1a]'}`}>
+                      <input type="checkbox" checked={selectedModules.includes(m.key)} disabled={required} onChange={() => toggleModule(m.key)} />
+                      {m.label}{required && <span className="text-[10px] font-normal text-[#C9944C]"> (wajib)</span>}
+                    </label>
+                  );
+                })}
               </div>
             ) : (
               <p className="mt-1 text-xs text-[#8EBFBF]">Memakai akses default sesuai role {role}.</p>

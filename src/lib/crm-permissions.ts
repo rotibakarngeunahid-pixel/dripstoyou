@@ -61,6 +61,32 @@ const HOME_PRIORITY: { module: string; path: string }[] = [
   { module: 'whatsapp', path: '/crm/whatsapp' },
 ];
 
+// The module(s) that give a role a reachable "home" page. NURSE always lands
+// on /crm/nurse (see crmHomePath below), which 403s without 'nurse_portal' (or
+// the manager-level 'nurse' module) — so that's the one checkbox a custom-access
+// nurse account can't skip. Other roles just need any one HOME_PRIORITY module.
+export function crmLandingModules(role: CRMRole): string[] {
+  if (role === 'NURSE') return ['nurse_portal', 'nurse'];
+  return HOME_PRIORITY.map((h) => h.module);
+}
+
+// Validates a custom-permission module selection for a role. Returns an
+// Indonesian error message if the staff would end up locked out of every
+// page, or null if the selection is fine. OWNER always has full access and
+// never uses custom permissions, so it's exempt.
+export function crmValidateCustomModules(role: CRMRole, modules: string[]): string | null {
+  if (role === 'OWNER') return null;
+  if (!modules || modules.length === 0) {
+    return 'Pilih minimal satu modul akses — tanpa itu staff tidak akan bisa masuk ke akunnya.';
+  }
+  if (!crmLandingModules(role).some((m) => modules.includes(m))) {
+    return role === 'NURSE'
+      ? "Modul 'Portal Nurse' wajib dicentang — itu satu-satunya halaman yang bisa diakses akun nurse."
+      : 'Wajib centang minimal satu modul utama (mis. Dashboard, Booking, Pasien, Finance, dll) agar staff punya halaman yang bisa diakses.';
+  }
+  return null;
+}
+
 export function crmHomePath(role: CRMRole, modules?: string[]): string {
   if (role === 'OWNER') return '/crm/dashboard';
   if (role === 'NURSE') return '/crm/nurse';

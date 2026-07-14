@@ -1,7 +1,8 @@
 <?php
 // CRM Staff & Role endpoint (OWNER only — gated by 'staff' permission)
-//   GET  /php-api/crm/staff.php          — list staff
-//   POST /php-api/crm/staff.php          — create/update (id optional)
+//   GET    /php-api/crm/staff.php          — list staff
+//   POST   /php-api/crm/staff.php          — create/update (id optional)
+//   DELETE /php-api/crm/staff.php?id=xxx   — permanently delete (hard delete)
 //
 // On create without a password, a strong one is generated and returned ONCE.
 
@@ -24,16 +25,36 @@ if ($method === 'GET') {
     jsonSuccess(['items' => $rows]);
 }
 
+if ($method === 'DELETE') {
+    $delId = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
+    if (!$delId) jsonError('ID wajib diisi', 400);
+
+    $chk = $db->prepare('SELECT id, name, role FROM crm_staff WHERE id = ? LIMIT 1');
+    $chk->execute([$delId]);
+    $target = $chk->fetch();
+    if (!$target) jsonError('Staff tidak ditemukan', 404);
+
+    if ($delId === $staff['staff_id']) jsonError('Tidak bisa menghapus akun sendiri', 422);
+    if ($target['role'] === 'OWNER') {
+        $ownerCount = (int)$db->query("SELECT COUNT(*) FROM crm_staff WHERE role = 'OWNER'")->fetchColumn();
+        if ($ownerCount <= 1) jsonError('Tidak bisa menghapus OWNER terakhir', 422);
+    }
+
+    $db->prepare('DELETE FROM crm_staff WHERE id = ?')->execute([$delId]);
+    crmAuditLog($staff, 'STAFF', 'DELETE', $delId, "Hapus staff {$target['name']} ({$target['role']})");
+    jsonSuccess(['id' => $delId], 'Staff dihapus');
+}
+
 if ($method === 'POST') {
     $body  = getBodyJson();
     $roles = ['OWNER', 'ADMIN', 'NURSE', 'FINANCE'];
     $sid   = !empty($body['id']) ? str_clean($body['id'], 191) : null;
     $now   = date('Y-m-d H:i:s');
 
-    $name   = str_clean($body['name'] ?? '', 100);
-    $role   = in_array($body['role'] ?? '', $roles, true) ? $body['role'] : null;
-    $active = array_key_exists('is_active', $body) ? (int)(bool)$body['is_active'] : 1;
-    $perms  = isset($body['permissions']) && is_array($body['permissions']) ? json_encode($body['permissions']) : null;
+    $name     = str_clean($body['name'] ?? '', 100);
+    $role     = in_array($body['role'] ?? '', $roles, true) ? $body['role'] : null;
+    $active   = array_key_exists('is_active', $body) ? (int)(bool)$body['is_active'] : 1;
+    $permsArr = (isset($body['permissions']) && is_array($body['permissions'])) ? array_values($body['permissions']) : null;
 
     if ($sid) {
         // Update
@@ -42,6 +63,11 @@ if ($method === 'POST') {
         $existing = $chk->fetch();
         if (!$existing) jsonError('Staff tidak ditemukan', 404);
         if (!$name || !$role) jsonError('Nama dan role wajib diisi', 422);
+        if ($permsArr !== null) {
+            $permErr = crmValidateCustomModules($role, $permsArr);
+            if ($permErr) jsonError($permErr, 422);
+        }
+        $perms = $permsArr !== null ? json_encode($permsArr) : null;
 
         $sets = ['name = ?', 'role = ?', 'is_active = ?', 'permissions_json = ?', 'updated_at = ?'];
         $args = [$name, $role, $active, $perms, $now];
@@ -63,6 +89,11 @@ if ($method === 'POST') {
     // Create
     requireFields($body, ['name', 'email', 'role']);
     if (!$role) jsonError('Role tidak valid', 422);
+    if ($permsArr !== null) {
+        $permErr = crmValidateCustomModules($role, $permsArr);
+        if ($permErr) jsonError($permErr, 422);
+    }
+    $perms = $permsArr !== null ? json_encode($permsArr) : null;
     $email = strtolower(trim((string)$body['email']));
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) jsonError('Email tidak valid', 422);
 
