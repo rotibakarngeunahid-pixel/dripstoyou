@@ -374,7 +374,9 @@ function NurseAdminView() {
     setSchedLoading(true); setSchedError('');
     try {
       const d = await crmGet<{ items: ScheduleBooking[] }>(`/api/crm/nurse?schedule=1&month=${month}`);
-      setSchedule(d.items ?? []);
+      // Buang item tanpa booking_date — nurse.php versi lama (belum kenal
+      // ?schedule=1) jatuh ke list nurse biasa; jangan sampai bikin crash.
+      setSchedule((d.items ?? []).filter((b) => typeof b.booking_date === 'string' && b.booking_date.length >= 10));
     } catch (e) { setSchedError(e instanceof Error ? e.message : 'Gagal memuat jadwal'); }
     finally { setSchedLoading(false); }
   }, [month]);
