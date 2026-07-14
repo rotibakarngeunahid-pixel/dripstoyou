@@ -5,6 +5,7 @@ import { Plus, Trash2, Copy, ExternalLink, Save } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { renderTemplate, generateWALink } from '@/lib/crm-whatsapp';
 import { LoadingBlock, ErrorBlock, EmptyState } from '@/components/crm/states';
+import ConfirmModal from '@/components/crm/ConfirmModal';
 
 type Template = { id: string; category: string; name: string; body_template: string; is_active: boolean; sort_order: number };
 
@@ -20,6 +21,8 @@ export default function WhatsAppPage() {
   const [phone, setPhone] = useState('');
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   const load = useCallback(async () => {
@@ -61,11 +64,18 @@ export default function WhatsAppPage() {
     } catch (e) { setToast(e instanceof Error ? e.message : 'Gagal'); }
     finally { setSaving(false); }
   }
-  async function del() {
+  function askDelete() {
     if (!selected?.id) { setSelected(null); return; }
-    if (!confirm('Hapus template ini?')) return;
-    await crmSend(`/api/crm/whatsapp?id=${selected.id}`, 'DELETE');
-    setSelected(null); load();
+    setConfirmOpen(true);
+  }
+  async function del() {
+    if (!selected?.id) return;
+    setDeleting(true);
+    try {
+      await crmSend(`/api/crm/whatsapp?id=${selected.id}`, 'DELETE');
+      setSelected(null); await load();
+    } catch (e) { setToast(e instanceof Error ? e.message : 'Gagal menghapus'); }
+    finally { setDeleting(false); setConfirmOpen(false); }
   }
 
   const preview = selected ? renderTemplate(selected.body_template, SAMPLE) : '';
@@ -117,7 +127,7 @@ export default function WhatsAppPage() {
             <label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={selected.is_active} onChange={(e) => setSelected({ ...selected, is_active: e.target.checked })} /> Aktif</label>
             <div className="mt-3 flex gap-2">
               <button onClick={save} disabled={saving} className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#205251] px-4 text-sm font-semibold text-white disabled:opacity-70"><Save size={16} /> {saving ? 'Menyimpan…' : 'Simpan'}</button>
-              <button onClick={del} className="inline-flex h-11 items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-medium text-red-600"><Trash2 size={16} /> Hapus</button>
+              <button onClick={askDelete} disabled={deleting} className="inline-flex h-11 items-center gap-2 rounded-xl border border-red-200 px-4 text-sm font-medium text-red-600 disabled:opacity-70"><Trash2 size={16} /> Hapus</button>
               {toast && <span className="self-center text-sm text-[#29808B]">{toast}</span>}
             </div>
           </div>
@@ -140,6 +150,16 @@ export default function WhatsAppPage() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        open={confirmOpen}
+        title="Hapus template ini?"
+        message={selected ? `Template "${selected.name}" akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.` : ''}
+        confirmLabel="Hapus"
+        loading={deleting}
+        onConfirm={del}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

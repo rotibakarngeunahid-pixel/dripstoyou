@@ -7,7 +7,9 @@ import { formatDate } from '@/lib/crm-format';
 import { CRM_MODULE_LABELS, crmEffectiveModules, crmValidateCustomModules } from '@/lib/crm-permissions';
 import type { CRMRole } from '@/lib/crm-session';
 import Modal from '@/components/crm/Modal';
+import ConfirmModal from '@/components/crm/ConfirmModal';
 import { LoadingBlock, ErrorBlock, EmptyState } from '@/components/crm/states';
+import { useCRMStaff } from '@/app/crm/CRMShell';
 
 type Staff = { id: string; name: string; email: string; role: string; is_active: boolean; last_login_at: string | null; permissions: string[] | null };
 
@@ -64,6 +66,7 @@ export default function StaffPage() {
       {modal && (
         <StaffModal
           staff={modal === 'new' ? null : modal}
+          ownerCount={rows.filter((r) => r.role === 'OWNER').length}
           onClose={() => setModal(null)}
           onSaved={() => { setModal(null); load(); }}
           onDeleted={() => { setModal(null); load(); }}
@@ -73,7 +76,11 @@ export default function StaffPage() {
   );
 }
 
-function StaffModal({ staff, onClose, onSaved, onDeleted }: { staff: Staff | null; onClose: () => void; onSaved: () => void; onDeleted: () => void }) {
+function StaffModal({ staff, ownerCount, onClose, onSaved, onDeleted }: { staff: Staff | null; ownerCount: number; onClose: () => void; onSaved: () => void; onDeleted: () => void }) {
+  const me = useCRMStaff();
+  const isSelf = !!staff && staff.id === me?.id;
+  const isLastOwner = !!staff && staff.role === 'OWNER' && ownerCount <= 1;
+  const deleteBlockedReason = isSelf ? 'Tidak bisa menghapus akun sendiri.' : isLastOwner ? 'Tidak bisa menghapus OWNER terakhir.' : null;
   const [name, setName] = useState(staff?.name ?? '');
   const [email, setEmail] = useState(staff?.email ?? '');
   const [role, setRole] = useState(staff?.role ?? 'ADMIN');
@@ -88,6 +95,7 @@ function StaffModal({ staff, onClose, onSaved, onDeleted }: { staff: Staff | nul
     staff?.permissions && staff.permissions.length ? staff.permissions : crmEffectiveModules((staff?.role ?? 'ADMIN') as CRMRole, null),
   );
   const [deleting, setDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const inputCls = 'h-11 w-full rounded-xl border border-[#DBDAD7] px-3 text-base outline-none focus:border-[#29808B]';
 
   // NURSE always lands on the nurse portal after login — without this checked,
@@ -124,12 +132,11 @@ function StaffModal({ staff, onClose, onSaved, onDeleted }: { staff: Staff | nul
 
   async function del() {
     if (!staff) return;
-    if (!confirm(`Hapus akun staff "${staff.name}" secara permanen? Tindakan ini tidak bisa dibatalkan.`)) return;
     setDeleting(true); setErr('');
     try {
       await crmSend(`/api/crm/staff?id=${encodeURIComponent(staff.id)}`, 'DELETE');
       onDeleted();
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Gagal menghapus'); setDeleting(false); }
+    } catch (e) { setErr(e instanceof Error ? e.message : 'Gagal menghapus'); setDeleting(false); setConfirmOpen(false); }
   }
 
   if (generated) {
@@ -145,12 +152,21 @@ function StaffModal({ staff, onClose, onSaved, onDeleted }: { staff: Staff | nul
   }
 
   return (
+    <>
     <Modal open onClose={onClose} title={staff ? 'Edit Staff' : 'Tambah Staff'} footer={
       <div className="flex items-center justify-between gap-2">
         {staff ? (
-          <button onClick={del} disabled={deleting || saving} className="flex h-11 items-center gap-1.5 rounded-xl border border-red-200 px-4 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-70">
-            <Trash2 size={16} /> {deleting ? 'Menghapus…' : 'Hapus'}
-          </button>
+          <div>
+            <button
+              onClick={() => setConfirmOpen(true)}
+              disabled={deleting || saving || !!deleteBlockedReason}
+              title={deleteBlockedReason ?? undefined}
+              className="flex h-11 items-center gap-1.5 rounded-xl border border-red-200 px-4 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent"
+            >
+              <Trash2 size={16} /> {deleting ? 'Menghapus…' : 'Hapus'}
+            </button>
+            {deleteBlockedReason && <p className="mt-1 text-[11px] text-[#8a9aa3]">{deleteBlockedReason}</p>}
+          </div>
         ) : <span />}
         <div className="flex gap-2">
           <button onClick={onClose} className="h-11 rounded-xl border border-[#DBDAD7] px-4 text-sm">Batal</button>
@@ -207,5 +223,18 @@ function StaffModal({ staff, onClose, onSaved, onDeleted }: { staff: Staff | nul
         {role === 'NURSE' && !staff && <p className="text-xs text-[#8EBFBF]">Akun nurse otomatis terhubung ke daftar nurse untuk penugasan & portal.</p>}
       </div>
     </Modal>
+
+    {staff && (
+      <ConfirmModal
+        open={confirmOpen}
+        title="Hapus akun staff?"
+        message={`Hapus akun staff "${staff.name}" secara permanen? Tindakan ini tidak bisa dibatalkan.`}
+        confirmLabel="Hapus"
+        loading={deleting}
+        onConfirm={del}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    )}
+    </>
   );
 }
