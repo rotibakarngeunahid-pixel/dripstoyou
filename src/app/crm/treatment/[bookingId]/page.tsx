@@ -8,9 +8,13 @@ import { crmGet, crmSend } from '@/lib/crm-client';
 import { crmBookingHref } from '@/lib/crm-permissions';
 import StatusBadge from '@/components/crm/StatusBadge';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
+import FormLockCard from '@/components/crm/FormLockCard';
 import { useCRMStaff } from '../../CRMShell';
 
-type Booking = { id: string; booking_code_display: string | null; customer_name: string; product_name: string; crm_status: string };
+type Booking = {
+  id: string; booking_code_display: string | null; customer_name: string; product_name: string; crm_status: string;
+  booking_date: string; booking_time: string; forms_locked: boolean; forms_open_at: string | null;
+};
 type ChecklistItem = { step: string; done: boolean };
 type UsedItem = { inventory_item_id: string; name: string; qty: number };
 type Treatment = {
@@ -109,6 +113,21 @@ export default function TreatmentPage() {
 
   if (loading) return <LoadingBlock />;
   if (error || !booking) return <ErrorBlock message={error || 'Tidak ditemukan'} onRetry={load} />;
+
+  // Time gate (mirrors treatment.php): form baru terbuka mendekati jadwal booking.
+  if (booking.forms_locked && !completed) {
+    return (
+      <FormLockCard
+        backHref={backHref}
+        formName="Treatment"
+        customerName={booking.customer_name}
+        productName={booking.product_name}
+        bookingDate={booking.booking_date}
+        bookingTime={booking.booking_time}
+        opensAt={booking.forms_open_at}
+      />
+    );
+  }
 
   // Flow guard (mirrors treatment.php): no treatment before informed consent.
   if (!consentSigned && !completed) {

@@ -294,6 +294,50 @@ function crmStatusRank(string $status): int {
     return $rank[$status] ?? 0;
 }
 
+// ── Time gate form on-site (screening / consent / treatment) ──────────────────
+// Form-form ini adalah dokumentasi tindakan di lokasi pasien, jadi baru boleh
+// diisi mendekati jadwal booking — bukan berhari-hari sebelumnya. Dibuka
+// beberapa menit lebih awal supaya nurse yang tiba duluan tidak terkunci.
+// Server berjalan di Asia/Makassar (WITA) — lihat helpers.php.
+
+function crmFormOpenMinutesEarly(): int { return 30; }
+
+// Unix timestamp kapan form booking ini terbuka (null bila tanggal tidak valid).
+function crmFormOpenEpoch(?string $bookingDate, ?string $bookingTime): ?int {
+    if (empty($bookingDate)) return null;
+    $time = (is_string($bookingTime) && preg_match('/^\d{1,2}:\d{2}/', $bookingTime))
+        ? substr($bookingTime, 0, 5) : '00:00';
+    $ts = strtotime($bookingDate . ' ' . $time . ':00');
+    if ($ts === false) return null;
+    return $ts - crmFormOpenMinutesEarly() * 60;
+}
+
+// Lampirkan status gate ke payload booking (untuk GET, agar UI bisa menampilkan
+// lock yang sama dengan yang di-enforce POST). Butuh booking_date/booking_time.
+function crmAttachFormWindow(array $booking): array {
+    $open = crmFormOpenEpoch($booking['booking_date'] ?? null, $booking['booking_time'] ?? null);
+    $booking['forms_open_at'] = $open !== null ? date('Y-m-d H:i:s', $open) : null;
+    $booking['forms_locked']  = $open !== null && time() < $open;
+    return $booking;
+}
+
+// Trust boundary: tolak pengisian form sebelum waktunya (423 Locked).
+function crmRequireFormWindowOpen(PDO $db, string $bookingId): void {
+    $s = $db->prepare('SELECT booking_date, booking_time FROM bookings WHERE id = ? LIMIT 1');
+    $s->execute([$bookingId]);
+    $b = $s->fetch();
+    if (!$b) return; // booking tidak ada → biarkan pemeriksaan caller yang melapor 404
+    $open = crmFormOpenEpoch($b['booking_date'] ?? null, $b['booking_time'] ?? null);
+    if ($open !== null && time() < $open) {
+        jsonError(
+            'Belum waktunya. Jadwal booking ini ' . date('d/m/Y', strtotime((string)$b['booking_date'])) .
+            ' jam ' . substr((string)$b['booking_time'], 0, 5) . ' WITA — form baru bisa diisi mulai ' .
+            date('d/m/Y H:i', $open) . ' WITA (' . crmFormOpenMinutesEarly() . ' menit sebelum jadwal).',
+            423
+        );
+    }
+}
+
 // Advance a booking's crm_status to $target only if it is currently earlier in
 // the lifecycle (and not terminal). Keeps legacy bookings.status in sync.
 function crmAdvanceBookingStatus(PDO $db, string $bookingId, string $target): void {

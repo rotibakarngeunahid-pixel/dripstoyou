@@ -13,11 +13,13 @@ import { STATUS_RANK, type CRMBookingStatus } from '@/lib/crm-status';
 import { CONSENT_COPY as COPY, type ConsentLang as Lang } from '@/lib/consent-copy';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
+import FormLockCard from '@/components/crm/FormLockCard';
 import { useCRMStaff } from '../../CRMShell';
 
 type Booking = {
   id: string; booking_code_display: string | null; customer_name: string; phone: string | null;
   product_name: string; crm_status: string;
+  booking_date: string; booking_time: string; forms_locked: boolean; forms_open_at: string | null;
 };
 type Consent = {
   patient_name_signed: string; agreed_at: string | null; filled_by?: 'NURSE' | 'CLIENT';
@@ -165,7 +167,90 @@ export default function ConsentPage() {
 
   const backHref = crmBookingHref(staff, booking.booking_code_display ?? bookingId);
   const screeningDone = (STATUS_RANK[booking.crm_status as CRMBookingStatus] ?? 0) >= STATUS_RANK.SCREENING_COMPLETED;
+  const clientFinal = !!existing?.agreed_at && existing.filled_by === 'CLIENT';
   const waMessage = `Halo ${booking.customer_name} 👋\n\nSebelum treatment ${booking.product_name} dimulai, mohon isi formulir persetujuan tindakan medis (informed consent) melalui link berikut:\n${linkUrl}\n\nLink berlaku 48 jam. Terima kasih — Drips To You - Bali 🌿`;
+
+  // Time gate (mirrors consent.php): form baru terbuka mendekati jadwal booking.
+  if (booking.forms_locked && !existing?.agreed_at) {
+    return (
+      <FormLockCard
+        backHref={backHref}
+        formName="Informed Consent"
+        customerName={booking.customer_name}
+        productName={booking.product_name}
+        bookingDate={booking.booking_date}
+        bookingTime={booking.booking_time}
+        opensAt={booking.forms_open_at}
+      />
+    );
+  }
+
+  // Consent yang diisi & ditandatangani sendiri oleh pasien via link publik
+  // bersifat final (mirrors consent.php) — tampilkan read-only, tanpa form.
+  if (clientFinal && existing) {
+    return (
+      <div className="crm-page mx-auto max-w-xl">
+        <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
+        <div className="crm-card p-6">
+          <div className="mb-5 text-center">
+            <Image
+              src="/img/drips-to-you-bali-icon.webp"
+              alt="Drips To You - Bali"
+              width={48}
+              height={48}
+              className="mx-auto mb-2"
+            />
+            <h2 className="crm-section-title">Informed Consent</h2>
+            <p className="text-xs text-[#8EBFBF]">Dokumen final — diisi mandiri oleh pasien via link</p>
+          </div>
+
+          <div className="mb-4 rounded-xl bg-[#D6EAEA] px-4 py-3 text-sm text-[#205251]">
+            <p>
+              Consent sudah ditandatangani sendiri oleh pasien melalui link pada{' '}
+              <strong>{formatDateTimeWITA(existing.agreed_at)}</strong> atas nama{' '}
+              <strong>{existing.patient_name_signed}</strong>. Dokumen ini bersifat final dan
+              tidak dapat diubah atau dibuat ulang oleh staff.
+            </p>
+          </div>
+
+          <div className="mb-4 rounded-xl bg-[#F3F0E7] px-4 py-3 text-sm">
+            <p><strong>Pasien:</strong> {booking.customer_name}</p>
+            <p><strong>Layanan:</strong> {booking.product_name}</p>
+          </div>
+
+          {existing.signature_data && (
+            <div className="mb-4">
+              <p className="mb-1 text-sm font-medium text-[#205251]">Tanda tangan pasien</p>
+              {/* eslint-disable-next-line @next/next/no-img-element -- data URI signature, next/image tidak relevan */}
+              <img
+                src={existing.signature_data}
+                alt={`Tanda tangan ${existing.patient_name_signed}`}
+                className="w-full rounded-xl border border-[#DBDAD7] bg-white object-contain"
+                style={{ maxHeight: 180 }}
+              />
+            </div>
+          )}
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={pdfBusy}
+              onClick={() => { void handleDownloadPdf(); }}
+              className="inline-flex h-12 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#205251] text-sm font-semibold text-[#205251] disabled:opacity-60"
+            >
+              <Download size={16} /> {pdfBusy ? 'Menyiapkan PDF…' : 'Download PDF'}
+            </button>
+            <Link
+              href={`/crm/treatment/${bookingId}`}
+              className="inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-[#205251] text-sm font-semibold text-white"
+            >
+              Lanjut Treatment →
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Flow guard (mirrors consent.php): consent may only be taken after screening.
   if (!screeningDone && !existing?.agreed_at) {

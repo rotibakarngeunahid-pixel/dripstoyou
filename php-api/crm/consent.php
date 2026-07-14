@@ -15,13 +15,14 @@ $bookingId = !empty($_GET['bookingId']) ? str_clean($_GET['bookingId'], 191) : n
 
 if ($method === 'GET') {
     if (!$bookingId) jsonError('bookingId wajib diisi', 400);
-    $b = $db->prepare('SELECT b.id, b.booking_code_display, b.customer_name, b.customer_phone_encrypted, b.crm_status, p.name AS product_name
+    $b = $db->prepare('SELECT b.id, b.booking_code_display, b.customer_name, b.customer_phone_encrypted, b.booking_date, b.booking_time, b.crm_status, p.name AS product_name
                        FROM bookings b JOIN products p ON p.id = b.product_id WHERE b.id = ? LIMIT 1');
     $b->execute([$bookingId]);
     $booking = $b->fetch();
     if (!$booking) jsonError('Booking tidak ditemukan', 404);
     $booking['phone'] = crmTryDecrypt($booking['customer_phone_encrypted'] ?? null, null);
     unset($booking['customer_phone_encrypted']);
+    $booking = crmAttachFormWindow($booking);
 
     $c = $db->prepare('SELECT id, patient_name, patient_name_signed, consent_language, filled_by, agreed_at, created_at, signature_data_encrypted FROM consents WHERE booking_id = ? LIMIT 1');
     $c->execute([$bookingId]);
@@ -44,6 +45,9 @@ if ($method === 'POST') {
     $booking = $b->fetch();
     if (!$booking) jsonError('Booking tidak ditemukan', 404);
 
+    // Time gate: consent hanya boleh diambil mendekati jadwal booking.
+    crmRequireFormWindowOpen($db, $bookingId);
+
     // Flow guard: screening → consent → treatment. Consent may only be taken
     // after screening has been submitted (and never on a terminal booking).
     if (crmStatusRank((string)$booking['crm_status']) < crmStatusRank('SCREENING_COMPLETED')) {
@@ -57,14 +61,21 @@ if ($method === 'POST') {
     $now        = date('Y-m-d H:i:s');
     $ipHash     = getIpHash();
 
-    $exists = $db->prepare('SELECT id FROM consents WHERE booking_id = ? LIMIT 1');
+    $exists = $db->prepare('SELECT id, filled_by, agreed_at FROM consents WHERE booking_id = ? LIMIT 1');
     $exists->execute([$bookingId]);
     $row = $exists->fetch();
 
+    // Consent yang sudah diisi & ditandatangani sendiri oleh pasien via link
+    // publik bersifat FINAL sebagai bukti hukum — staff tidak boleh menimpa
+    // atau membuat ulang dokumen tersebut lewat endpoint ini.
+    if ($row && ($row['filled_by'] ?? '') === 'CLIENT' && !empty($row['agreed_at'])) {
+        jsonError('Consent sudah diisi dan ditandatangani sendiri oleh pasien melalui link. Dokumen bersifat final dan tidak dapat diubah atau dibuat ulang.', 409);
+    }
+
     if ($row) {
-        // filled_by/consent_link_id reset to NURSE/NULL: a staff submission through
-        // this endpoint always supersedes a prior client self-fill as the record of
-        // who is currently vouching for this document.
+        // filled_by/consent_link_id reset to NURSE/NULL: a staff re-submission over
+        // a prior NURSE-filled record supersedes it as the record of who is
+        // currently vouching for this document (client-filled is blocked above).
         $db->prepare('UPDATE consents SET patient_name=?, patient_name_signed=?, signature_data_encrypted=?, consent_language=?, filled_by="NURSE", consent_link_id=NULL, agreed_at=?, ip_address_hash=? WHERE id=?')
            ->execute([$booking['customer_name'], $nameSigned, $sig, $lang, $now, $ipHash, $row['id']]);
         $cid = $row['id'];

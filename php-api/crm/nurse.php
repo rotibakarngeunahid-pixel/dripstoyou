@@ -3,6 +3,7 @@
 //   GET  /php-api/crm/nurse.php                       — list nurses (+ workload for ?date=)
 //   GET  /php-api/crm/nurse.php?portal=1&date=YYYY-MM-DD — bookings assigned to the logged-in nurse
 //   GET  /php-api/crm/nurse.php?portal=1&calendar=1&month=YYYY-MM — dates in the month the nurse is assigned to
+//   GET  /php-api/crm/nurse.php?schedule=1&month=YYYY-MM — (admin) semua booking sebulan + nurse-nya
 //   POST /php-api/crm/nurse.php  {action:'assign', booking_id, nurse_id} — assign nurse to booking
 
 require_once __DIR__ . '/_crm.php';
@@ -56,6 +57,32 @@ if ($method === 'GET' && !empty($_GET['portal'])) {
     );
     $stmt->execute([$nurseId, $date]);
     jsonSuccess(['items' => $stmt->fetchAll(), 'nurse_id' => $nurseId, 'date' => $date]);
+}
+
+// ── Admin/Owner: semua booking sebulan + nurse-nya (kalender penugasan) ────────
+// Menjawab "tanggal X ada booking apa saja, jam berapa, nurse-nya siapa" dalam
+// satu fetch — frontend mengelompokkan per tanggal.
+if ($method === 'GET' && !empty($_GET['schedule'])) {
+    if (!$canManage) jsonError('Forbidden', 403);
+
+    $month = !empty($_GET['month']) ? str_clean($_GET['month'], 7) : date('Y-m');
+    if (!preg_match('/^\d{4}-\d{2}$/', $month)) jsonError('Format bulan tidak valid', 422);
+    $monthStart = $month . '-01';
+    $monthEnd   = date('Y-m-t', strtotime($monthStart));
+
+    $stmt = $db->prepare(
+        "SELECT b.id, b.booking_code_display, b.booking_date, b.booking_time, b.crm_status,
+                b.customer_name, b.nurse_id, n.name AS nurse_name,
+                p.name AS product_name, sa.name AS service_area_name
+         FROM bookings b
+         JOIN products p ON p.id = b.product_id
+         LEFT JOIN service_areas sa ON sa.id = b.service_area_id
+         LEFT JOIN nurses n ON n.id = b.nurse_id
+         WHERE b.booking_date BETWEEN ? AND ?
+         ORDER BY b.booking_date ASC, b.booking_time ASC"
+    );
+    $stmt->execute([$monthStart, $monthEnd]);
+    jsonSuccess(['items' => $stmt->fetchAll(), 'month' => $month]);
 }
 
 // ── List nurses + workload ─────────────────────────────────────────────────────
