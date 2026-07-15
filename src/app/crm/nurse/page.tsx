@@ -383,7 +383,7 @@ function NurseAdminView() {
 
   const loadWorkload = useCallback(async () => {
     setLoading(true); setError('');
-    try { const d = await crmGet<{ items: NurseRow[] }>(`/api/crm/nurse?date=${date}`); setItems(d.items ?? []); }
+    try { const d = await crmGet<{ items: NurseRow[] }>(`/api/crm/nurse?all=1&date=${date}`); setItems(d.items ?? []); }
     catch (e) { setError(e instanceof Error ? e.message : 'Gagal memuat nurse'); }
     finally { setLoading(false); }
   }, [date]);

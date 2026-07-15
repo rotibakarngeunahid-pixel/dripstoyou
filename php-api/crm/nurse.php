@@ -87,10 +87,15 @@ if ($method === 'GET' && !empty($_GET['schedule'])) {
 
 // ── List nurses + workload ─────────────────────────────────────────────────────
 if ($method === 'GET') {
+    // By default only return active nurses — the assign modal must only show
+    // nurses who can actually be assigned. Pass ?all=1 to include inactive
+    // nurses (used by the nurse schedule admin view / workload panel).
+    $showAll = !empty($_GET['all']);
+    $where   = $showAll ? '' : 'WHERE n.is_active = 1 ';
     $stmt = $db->prepare(
         "SELECT n.id, n.name, n.phone_last4, n.is_active, n.availability_json,
                 (SELECT COUNT(*) FROM bookings b WHERE b.nurse_id = n.id AND b.booking_date = ?) AS today_count
-         FROM nurses n ORDER BY n.is_active DESC, n.name ASC"
+         FROM nurses n {$where}ORDER BY n.is_active DESC, n.name ASC"
     );
     $stmt->execute([$date]);
     jsonSuccess(['items' => $stmt->fetchAll(), 'date' => $date]);

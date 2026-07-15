@@ -82,6 +82,34 @@ if ($method === 'POST') {
         }
         $args[] = $sid;
         $db->prepare('UPDATE crm_staff SET ' . implode(', ', $sets) . ' WHERE id = ?')->execute($args);
+
+        // ── Sync nurses roster ─────────────────────────────────────────────
+        // If the staff member is (or was) a NURSE, keep nurses.name and
+        // nurses.is_active in sync with crm_staff so the assign modal always
+        // reflects the true active/inactive state.
+        if ($role === 'NURSE') {
+            // Check if a nurses row already exists for this staff member.
+            $nrow = $db->prepare('SELECT id FROM nurses WHERE staff_id = ? LIMIT 1');
+            $nrow->execute([$sid]);
+            $nurseRow = $nrow->fetch();
+            if ($nurseRow) {
+                // Update existing nurses row.
+                $db->prepare('UPDATE nurses SET name = ?, is_active = ?, updated_at = ? WHERE staff_id = ?')
+                   ->execute([$name, $active, $now, $sid]);
+            } else {
+                // Nurse row is missing (can happen if staff was created outside
+                // the normal flow). Create it now.
+                $db->prepare('INSERT INTO nurses (id, staff_id, name, phone_encrypted, phone_last4, is_active, created_at, updated_at)
+                              VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+                   ->execute([generateId(), $sid, $name, encryptField('0000000000'), '0000', $active, $now, $now]);
+            }
+        } elseif ($existing['role'] === 'NURSE' && $role !== 'NURSE') {
+            // Role changed away from NURSE — deactivate the nurses row so the
+            // staff member no longer appears in the assign list.
+            $db->prepare('UPDATE nurses SET is_active = 0, updated_at = ? WHERE staff_id = ?')
+               ->execute([$now, $sid]);
+        }
+
         crmAuditLog($staff, 'STAFF', 'UPDATE', $sid, "Update staff $name ($role)");
         jsonSuccess(['id' => $sid], 'Staff diperbarui');
     }
