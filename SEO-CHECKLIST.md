@@ -55,7 +55,7 @@ Toggle bahasa saat ini client-side (localStorage, URL sama) → hanya versi EN y
 ### Prioritas 1 — minggu ini
 - [ ] **Google Search Console**: verifikasi properti Domain `dripstoyou.com` (via DNS TXT di registrar/Vercel) → submit `https://dripstoyou.com/sitemap.xml` → *URL Inspection* → *Request Indexing* untuk: `/`, `/treatments`, `/booking`, dan tiap detail treatment.
 - [ ] **Google Business Profile** (paling krusial untuk brand search + Maps): buat profil "Drips To You - Bali", kategori *IV therapy service* / *Medical service*, tipe **Service Area Business** (tanpa alamat publik), area layanan: Seminyak, Canggu, Uluwatu, Nusa Dua, Ubud, Denpasar, Sanur; jam 08:00–22:00 WITA; nomor +62 823-1404-6089; link ke website. Upload foto asli (tim, treatment, mobil).
-- [ ] **Redirect domain**: pastikan di Vercel `www.dripstoyou.com` → 301 → `dripstoyou.com` (Domains → set non-www sebagai primary; Vercel otomatis 301 + HTTPS). Tes: `curl -I http://www.dripstoyou.com`.
+- [x] ~~Redirect domain www → non-www~~ — SUDAH via `redirects()` host-based di `next.config.ts` (terverifikasi 308 di produksi 2026-07-18). `http://` → `https://` juga sudah otomatis (308 Vercel).
 - [ ] **Validasi Rich Results**: tes `https://dripstoyou.com`, satu halaman treatment, dan `/faq` di https://search.google.com/test/rich-results setelah deploy.
 
 ### Prioritas 2 — bulan ini
