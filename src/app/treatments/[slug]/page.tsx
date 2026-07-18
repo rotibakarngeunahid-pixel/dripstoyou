@@ -6,7 +6,7 @@ import TreatmentDetailContent from '@/components/public/TreatmentDetailContent';
 import ScrollRevealInit from '@/components/public/ScrollRevealInit';
 import JsonLd from '@/components/seo/JsonLd';
 import { breadcrumbJsonLd, serviceJsonLd, DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo';
-import { toDirectImageUrl } from '@/lib/images';
+import { toDirectImageUrl, toPublicImageUrl } from '@/lib/images';
 
 export const revalidate = 60;
 
@@ -87,7 +87,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const url = `${SITE_URL}/treatments/${slug}`;
   const title = `${product.name} — Mobile IV Therapy Bali | Drips To You`;
   const description = metaDescription(product);
-  const ogImage = product.image_url ?? DEFAULT_OG_IMAGE;
+  const ogImage = toPublicImageUrl(product.image_url) ?? DEFAULT_OG_IMAGE;
 
   return {
     title: { absolute: title },
@@ -128,7 +128,7 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
     name: product.name,
     slug: product.slug,
     description: product.short_description,
-    image: product.image_url,
+    image: toPublicImageUrl(product.image_url),
     price: product.price_amount,
     currency: product.currency,
   });

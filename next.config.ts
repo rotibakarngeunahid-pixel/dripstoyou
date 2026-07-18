@@ -42,14 +42,30 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'images.pexels.com' },
-      // PHP backend served via subdomain (api.dripstoyou.com → cPanel php-api/)
+      // PHP backend served via subdomain (api.dripstoyou.com → cPanel php-api/).
+      // http is required: PHP_BACKEND_URL is http:// (https on this host 302s
+      // to www.dripstoyou.com → Vercel 403 self-loop).
       { protocol: 'https', hostname: 'api.dripstoyou.com' },
+      { protocol: 'http',  hostname: 'api.dripstoyou.com' },
       // dripstoyou.com kept for legacy DB image URLs and next/image optimization
       { protocol: 'https', hostname: 'dripstoyou.com' },
       { protocol: 'http',  hostname: 'dripstoyou.com' },
       { protocol: 'https', hostname: 'ik.imagekit.io' },
       { protocol: 'https', hostname: 'i.pravatar.cc' },
     ],
+  },
+
+  // Canonicalize www → apex so Google never indexes duplicate hosts
+  // (www.dripstoyou.com currently serves 200 instead of redirecting).
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: 'www.dripstoyou.com' }],
+        destination: 'https://dripstoyou.com/:path*',
+        permanent: true,
+      },
+    ];
   },
 
   // Proxy /php-api/* requests to the actual PHP server (api.dripstoyou.com).

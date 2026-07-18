@@ -9,3 +9,15 @@ export function toDirectImageUrl<T extends string | null | undefined>(url: T): T
   if (!phpBase) return url;
   return url.replace(/^https?:\/\/dripstoyou\.com\/php-api/, phpBase) as T;
 }
+
+// Inverse of toDirectImageUrl, for og:image / JSON-LD: those must be public
+// https URLs, not the (possibly http://) backend host the optimizer fetches.
+// The proxied https://dripstoyou.com/php-api/... path serves the same file.
+export function toPublicImageUrl<T extends string | null | undefined>(url: T): T {
+  if (!url) return url;
+  const phpBase = (process.env.NEXT_PUBLIC_API_BASE_URL ?? '').replace(/\/+$/, '');
+  if (phpBase && url.startsWith(`${phpBase}/`)) {
+    return url.replace(phpBase, 'https://dripstoyou.com/php-api') as T;
+  }
+  return url.replace(/^http:\/\//, 'https://') as T;
+}
