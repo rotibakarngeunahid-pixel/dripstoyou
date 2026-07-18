@@ -8,6 +8,48 @@ import { crmHomePath } from '@/lib/crm-permissions';
 //    to CRM access, the /crm session too (single sign-on bridge).
 //  - CRM-only staff (nurse/finance/native crm_staff): set the /crm session.
 // Returns { success, target } — where to redirect after login.
+//
+// Auth goes through php-api/unified-login.php, which checks both identities in
+// ONE request and records exactly one login_attempts row. Calling the two legacy
+// endpoints separately made every wrong password count double — and a successful
+// CRM-only login still logged one failure — so the 5-per-15-minutes limit locked
+// real users out after ~3 typos. The legacy two-call flow is kept only as a
+// fallback while unified-login.php has not been uploaded to the PHP host yet.
+
+type AdminPayload = { token: string; admin: { id: string; name: string; email: string; role: string } };
+type CRMPayload = {
+  token: string;
+  staff: { id: string; name: string; email: string; role: string };
+  modules?: string[];
+};
+
+async function saveAdminSession(p: AdminPayload): Promise<void> {
+  const s = await getSession();
+  s.adminId = p.admin.id; s.email = p.admin.email; s.role = p.admin.role as AdminRole;
+  s.name = p.admin.name; s.adminToken = p.token;
+  await s.save();
+}
+
+async function saveCRMSession(p: CRMPayload, isWebsiteAdmin: boolean): Promise<string> {
+  const cs = await getCRMSession();
+  cs.staffId = p.staff.id; cs.email = p.staff.email; cs.role = p.staff.role as CRMRole;
+  cs.name = p.staff.name; cs.crmToken = p.token;
+  cs.modules = Array.isArray(p.modules) ? p.modules : [];
+  cs.isWebsiteAdmin = isWebsiteAdmin;
+  await cs.save();
+  return crmHomePath(p.staff.role as CRMRole, cs.modules);
+}
+
+function rateLimited(json: Record<string, unknown>): NextResponse {
+  return NextResponse.json(
+    {
+      error: typeof json.message === 'string'
+        ? json.message
+        : 'Terlalu banyak percobaan login. Coba lagi dalam 15 menit.',
+    },
+    { status: 429 },
+  );
+}
 
 export async function POST(req: NextRequest) {
   let body: { email?: unknown; password?: unknown };
@@ -40,15 +82,37 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // ── Preferred path: one PHP call, one rate-limit row ─────────────────────────
+  const uni = await callPhp('unified-login.php');
+  if (uni.status === 429) return rateLimited(uni.json);
+  if (uni.ok && uni.json.success) {
+    const data = (uni.json.data ?? {}) as { admin?: AdminPayload; crm?: CRMPayload };
+    let isWebsiteAdmin = false;
+    let crmTarget: string | null = null;
+    if (data.admin?.token && data.admin.admin) {
+      await saveAdminSession(data.admin);
+      isWebsiteAdmin = true;
+    }
+    if (data.crm?.token && data.crm.staff) {
+      crmTarget = await saveCRMSession(data.crm, isWebsiteAdmin);
+    }
+    if (!isWebsiteAdmin && !crmTarget) {
+      return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 });
+    }
+    return NextResponse.json({ success: true, target: crmTarget ?? '/admin/dashboard' });
+  }
+  if (uni.status === 401) {
+    return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 });
+  }
+
+  // ── Fallback: unified-login.php not deployed yet (404/405/5xx) ───────────────
   let isWebsiteAdmin = false;
 
   // 1. Website admin
   const adminRes = await callPhp('admin/login.php');
+  if (adminRes.status === 429) return rateLimited(adminRes.json);
   if (adminRes.ok && adminRes.json.success) {
-    const { token, admin } = adminRes.json.data as { token: string; admin: { id: string; name: string; email: string; role: string } };
-    const s = await getSession();
-    s.adminId = admin.id; s.email = admin.email; s.role = admin.role as AdminRole; s.name = admin.name; s.adminToken = token;
-    await s.save();
+    await saveAdminSession(adminRes.json.data as AdminPayload);
     isWebsiteAdmin = true;
   } else if (adminRes.status === 503) {
     return NextResponse.json({ error: 'Server autentikasi tidak dapat dihubungi. Coba lagi.' }, { status: 503 });
@@ -57,15 +121,9 @@ export async function POST(req: NextRequest) {
   // 2. CRM (native crm_staff, or admin bridge)
   let crmTarget: string | null = null;
   const crmRes = await callPhp('crm/auth/login.php');
+  if (crmRes.status === 429 && !isWebsiteAdmin) return rateLimited(crmRes.json);
   if (crmRes.ok && crmRes.json.success) {
-    const { token, staff, modules } = crmRes.json.data as {
-      token: string; staff: { id: string; name: string; email: string; role: string }; modules?: string[];
-    };
-    const cs = await getCRMSession();
-    cs.staffId = staff.id; cs.email = staff.email; cs.role = staff.role as CRMRole; cs.name = staff.name;
-    cs.crmToken = token; cs.modules = Array.isArray(modules) ? modules : []; cs.isWebsiteAdmin = isWebsiteAdmin;
-    await cs.save();
-    crmTarget = crmHomePath(staff.role as CRMRole, cs.modules);
+    crmTarget = await saveCRMSession(crmRes.json.data as CRMPayload, isWebsiteAdmin);
   }
 
   if (!isWebsiteAdmin && !crmTarget) {
@@ -73,6 +131,5 @@ export async function POST(req: NextRequest) {
   }
 
   // Prefer the CRM home; admins without CRM access (CONTENT_ADMIN) go to /admin.
-  const target = crmTarget ?? '/admin/dashboard';
-  return NextResponse.json({ success: true, target });
+  return NextResponse.json({ success: true, target: crmTarget ?? '/admin/dashboard' });
 }

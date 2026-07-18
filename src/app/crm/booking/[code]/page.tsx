@@ -73,9 +73,12 @@ export default function BookingDetailPage() {
   const rank = STATUS_RANK[b.crm_status] ?? 0;
   const canAssignNurse = rank >= STATUS_RANK.CONFIRMED;
   const remaining = Math.max(0, b.payment.total - b.payment.paid);
+  // Kalau dekripsi nomor gagal, backend mengirim versi bertopeng ("···1234") —
+  // 4 digit itu bukan nomor WA yang valid, jadi tombolnya dimatikan.
+  const waReady = b.phone.replace(/\D/g, '').length >= 7;
 
   function waLink() {
-    if (!b) return '#';
+    if (!b || !waReady) return '#';
     const msg = `Halo ${b.customer_name}, terkait booking ${b.booking_code_display ?? ''} (${b.product_name}) pada ${formatDateTimeWITA(`${b.booking_date} ${b.booking_time}`)}.`;
     return generateWALink(b.phone, msg);
   }
@@ -98,7 +101,15 @@ export default function BookingDetailPage() {
           <div className="mt-1"><StatusBadge status={b.crm_status} /></div>
         </div>
         <div className="crm-actions">
-          <a href={waLink()} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#25D366] px-3 text-sm font-medium text-white">
+          <a
+            href={waLink()}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={waReady ? undefined : 'Nomor HP tidak tersedia (gagal didekripsi)'}
+            className={`inline-flex h-10 items-center gap-2 rounded-xl px-3 text-sm font-medium text-white ${
+              waReady ? 'bg-[#25D366]' : 'pointer-events-none bg-[#8EBFBF]'
+            }`}
+          >
             <MessageCircle size={16} /> WhatsApp
           </a>
           {!isNurse && (

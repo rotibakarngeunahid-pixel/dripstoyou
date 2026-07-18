@@ -73,7 +73,7 @@ function formatDateTime(value: string) {
   return new Date(value).toLocaleDateString('id-ID', {
     day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
-  }) + ' WIB';
+  }) + ' WITA';
 }
 
 type Toast = { message: string; type: 'success' | 'error' };

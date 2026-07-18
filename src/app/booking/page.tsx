@@ -771,10 +771,12 @@ function Step2({
   onNext: () => void;
   onBack: () => void;
 }) {
+  // Tanggal lokal perangkat, bukan toISOString() (UTC) — antara 00:00–08:00
+  // WITA tanggal UTC masih "kemarin", sehingga min-nya jadi hari ini, bukan besok.
   const minDate = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
-    return d.toISOString().split('T')[0];
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }, []);
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});

@@ -40,6 +40,12 @@ if ($method === 'DELETE') {
         if ($ownerCount <= 1) jsonError('Tidak bisa menghapus OWNER terakhir', 422);
     }
 
+    // Deactivate the linked nurses roster row BEFORE deleting the staff row —
+    // the FK is ON DELETE SET NULL, so without this the roster row survives as
+    // an active "ghost" nurse that still shows up in assign lists forever.
+    $db->prepare('UPDATE nurses SET is_active = 0, updated_at = ? WHERE staff_id = ?')
+       ->execute([date('Y-m-d H:i:s'), $delId]);
+
     $db->prepare('DELETE FROM crm_staff WHERE id = ?')->execute([$delId]);
     crmAuditLog($staff, 'STAFF', 'DELETE', $delId, "Hapus staff {$target['name']} ({$target['role']})");
     jsonSuccess(['id' => $delId], 'Staff dihapus');
