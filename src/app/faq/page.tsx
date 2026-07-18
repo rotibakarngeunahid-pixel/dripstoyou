@@ -3,18 +3,30 @@ import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import FaqContent from '@/components/public/FaqContent';
 import { getWaNumber } from '@/lib/whatsapp';
+import JsonLd from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, faqPageJsonLd, DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo';
 
 export const revalidate = 120;
 
+const PAGE_URL = `${SITE_URL}/faq`;
+const DESCRIPTION = 'Answers about mobile IV therapy in Bali: how booking works, treatment safety, pricing, and the areas we serve. Read the FAQ, then book in minutes.';
+
 export const metadata: Metadata = {
-  title: 'FAQ | Drips To You - Bali Mobile IV Therapy',
-  description: 'Frequently asked questions about Drips To You - Bali: how IV therapy works, booking process, safety, pricing, and which areas we serve.',
+  title: 'FAQ — Mobile IV Therapy Bali',
+  description: DESCRIPTION,
   openGraph: {
-    title: 'FAQ - Drips To You - Bali',
-    description: 'Answers to common questions about mobile IV therapy in Bali — booking, safety, pricing, and service areas.',
-    url: 'https://dripstoyou.com/faq',
+    title: 'FAQ | Drips To You - Bali',
+    description: DESCRIPTION,
+    url: PAGE_URL,
+    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: 'Drips To You - Bali Mobile IV Therapy' }],
   },
-  alternates: { canonical: 'https://dripstoyou.com/faq' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'FAQ | Drips To You - Bali',
+    description: DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  alternates: { canonical: PAGE_URL },
 };
 
 interface Faq {
@@ -47,8 +59,19 @@ export default async function FaqPage() {
     Promise.resolve(getWaNumber()),
   ]);
 
+  const schemaFaqs = faqs
+    .filter((f) => f.questionEn && f.answerEn)
+    .map((f) => ({ question: f.questionEn, answer: f.answerEn }));
+
   return (
     <>
+      {schemaFaqs.length > 0 && <JsonLd data={faqPageJsonLd(schemaFaqs)} />}
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', url: SITE_URL },
+          { name: 'FAQ', url: PAGE_URL },
+        ])}
+      />
       <Header />
       <FaqContent faqs={faqs} waNumber={waNumber} />
       <SiteFooter />

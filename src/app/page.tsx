@@ -4,6 +4,9 @@ import HomeContent from '@/components/public/HomeContent';
 import SiteFooter from '@/components/public/SiteFooter';
 import type { HomepageProduct, ServiceAreaData } from '@/components/public/HomeContent';
 import { parseOperatingHours, toSchemaOpeningHours } from '@/lib/operatingHours';
+import JsonLd from '@/components/seo/JsonLd';
+import { fetchSameAs, medicalBusinessJsonLd } from '@/lib/seo';
+import { toDirectImageUrl } from '@/lib/images';
 
 export const revalidate = 60;
 
@@ -38,7 +41,8 @@ async function getHomepageProducts(): Promise<HomepageProduct[]> {
     const all: HomepageProduct[] = Array.isArray(json.data) ? json.data : [];
     return all
       .filter((p) => p.show_on_homepage)
-      .sort((a, b) => (a.homepage_order ?? 99) - (b.homepage_order ?? 99));
+      .sort((a, b) => (a.homepage_order ?? 99) - (b.homepage_order ?? 99))
+      .map((p) => ({ ...p, image_url: toDirectImageUrl(p.image_url) }));
   } catch {
     return [];
   }
@@ -73,36 +77,12 @@ async function getServiceAreas(): Promise<ServiceAreaData[]> {
   }
 }
 
-const JSON_LD_BASE = {
-  '@context': 'https://schema.org',
-  '@type': 'MedicalBusiness',
-  name: 'Drips To You - Bali',
-  description: 'Mobile IV therapy and wellness service delivered to villas, hotels, and homes in Bali.',
-  url: 'https://dripstoyou.com',
-  telephone: '+62812-0000-0000',
-  email: 'hello@dripstoyou.com',
-  address: {
-    '@type': 'PostalAddress',
-    addressLocality: 'Bali',
-    addressCountry: 'ID',
-  },
-  geo: {
-    '@type': 'GeoCoordinates',
-    latitude: -8.4095,
-    longitude: 115.1889,
-  },
-  priceRange: '$$',
-  areaServed: { '@type': 'Place', name: 'Bali, Indonesia' },
-  sameAs: ['https://instagram.com/dripstoyou'],
-  serviceType: 'IV Therapy, Mobile IV Drip, Wellness',
-  medicalSpecialty: 'IV Hydration Therapy',
-};
-
 export default async function HomePage() {
-  const [settings, homepageProducts, serviceAreas] = await Promise.all([
+  const [settings, homepageProducts, serviceAreas, sameAs] = await Promise.all([
     getPublicSettings(),
     getHomepageProducts(),
     getServiceAreas(),
+    fetchSameAs(),
   ]);
 
   const waNumber =
@@ -114,14 +94,17 @@ export default async function HomePage() {
     parseOperatingHours(settings?.businessHours ?? null),
   );
 
-  const jsonLd = { ...JSON_LD_BASE, openingHours };
+  const jsonLd = medicalBusinessJsonLd({
+    // Placeholder fallback number must never reach structured data.
+    telephone: waNumber !== '6281200000000' ? `+${waNumber}` : undefined,
+    openingHours,
+    areaServed: serviceAreas.map((a) => a.name),
+    sameAs,
+  });
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
       <Header />
       <ScrollRevealInit />
       <HomeContent waNumber={waNumber} homepageProducts={homepageProducts} serviceAreas={serviceAreas} />

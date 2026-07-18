@@ -67,6 +67,17 @@ const nextConfig: NextConfig = {
 
   async headers() {
     return [
+      // Belt-and-braces: private/utility routes must never be indexed even if
+      // a crawler reaches them through an external link (robots.txt disallow
+      // alone does not prevent indexing of the URL itself).
+      {
+        source: '/(admin|crm|login|consent|cek-booking)/:path*',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
+      {
+        source: '/(admin|crm|login|consent|cek-booking)',
+        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }],
+      },
       {
         source: '/(.*)',
         headers: [

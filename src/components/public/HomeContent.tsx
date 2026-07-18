@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import Image, { getImageProps } from 'next/image';
 import Link from 'next/link';
 import { useLanguage } from '@/contexts/language';
 import { formatPrice as formatCurrencyPrice } from '@/lib/currency';
@@ -121,6 +121,10 @@ export default function HomeContent({ waNumber, homepageProducts, serviceAreas }
    HERO
 ───────────────────────────────────────────── */
 function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLanguage>['t']; waUrl: (s: string) => string; waBookingMsg: string }) {
+  const { lang } = useLanguage();
+  const heroAlt = lang === 'id'
+    ? 'Perawat Drips To You - Bali memberikan mobile IV therapy di villa di Bali'
+    : 'Drips To You - Bali nurse delivering mobile IV therapy at a villa in Bali';
   return (
     <section className="hero landing-hero" id="hero" aria-label="Drips To You - Bali">
       {/* Text content — left column */}
@@ -153,32 +157,34 @@ function HeroSection({ t, waUrl, waBookingMsg }: { t: ReturnType<typeof useLangu
         </div>
       </div>
 
-      {/* Photo — right side, no blur/filter */}
+      {/* Photo — right side, no blur/filter.
+          Art direction via <picture>: the browser downloads ONLY the matching
+          source (previously both desktop+mobile heroes were preloaded). */}
       <div className="hero-photo-wrap landing-hero-media" aria-hidden="true">
-        <Image
-          src={BRAND.photo1}
-          alt="Perawat Drips To You - Bali di villa"
-          fill
-          priority
-          quality={100}
-          sizes="100vw"
-          className="hero-photo landing-hero-photo landing-hero-photo--desktop"
-        />
-        <Image
-          src={BRAND.photo1Mobile}
-          alt="Perawat Drips To You - Bali"
-          fill
-          priority
-          quality={100}
-          sizes="100vw"
-          className="hero-photo landing-hero-photo landing-hero-photo--mobile"
-        />
+        <HeroPicture heroAlt={heroAlt} />
         <div className="hero-photo-overlay landing-hero-overlay" />
       </div>
     </section>
   );
 }
 
+
+function HeroPicture({ heroAlt }: { heroAlt: string }) {
+  const common = { alt: heroAlt, fill: true, quality: 100, sizes: '100vw' } as const;
+  const {
+    props: { srcSet: mobileSrcSet },
+  } = getImageProps({ ...common, src: BRAND.photo1Mobile });
+  const { props: desktopProps } = getImageProps({ ...common, src: BRAND.photo1, priority: true });
+
+  return (
+    <picture>
+      {/* Breakpoint mirrors .landing-hero mobile switch in globals.css (640px) */}
+      <source media="(max-width: 640px)" srcSet={mobileSrcSet} />
+      {/* eslint-disable-next-line jsx-a11y/alt-text -- alt comes via desktopProps */}
+      <img {...desktopProps} className="hero-photo landing-hero-photo landing-hero-photo--art" />
+    </picture>
+  );
+}
 
 /* ─────────────────────────────────────────────
    TREATMENTS
@@ -214,10 +220,9 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
                     <Image
                       className="card-photo"
                       src={p.image_url}
-                      alt={`${p.name} IV Therapy Bali`}
+                      alt={`${p.name} IV Therapy Bali - Drips To You`}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 280px"
-                      unoptimized
                     />
                   )}
                   {badge && (
@@ -259,8 +264,12 @@ function TreatmentsSection({ t, products }: { t: ReturnType<typeof useLanguage>[
    EXPERIENCE GALLERY
 ───────────────────────────────────────────── */
 function ExperienceGallerySection({ t }: { t: ReturnType<typeof useLanguage>['t'] }) {
+  const { lang } = useLanguage();
   const images = [BRAND.photo2, BRAND.photo3, BRAND.photo4, BRAND.photo5];
-  
+  const galleryAlt = lang === 'id'
+    ? 'Momen layanan mobile IV therapy Drips To You - Bali'
+    : 'Drips To You - Bali mobile IV therapy service moment';
+
   return (
     <section className="gallery-sec" id="gallery">
       <div className="sec-inner">
@@ -272,7 +281,7 @@ function ExperienceGallerySection({ t }: { t: ReturnType<typeof useLanguage>['t'
         <div className="gallery-grid">
           {images.map((src, i) => (
             <div key={i} className="gallery-item reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
-              <Image src={src} alt="Drips To You - Bali Experience" fill sizes="(max-width: 768px) 50vw, 25vw" className="gallery-img" />
+              <Image src={src} alt={`${galleryAlt} ${i + 1}`} fill sizes="(max-width: 768px) 50vw, 25vw" className="gallery-img" />
             </div>
           ))}
         </div>

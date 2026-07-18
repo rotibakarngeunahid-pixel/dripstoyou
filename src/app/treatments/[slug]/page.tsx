@@ -4,6 +4,9 @@ import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import TreatmentDetailContent from '@/components/public/TreatmentDetailContent';
 import ScrollRevealInit from '@/components/public/ScrollRevealInit';
+import JsonLd from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, serviceJsonLd, DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo';
+import { toDirectImageUrl } from '@/lib/images';
 
 export const revalidate = 60;
 
@@ -58,10 +61,22 @@ async function getProduct(slug: string): Promise<Product | null> {
     );
     if (!res.ok) return null;
     const json = await res.json();
-    return json.data ?? null;
+    const product: Product | null = json.data ?? null;
+    if (!product) return null;
+    return { ...product, image_url: toDirectImageUrl(product.image_url) };
   } catch {
     return null;
   }
+}
+
+function metaDescription(product: Product): string {
+  const fallback = `Book the ${product.name} drip in Bali — mobile IV therapy delivered to your villa, hotel, or home by a certified medical team. Book online in minutes.`;
+  const source = product.short_description?.trim();
+  if (!source) return fallback;
+  // Keep descriptions within the 140–160 character sweet spot.
+  if (source.length <= 160 && source.length >= 80) return source;
+  if (source.length > 160) return `${source.slice(0, 157).trimEnd()}…`;
+  return `${source} Delivered to your villa, hotel, or home in Bali — book online.`.slice(0, 160);
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -69,19 +84,27 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = await getProduct(slug);
   if (!product) return { title: 'Not Found' };
 
-  const url = `https://dripstoyou.com/treatments/${slug}`;
-  const ogImages = product.image_url
-    ? [{ url: product.image_url, width: 1200, height: 630, alt: product.name }]
-    : [];
+  const url = `${SITE_URL}/treatments/${slug}`;
+  const title = `${product.name} — Mobile IV Therapy Bali | Drips To You`;
+  const description = metaDescription(product);
+  const ogImage = product.image_url ?? DEFAULT_OG_IMAGE;
 
   return {
-    title: `${product.name} | Mobile IV Therapy Bali`,
-    description: product.short_description ?? `Book ${product.name} mobile IV therapy in Bali. Certified medical team delivered to your villa, hotel or home.`,
+    title: { absolute: title },
+    description,
     openGraph: {
-      title: `${product.name} - Drips To You - Bali`,
-      description: product.short_description ?? undefined,
+      title,
+      description,
       url,
-      images: ogImages,
+      type: 'website',
+      siteName: 'Drips To You - Bali',
+      images: [{ url: ogImage, width: 1200, height: 630, alt: `${product.name} IV Therapy Bali - Drips To You` }],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
     },
     alternates: { canonical: url },
   };
@@ -101,27 +124,25 @@ export default async function TreatmentDetailPage({ params }: { params: Promise<
     process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ??
     '6281200000000';
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Service',
+  const jsonLd = serviceJsonLd({
     name: product.name,
-    description: product.short_description ?? undefined,
-    provider: {
-      '@type': 'MedicalBusiness',
-      name: 'Drips To You - Bali',
-      url: 'https://dripstoyou.com',
-    },
-    areaServed: { '@type': 'Place', name: 'Bali, Indonesia' },
-    ...(product.image_url ? { image: product.image_url } : {}),
-    ...(product.price_amount ? { offers: { '@type': 'Offer', price: product.price_amount, priceCurrency: product.currency ?? 'IDR' } } : {}),
-  };
+    slug: product.slug,
+    description: product.short_description,
+    image: product.image_url,
+    price: product.price_amount,
+    currency: product.currency,
+  });
+
+  const breadcrumb = breadcrumbJsonLd([
+    { name: 'Home', url: SITE_URL },
+    { name: 'Treatments', url: `${SITE_URL}/treatments` },
+    { name: product.name, url: `${SITE_URL}/treatments/${product.slug}` },
+  ]);
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <JsonLd data={jsonLd} />
+      <JsonLd data={breadcrumb} />
       <Header />
       <TreatmentDetailContent product={product} waNumber={waNumber} />
       <SiteFooter waNumber={waNumber} />

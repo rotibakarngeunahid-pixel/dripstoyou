@@ -2,18 +2,31 @@ import type { Metadata } from 'next';
 import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import TreatmentsContent from '@/components/public/TreatmentsContent';
+import JsonLd from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo';
+import { toDirectImageUrl } from '@/lib/images';
 
 export const revalidate = 60;
 
+const PAGE_URL = `${SITE_URL}/treatments`;
+const DESCRIPTION = 'Browse mobile IV drips in Bali — hangover recovery, Bali belly relief, immune and energy boosts delivered to your villa or hotel. See prices, book online.';
+
 export const metadata: Metadata = {
-  title: 'IV Therapy Treatments in Bali | Drips To You',
-  description: 'Browse mobile IV therapy treatments delivered to your villa, hotel, or home in Bali. Hangover recovery, immune boost, energy drips and more. Book online.',
+  title: 'IV Therapy Treatments in Bali',
+  description: DESCRIPTION,
   openGraph: {
-    title: 'IV Therapy Treatments in Bali | Drips To You',
-    description: 'Browse mobile IV therapy treatments in Bali — delivered to your villa, hotel, or home by a certified medical team.',
-    url: 'https://dripstoyou.com/treatments',
+    title: 'IV Therapy Treatments in Bali | Drips To You - Bali',
+    description: DESCRIPTION,
+    url: PAGE_URL,
+    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: 'Drips To You - Bali Mobile IV Therapy' }],
   },
-  alternates: { canonical: 'https://dripstoyou.com/treatments' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'IV Therapy Treatments in Bali | Drips To You - Bali',
+    description: DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  alternates: { canonical: PAGE_URL },
 };
 
 interface Benefit {
@@ -49,7 +62,8 @@ async function getProducts(): Promise<Product[]> {
     );
     if (!res.ok) return [];
     const json = await res.json();
-    return Array.isArray(json.data) ? json.data : [];
+    const products: Product[] = Array.isArray(json.data) ? json.data : [];
+    return products.map((p) => ({ ...p, image_url: toDirectImageUrl(p.image_url) }));
   } catch {
     return [];
   }
@@ -60,6 +74,12 @@ export default async function TreatmentsPage() {
 
   return (
     <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', url: SITE_URL },
+          { name: 'Treatments', url: PAGE_URL },
+        ])}
+      />
       <Header />
       <TreatmentsContent products={products} />
       <SiteFooter />

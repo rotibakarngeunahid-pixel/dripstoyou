@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation';
 import Header from '@/components/public/Header';
 import LegalContent, { type LegalSlug } from '@/components/public/LegalContent';
 import SiteFooter from '@/components/public/SiteFooter';
+import JsonLd from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, SITE_URL } from '@/lib/seo';
 
 export const revalidate = 60;
 
@@ -27,6 +29,13 @@ const TITLES: Record<LegalSlug, string> = {
   'privacy-policy': 'Privacy Policy',
 };
 
+const DESCRIPTIONS: Record<LegalSlug, string> = {
+  'terms-conditions':
+    'Terms and conditions for Drips To You - Bali mobile IV therapy services: bookings, cancellations, eligibility, and service coverage across Bali.',
+  'privacy-policy':
+    'How Drips To You - Bali collects, uses, and protects your personal data when you book mobile IV therapy or contact us via the website and WhatsApp.',
+};
+
 function isLegalSlug(value: string): value is LegalSlug {
   return value === 'terms-conditions' || value === 'privacy-policy';
 }
@@ -39,8 +48,9 @@ export function generateMetadata({
   return params.then(({ slug }) => {
     if (!isLegalSlug(slug)) return { title: 'Not Found' };
     return {
-      title: `${TITLES[slug]} - Drips To You - Bali`,
-      robots: 'noindex, follow',
+      title: TITLES[slug],
+      description: DESCRIPTIONS[slug],
+      alternates: { canonical: `${SITE_URL}/legal/${slug}` },
     };
   });
 }
@@ -57,6 +67,12 @@ export default async function LegalPage({
 
   return (
     <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', url: SITE_URL },
+          { name: TITLES[slug], url: `${SITE_URL}/legal/${slug}` },
+        ])}
+      />
       <Header />
       <LegalContent slug={slug} siteEmail={siteEmail} />
       <SiteFooter />

@@ -3,6 +3,8 @@ import { Playfair_Display, DM_Sans } from 'next/font/google';
 import './globals.css';
 import { LanguageProvider } from '@/contexts/language';
 import TopProgressBar from '@/components/TopProgressBar';
+import JsonLd from '@/components/seo/JsonLd';
+import { fetchSameAs, organizationJsonLd, webSiteJsonLd } from '@/lib/seo';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -57,9 +59,16 @@ export const metadata: Metadata = {
   alternates: { canonical: SITE_URL },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const sameAs = await fetchSameAs();
   return (
     <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
+      <head>
+        <link rel="preconnect" href="https://ik.imagekit.io" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://ik.imagekit.io" />
+        <JsonLd data={organizationJsonLd(sameAs)} />
+        <JsonLd data={webSiteJsonLd()} />
+      </head>
       <body>
         <TopProgressBar />
         <LanguageProvider>

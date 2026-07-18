@@ -4035,6 +4035,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
 
 .landing-hero-photo--mobile { display: none; }
 .landing-hero-photo--desktop { display: block; }
+.landing-hero-photo--art { display: block; }
 
 .landing-hero-overlay {
   position: absolute;
@@ -4219,6 +4220,7 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
     display: block;
     object-position: 50% 20%;
   }
+  .landing-hero-photo--art { object-position: 50% 20%; }
 
   .landing-hero-content {
     justify-content: flex-end;

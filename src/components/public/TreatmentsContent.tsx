@@ -149,11 +149,10 @@ export default function TreatmentsContent({ products }: Props) {
                       {product.image_url ? (
                         <Image
                           src={product.image_url}
-                          alt={`${product.name} IV therapy`}
+                          alt={`${product.name} IV Therapy Bali - Drips To You`}
                           fill
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 420px"
                           className="tp-card-photo"
-                          unoptimized
                         />
                       ) : (
                         <div className="tp-card-placeholder" />

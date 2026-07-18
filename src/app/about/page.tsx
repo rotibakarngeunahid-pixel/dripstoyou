@@ -3,18 +3,30 @@ import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import AboutContent from '@/components/public/AboutContent';
 import { getWaNumber } from '@/lib/whatsapp';
+import JsonLd from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, DEFAULT_OG_IMAGE, SITE_URL } from '@/lib/seo';
 
 export const revalidate = 60;
 
+const PAGE_URL = `${SITE_URL}/about`;
+const DESCRIPTION = 'Meet the certified medical team behind Drips To You - Bali, delivering safe mobile IV therapy to villas, hotels, and homes across Bali. Get to know us.';
+
 export const metadata: Metadata = {
-  title: 'About Us | Drips To You - Bali Mobile IV Therapy',
-  description: 'Meet the Drips To You - Bali team. Certified medical professionals delivering IV therapy to villas, hotels, and homes across Bali.',
+  title: 'About Us — Mobile IV Therapy Bali',
+  description: DESCRIPTION,
   openGraph: {
-    title: 'About Drips To You - Bali',
-    description: 'Certified medical professionals delivering mobile IV therapy across Bali. Learn about our team and service areas.',
-    url: 'https://dripstoyou.com/about',
+    title: 'About Us | Drips To You - Bali',
+    description: DESCRIPTION,
+    url: PAGE_URL,
+    images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: 'Drips To You - Bali Mobile IV Therapy' }],
   },
-  alternates: { canonical: 'https://dripstoyou.com/about' },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'About Us | Drips To You - Bali',
+    description: DESCRIPTION,
+    images: [DEFAULT_OG_IMAGE],
+  },
+  alternates: { canonical: PAGE_URL },
 };
 
 type Area = { id: string; name: string };
@@ -43,6 +55,12 @@ export default async function AboutPage() {
 
   return (
     <>
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: 'Home', url: SITE_URL },
+          { name: 'About Us', url: PAGE_URL },
+        ])}
+      />
       <Header />
       <AboutContent waNumber={waNumber} areas={areas} />
       <SiteFooter />

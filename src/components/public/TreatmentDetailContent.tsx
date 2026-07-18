@@ -146,11 +146,10 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
               <div className="td-hero-photo-wrap">
                 <Image
                   src={product.image_url}
-                  alt={`${displayName} IV therapy`}
+                  alt={`${displayName} IV Therapy Bali - Drips To You`}
                   fill
                   sizes="(max-width: 900px) 100vw, 44vw"
                   className="td-hero-img"
-                  unoptimized
                   priority
                 />
               </div>
@@ -201,11 +200,10 @@ export default function TreatmentDetailContent({ product, waNumber }: Props) {
               <div className="td-about-img-wrap reveal">
                 <Image
                   src={product.image_url}
-                  alt={displayName}
+                  alt={`${displayName} IV Therapy Bali - Drips To You`}
                   fill
                   sizes="(max-width: 900px) 100vw, 50vw"
                   className="td-about-img"
-                  unoptimized
                 />
               </div>
             )}
