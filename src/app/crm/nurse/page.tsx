@@ -26,9 +26,9 @@ function shiftMonth(month: string, delta: number): string {
 }
 
 // Cermin gate di php-api (crmFormOpenEpoch): form screening/consent/treatment
-// terbuka 30 menit sebelum jam booking. Ini hanya soft-lock UI — PHP tetap
+// terbuka 1 jam sebelum jam booking. Ini hanya soft-lock UI — PHP tetap
 // jadi trust boundary.
-const FORM_OPEN_EARLY_MIN = 30;
+const FORM_OPEN_EARLY_MIN = 60;
 function formOpenAt(dateIso: string, time: string | null | undefined): Date {
   const t = time && /^\d{1,2}:\d{2}/.test(time) ? time.slice(0, 5) : '00:00';
   return new Date(new Date(`${dateIso}T${t.padStart(5, '0')}:00`).getTime() - FORM_OPEN_EARLY_MIN * 60_000);

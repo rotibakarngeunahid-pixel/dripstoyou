@@ -6,7 +6,7 @@ import { formatDateTimeWITA, formatDayTime } from '@/lib/crm-format';
 
 // Kartu "belum waktunya" untuk form on-site (screening / consent / treatment).
 // Cermin dari time gate di php-api (crmRequireFormWindowOpen): form baru
-// terbuka 30 menit sebelum jam booking.
+// terbuka 1 jam sebelum jam booking.
 export default function FormLockCard({
   backHref, formName, customerName, productName, bookingDate, bookingTime, opensAt,
 }: {
@@ -34,8 +34,8 @@ export default function FormLockCard({
         <p className="mx-auto mb-4 max-w-sm text-sm text-[#4d6060]">
           Jadwal booking ini <strong>{formatDayTime(bookingDate, bookingTime)} WITA</strong>.
           Form {formName.toLowerCase()} baru bisa diisi mulai{' '}
-          <strong>{opensAt ? formatDateTimeWITA(opensAt) : '30 menit sebelum jadwal'}</strong>{' '}
-          (30 menit sebelum jadwal) agar data yang tercatat benar-benar kondisi pasien saat kunjungan.
+          <strong>{opensAt ? formatDateTimeWITA(opensAt) : '1 jam sebelum jadwal'}</strong>{' '}
+          (1 jam sebelum jadwal) agar data yang tercatat benar-benar kondisi pasien saat kunjungan.
         </p>
         <Link
           href={backHref}

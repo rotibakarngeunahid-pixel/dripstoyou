@@ -300,7 +300,7 @@ function crmStatusRank(string $status): int {
 // beberapa menit lebih awal supaya nurse yang tiba duluan tidak terkunci.
 // Server berjalan di Asia/Makassar (WITA) — lihat helpers.php.
 
-function crmFormOpenMinutesEarly(): int { return 30; }
+function crmFormOpenMinutesEarly(): int { return 60; }
 
 // Unix timestamp kapan form booking ini terbuka (null bila tanggal tidak valid).
 function crmFormOpenEpoch(?string $bookingDate, ?string $bookingTime): ?int {
