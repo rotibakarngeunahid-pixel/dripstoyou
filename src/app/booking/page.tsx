@@ -655,6 +655,31 @@ function Step1({
 }
 
 /* ─── GPS Location Button ─── */
+/** Build a concise local address from Nominatim address parts, skipping broad
+ *  regions ("Lesser Sunda Islands", "Indonesia") that confuse users. */
+function formatDetectedAddress(data: { display_name?: string; address?: Record<string, string | undefined> }): string {
+  const a = data.address;
+  if (!a) return data.display_name ?? '';
+  const street = [a.road, a.house_number].filter(Boolean).join(' ');
+  const parts = [
+    street,
+    a.neighbourhood ?? a.hamlet,
+    a.suburb ?? a.village ?? a.town,
+    a.city_district,
+    a.city ?? a.county,
+    a.state,
+    a.postcode,
+  ].filter((p): p is string => Boolean(p));
+  const seen = new Set<string>();
+  const unique = parts.filter(p => {
+    const k = p.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  return unique.length ? unique.join(', ') : (data.display_name ?? '');
+}
+
 function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => void }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -700,12 +725,13 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
         try {
           const { latitude, longitude } = pos.coords;
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`,
-            { headers: { 'Accept-Language': 'en' } },
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=jsonv2&addressdetails=1&zoom=18`,
+            { headers: { 'Accept-Language': 'id' } },
           );
-          const data = await res.json() as { display_name?: string };
-          if (data.display_name) {
-            onAddressRef.current(data.display_name.slice(0, 300));
+          const data = await res.json() as { display_name?: string; address?: Record<string, string | undefined> };
+          const detected = formatDetectedAddress(data);
+          if (detected) {
+            onAddressRef.current(detected.slice(0, 300));
             setLoading(false);
             setSuccess(true);
             successTimer.current = setTimeout(() => setSuccess(false), 3000);
@@ -726,7 +752,7 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
         else if (err.code === err.TIMEOUT) msg = bkRef.current.gpsTimeout;
         showError(msg);
       },
-      { timeout: 10000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
   }, []);
 
