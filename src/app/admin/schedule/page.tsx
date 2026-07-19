@@ -216,6 +216,9 @@ export default function SchedulePage() {
       <p className="admin-help" style={{ marginTop: 12 }}>
         {t.minPreBookingHelp}
       </p>
+      <p className="admin-help" style={{ marginTop: 4 }}>
+        {t.jamTutupHelp}
+      </p>
     </div>
   );
 }

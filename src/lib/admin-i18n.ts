@@ -118,7 +118,8 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
     slotDurasi: 'Slot',
     maxPerSlot: 'Max/Slot',
     minPreBooking: 'Min Pre-booking',
-    minPreBookingHelp: 'Min Pre-booking = menit minimum sebelum waktu booking. Contoh: 120 berarti minimal pesan 2 jam sebelumnya.',
+    minPreBookingHelp: 'Min Pre-booking = menit minimum sebelum waktu booking. Contoh: 60 berarti minimal pesan 1 jam sebelumnya.',
+    jamTutupHelp: 'Jam Tutup 00:00 = buka sampai tengah malam. Untuk layanan 24 jam penuh, set Jam Buka 00:00 dan Jam Tutup 00:00.',
 
     // Day names (index 0=Sun..6=Sat)
     day0: 'Minggu',
@@ -528,7 +529,8 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
     slotDurasi: 'Slot',
     maxPerSlot: 'Max/Slot',
     minPreBooking: 'Min Pre-booking',
-    minPreBookingHelp: 'Min Pre-booking = minimum minutes before the booking time. Example: 120 means at least 2 hours in advance.',
+    minPreBookingHelp: 'Min Pre-booking = minimum minutes before the booking time. Example: 60 means at least 1 hour in advance.',
+    jamTutupHelp: 'Close Time 00:00 = open until midnight. For a full 24-hour schedule, set Open Time to 00:00 and Close Time to 00:00.',
 
     // Day names
     day0: 'Sunday',

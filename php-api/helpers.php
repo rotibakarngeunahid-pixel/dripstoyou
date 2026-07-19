@@ -352,6 +352,12 @@ function getDateAvailability(PDO $db, string $dateStr): array {
 
     $openMinutes = timeToMinutesStrict($schedule['open_time'] ?? null);
     $closeMinutes = timeToMinutesStrict($schedule['close_time'] ?? null);
+    // Konvensi: jam tutup "00:00" = buka sampai tengah malam (24:00). Input
+    // time HTML maksimal 23:59, jadi tanpa konvensi ini slot terakhir (23:00)
+    // dan jadwal 24 jam penuh (00:00–00:00) tidak bisa direpresentasikan.
+    if ($closeMinutes === 0) {
+        $closeMinutes = 1440;
+    }
     $slotDur = max(1, (int)($schedule['slot_duration_minutes'] ?? 60));
     $maxPerSlot = max(1, (int)($schedule['max_bookings_per_slot'] ?? 1));
     $minPrebooking = max(0, (int)($schedule['min_prebooking_minutes'] ?? 0));
@@ -376,6 +382,9 @@ function getDateAvailability(PDO $db, string $dateStr): array {
     foreach ($stmt->fetchAll() as $row) {
         $start = timeToMinutesStrict($row['start_time'] ?? null);
         $end = timeToMinutesStrict($row['end_time'] ?? null);
+        if ($end === 0) {
+            $end = 1440; // konvensi yang sama: end 00:00 = sampai tengah malam
+        }
         if ($start !== null && $end !== null && $end > $start) {
             $blockedRanges[] = [$start, $end];
         }
