@@ -7,13 +7,12 @@ import { ArrowLeft } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { crmBookingHref } from '@/lib/crm-permissions';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
-import FormLockCard from '@/components/crm/FormLockCard';
 import { useCRMStaff } from '../../CRMShell';
 import { SCREENING_COPY as COPY, type ScreeningLang as Lang } from '@/lib/screening-copy';
 
 type Booking = {
   id: string; booking_code_display: string | null; customer_name: string; product_name: string; crm_status: string;
-  booking_date: string; booking_time: string; forms_locked: boolean; forms_open_at: string | null;
+  booking_date: string; booking_time: string;
 };
 type Screening = {
   blood_pressure: string | null; temperature: string | null; pulse: number | null;
@@ -103,21 +102,6 @@ export default function ScreeningPage() {
 
   if (loading) return <LoadingBlock />;
   if (error || !booking) return <ErrorBlock message={error || t.notFound} onRetry={load} />;
-
-  // Time gate (mirrors screening.php): form baru terbuka mendekati jadwal booking.
-  if (booking.forms_locked) {
-    return (
-      <FormLockCard
-        backHref={backHref}
-        formName="Screening"
-        customerName={booking.customer_name}
-        productName={booking.product_name}
-        bookingDate={booking.booking_date}
-        bookingTime={booking.booking_time}
-        opensAt={booking.forms_open_at}
-      />
-    );
-  }
 
   const num = 'min-h-[52px] w-full rounded-xl border border-[#DBDAD7] px-3 py-3 text-lg outline-none focus:border-[#29808B]';
 

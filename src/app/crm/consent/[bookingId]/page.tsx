@@ -13,13 +13,12 @@ import { STATUS_RANK, type CRMBookingStatus } from '@/lib/crm-status';
 import { CONSENT_COPY as COPY, type ConsentLang as Lang } from '@/lib/consent-copy';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
-import FormLockCard from '@/components/crm/FormLockCard';
 import { useCRMStaff } from '../../CRMShell';
 
 type Booking = {
   id: string; booking_code_display: string | null; customer_name: string; phone: string | null;
   product_name: string; crm_status: string;
-  booking_date: string; booking_time: string; forms_locked: boolean; forms_open_at: string | null;
+  booking_date: string; booking_time: string;
 };
 type Consent = {
   patient_name_signed: string; agreed_at: string | null; filled_by?: 'NURSE' | 'CLIENT';
@@ -169,21 +168,6 @@ export default function ConsentPage() {
   const screeningDone = (STATUS_RANK[booking.crm_status as CRMBookingStatus] ?? 0) >= STATUS_RANK.SCREENING_COMPLETED;
   const clientFinal = !!existing?.agreed_at && existing.filled_by === 'CLIENT';
   const waMessage = `Halo ${booking.customer_name} 👋\n\nSebelum treatment ${booking.product_name} dimulai, mohon isi formulir persetujuan tindakan medis (informed consent) melalui link berikut:\n${linkUrl}\n\nLink berlaku 48 jam. Terima kasih — Drips To You - Bali 🌿`;
-
-  // Time gate (mirrors consent.php): form baru terbuka mendekati jadwal booking.
-  if (booking.forms_locked && !existing?.agreed_at) {
-    return (
-      <FormLockCard
-        backHref={backHref}
-        formName="Informed Consent"
-        customerName={booking.customer_name}
-        productName={booking.product_name}
-        bookingDate={booking.booking_date}
-        bookingTime={booking.booking_time}
-        opensAt={booking.forms_open_at}
-      />
-    );
-  }
 
   // Consent yang diisi & ditandatangani sendiri oleh pasien via link publik
   // bersifat final (mirrors consent.php) — tampilkan read-only, tanpa form.

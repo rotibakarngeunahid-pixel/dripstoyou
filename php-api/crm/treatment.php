@@ -20,7 +20,6 @@ if ($method === 'GET') {
     $b->execute([$bookingId]);
     $booking = $b->fetch();
     if (!$booking) jsonError('Booking tidak ditemukan', 404);
-    $booking = crmAttachFormWindow($booking);
 
     $t = $db->prepare('SELECT * FROM treatments WHERE booking_id = ? LIMIT 1');
     $t->execute([$bookingId]);
@@ -45,9 +44,6 @@ if ($method === 'POST') {
     $b = $db->prepare('SELECT id FROM bookings WHERE id = ? LIMIT 1');
     $b->execute([$bookingId]);
     if (!$b->fetch()) jsonError('Booking tidak ditemukan', 404);
-
-    // Time gate: treatment hanya boleh didokumentasikan mendekati jadwal booking.
-    crmRequireFormWindowOpen($db, $bookingId);
 
     // Flow guard: informed consent must be signed before any treatment record
     // is created or updated (screening → consent → treatment).

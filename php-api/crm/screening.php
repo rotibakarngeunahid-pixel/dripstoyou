@@ -20,7 +20,6 @@ if ($method === 'GET') {
     $b->execute([$bookingId]);
     $booking = $b->fetch();
     if (!$booking) jsonError('Booking tidak ditemukan', 404);
-    $booking = crmAttachFormWindow($booking);
 
     $s = $db->prepare('SELECT * FROM screenings WHERE booking_id = ? LIMIT 1');
     $s->execute([$bookingId]);
@@ -39,10 +38,6 @@ if ($method === 'POST') {
     $body = getBodyJson();
     $bookingId = str_clean($body['booking_id'] ?? $bookingId ?? '', 191);
     if (!$bookingId) jsonError('booking_id wajib diisi', 400);
-
-    // Time gate: screening (draft maupun submit) hanya boleh diisi mendekati
-    // jadwal booking — bukan berhari-hari sebelumnya.
-    crmRequireFormWindowOpen($db, $bookingId);
 
     $bp   = !empty($body['blood_pressure']) ? str_clean($body['blood_pressure'], 20) : null;
     if ($bp !== null && !preg_match('/^\d{2,3}\/\d{2,3}$/', $bp)) jsonError('Format tekanan darah tidak valid (contoh: 120/80)', 422);

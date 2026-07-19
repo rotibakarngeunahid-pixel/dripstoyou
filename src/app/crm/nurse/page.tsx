@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { crmGet } from '@/lib/crm-client';
-import { formatDate, formatDateTimeWITA, formatMonthYear } from '@/lib/crm-format';
+import { formatDate, formatMonthYear } from '@/lib/crm-format';
 import { crmBookingHref } from '@/lib/crm-permissions';
 import { STATUS_RANK, type CRMBookingStatus } from '@/lib/crm-status';
 import StatusBadge from '@/components/crm/StatusBadge';
 import { LoadingBlock, ErrorBlock, EmptyState } from '@/components/crm/states';
 import { useCRMStaff } from '../CRMShell';
-import { Stethoscope, CheckCircle2, ChevronRight, ChevronLeft, CalendarDays, Lock, UserX } from 'lucide-react';
+import { Stethoscope, CheckCircle2, ChevronRight, ChevronLeft, CalendarDays, UserX } from 'lucide-react';
 
 // Tanggal lokal perangkat (bukan UTC) — nurse di Bali jam 00:00–08:00 WITA
 // masih "kemarin" menurut toISOString(), jadi jangan pakai itu.
@@ -23,15 +23,6 @@ function shiftMonth(month: string, delta: number): string {
   const [y, m] = month.split('-').map(Number);
   const d = new Date(y, (m - 1) + delta, 1);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-
-// Cermin gate di php-api (crmFormOpenEpoch): form screening/consent/treatment
-// terbuka 1 jam sebelum jam booking. Ini hanya soft-lock UI — PHP tetap
-// jadi trust boundary.
-const FORM_OPEN_EARLY_MIN = 60;
-function formOpenAt(dateIso: string, time: string | null | undefined): Date {
-  const t = time && /^\d{1,2}:\d{2}/.test(time) ? time.slice(0, 5) : '00:00';
-  return new Date(new Date(`${dateIso}T${t.padStart(5, '0')}:00`).getTime() - FORM_OPEN_EARLY_MIN * 60_000);
 }
 
 export default function NursePage() {
@@ -179,15 +170,6 @@ function NursePortal() {
   const [calLoading, setCalLoading] = useState(true);
   const [calError, setCalError] = useState('');
 
-  // Jam saat ini (di-refresh berkala) supaya tombol form otomatis terbuka
-  // begitu waktunya tiba. 0 = belum diketahui (render pertama).
-  const [now, setNow] = useState(0);
-  useEffect(() => {
-    const t = setTimeout(() => setNow(Date.now()), 0);
-    const iv = setInterval(() => setNow(Date.now()), 30_000);
-    return () => { clearTimeout(t); clearInterval(iv); };
-  }, []);
-
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
@@ -302,8 +284,6 @@ function NursePortal() {
           {items.map((b) => {
             const cta = nurseCTA(b.crm_status, b.id, b.booking_code_display);
             const isDone = (STATUS_RANK[b.crm_status] ?? 0) >= STATUS_RANK.TREATMENT_COMPLETED;
-            const openAt = formOpenAt(date, b.booking_time);
-            const locked = !isDone && now !== 0 && now < openAt.getTime();
             return (
               <div
                 key={b.id}
@@ -328,18 +308,14 @@ function NursePortal() {
                     <StatusBadge status={b.crm_status} />
                   </div>
                 </div>
-                {!isDone && (locked ? (
-                  <div className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#f1f5f9] py-2.5 text-sm font-medium text-[#94a3b8]">
-                    <Lock size={14} /> Form terbuka {formatDateTimeWITA(openAt)}
-                  </div>
-                ) : (
+                {!isDone && (
                   <Link
                     href={cta.href}
                     className="crm-button mt-3 flex w-full py-2.5 text-sm"
                   >
                     {cta.label} <ChevronRight size={16} />
                   </Link>
-                ))}
+                )}
               </div>
             );
           })}

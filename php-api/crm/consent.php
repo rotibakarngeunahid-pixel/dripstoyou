@@ -22,7 +22,6 @@ if ($method === 'GET') {
     if (!$booking) jsonError('Booking tidak ditemukan', 404);
     $booking['phone'] = crmTryDecrypt($booking['customer_phone_encrypted'] ?? null, null);
     unset($booking['customer_phone_encrypted']);
-    $booking = crmAttachFormWindow($booking);
 
     $c = $db->prepare('SELECT id, patient_name, patient_name_signed, consent_language, filled_by, agreed_at, created_at, signature_data_encrypted FROM consents WHERE booking_id = ? LIMIT 1');
     $c->execute([$bookingId]);
@@ -44,9 +43,6 @@ if ($method === 'POST') {
     $b->execute([$bookingId]);
     $booking = $b->fetch();
     if (!$booking) jsonError('Booking tidak ditemukan', 404);
-
-    // Time gate: consent hanya boleh diambil mendekati jadwal booking.
-    crmRequireFormWindowOpen($db, $bookingId);
 
     // Flow guard: screening → consent → treatment. Consent may only be taken
     // after screening has been submitted (and never on a terminal booking).
