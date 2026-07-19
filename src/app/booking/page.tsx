@@ -74,7 +74,8 @@ interface BK {
   detailLabels: string[];
   currencyLabel: string;
   errDate: string; errTime: string; errArea: string; errAddress: string; errAddressShort: string;
-  errName: string; errPhone: string;
+  errName: string; errPhone: string; errAgree: string;
+  toastIncomplete: string; agreeShort: string;
   gpsBtn: string; gpsDetecting: string; gpsSuccess: string;
   gpsDenied: string; gpsUnavailable: string; gpsTimeout: string; gpsFailed: string;
 }
@@ -168,6 +169,9 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     errAddressShort: 'Address must be at least 15 characters (include villa/hotel name, room, and street).',
     errName: 'Please enter your full name.',
     errPhone: 'Please enter a valid WhatsApp number.',
+    errAgree: 'Please tick the agreement box to continue.',
+    toastIncomplete: 'Please complete the following:',
+    agreeShort: 'Terms & Privacy agreement',
     gpsBtn: '📍 Use my current location',
     gpsDetecting: 'Detecting location…',
     gpsSuccess: '✓ Location detected',
@@ -264,6 +268,9 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     errAddressShort: 'Alamat harus minimal 15 karakter (sertakan nama villa/hotel, nomor kamar, dan nama jalan).',
     errName: 'Masukkan nama lengkap Anda.',
     errPhone: 'Masukkan nomor WhatsApp yang valid.',
+    errAgree: 'Centang kotak persetujuan untuk melanjutkan.',
+    toastIncomplete: 'Lengkapi data berikut:',
+    agreeShort: 'Persetujuan Syarat & Ketentuan',
     gpsBtn: '📍 Gunakan lokasi saya',
     gpsDetecting: 'Mendeteksi lokasi…',
     gpsSuccess: '✓ Lokasi terdeteksi',
@@ -782,6 +789,30 @@ function GpsButton({ bk, onAddress }: { bk: BK; onAddress: (addr: string) => voi
   );
 }
 
+/* ─── Incomplete-data toast ─── */
+const stripReq = (s: string) => s.replace(/\s*\*\s*$/, '');
+
+type ToastState = { key: number; items: string[] } | null;
+
+function IncompleteToast({ title, items, onClose }: { title: string; items: string[]; onClose: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 6000);
+    return () => clearTimeout(t);
+  }, [onClose]);
+  return (
+    <div className="bk-toast" role="alert">
+      <div className="bk-toast-head">
+        <span className="bk-toast-icon">!</span>
+        <span className="bk-toast-title">{title}</span>
+        <button type="button" className="bk-toast-close" onClick={onClose} aria-label="Close">×</button>
+      </div>
+      <ul className="bk-toast-list">
+        {items.map(i => <li key={i}>{i}</li>)}
+      </ul>
+    </div>
+  );
+}
+
 /* ─── Step 2: Schedule + Location ─── */
 function Step2({
   bk, form, setForm, areas, slots, loadingSlots, slotError, onDateChange, onNext, onBack,
@@ -806,6 +837,8 @@ function Step2({
   }, []);
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [toast, setToast] = useState<ToastState>(null);
+  const closeToast = useCallback(() => setToast(null), []);
   const dateRef    = useRef<HTMLLabelElement>(null);
   const timeRef    = useRef<HTMLDivElement>(null);
   const areaRef    = useRef<HTMLDivElement>(null);
@@ -832,7 +865,18 @@ function Step2({
     if (!form.address.trim())   errs.address = bk.errAddress;
     else if (form.address.trim().length < 15) errs.address = bk.errAddressShort;
     setFieldErrors(errs);
-    if (Object.keys(errs).length > 0) { scrollToFirst(errs); return; }
+    if (Object.keys(errs).length > 0) {
+      const labels: Record<string, string> = {
+        date: bk.dateLabel, time: bk.timeLabel, area: bk.areaLabel, address: bk.addressLabel,
+      };
+      const items = ['date', 'time', 'area', 'address']
+        .filter(k => errs[k])
+        .map(k => stripReq(labels[k]));
+      setToast(t => ({ key: (t?.key ?? 0) + 1, items }));
+      scrollToFirst(errs);
+      return;
+    }
+    setToast(null);
     onNext();
   }
 
@@ -1002,6 +1046,8 @@ function Step2({
           {bk.btnNext2} <IcArrowRight />
         </button>
       </div>
+
+      {toast && <IncompleteToast key={toast.key} title={bk.toastIncomplete} items={toast.items} onClose={closeToast} />}
     </div>
   );
 }
@@ -1025,38 +1071,75 @@ function Step3({
   bookingCurrency: string;
 }) {
   const [agreed, setAgreed] = useState(false);
-  const canSubmit = form.name.trim().length > 1 && form.phone.trim().length >= 7 && agreed;
   const loc = bk.locTypes.find(l => l.v === form.locType);
+
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [toast, setToast] = useState<ToastState>(null);
+  const closeToast = useCallback(() => setToast(null), []);
+  const nameRef  = useRef<HTMLLabelElement>(null);
+  const phoneRef = useRef<HTMLLabelElement>(null);
+  const agreeRef = useRef<HTMLDivElement>(null);
 
   const unitPrice    = product ? getPriceForCurrency(product, bookingCurrency) : 0;
   const dispCurrency = product ? getEffectiveCurrency(product, bookingCurrency) : 'IDR';
 
+  function handleSubmit(e: React.FormEvent) {
+    const errs: Record<string, string> = {};
+    if (form.name.trim().length < 2)  errs.name  = bk.errName;
+    if (form.phone.trim().length < 7) errs.phone = bk.errPhone;
+    if (!agreed)                      errs.agree = bk.errAgree;
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      e.preventDefault();
+      const labels: Record<string, string> = {
+        name: bk.nameLabel, phone: bk.phoneLabel, agree: bk.agreeShort,
+      };
+      const items = ['name', 'phone', 'agree']
+        .filter(k => errs[k])
+        .map(k => stripReq(labels[k]));
+      setToast(t => ({ key: (t?.key ?? 0) + 1, items }));
+      const first = errs.name ? nameRef.current : errs.phone ? phoneRef.current : agreeRef.current;
+      first?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+    setToast(null);
+    onSubmit(e);
+  }
+
   return (
-    <form className="bk-fade-in" onSubmit={onSubmit}>
+    <form className="bk-fade-in" onSubmit={handleSubmit}>
       <div className="bk-card">
         <div className="bk-card-title">{bk.step3Title}</div>
         <div className="bk-card-subtitle">{bk.step3Sub}</div>
         <div className="bk-details-grid">
-          <label className="bk-field">
+          <label className="bk-field" ref={nameRef}>
             <span className="bk-field-label">{bk.nameLabel}</span>
             <input
               type="text"
-              className="control"
+              className={`control${fieldErrors.name ? ' bk-input-err' : ''}`}
               placeholder={bk.namePlaceholder}
               value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              onChange={e => {
+                setForm(f => ({ ...f, name: e.target.value }));
+                if (e.target.value.trim().length >= 2) setFieldErrors(p => { const n = { ...p }; delete n.name; return n; });
+              }}
             />
+            {fieldErrors.name && <span className="bk-field-error">{fieldErrors.name}</span>}
           </label>
-          <label className="bk-field">
+          <label className="bk-field" ref={phoneRef}>
             <span className="bk-field-label">{bk.phoneLabel}</span>
             <input
               type="tel"
-              className="control"
+              className={`control${fieldErrors.phone ? ' bk-input-err' : ''}`}
               placeholder={bk.phonePlaceholder}
               inputMode="tel"
               value={form.phone}
-              onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
+              onChange={e => {
+                setForm(f => ({ ...f, phone: e.target.value }));
+                if (e.target.value.trim().length >= 7) setFieldErrors(p => { const n = { ...p }; delete n.phone; return n; });
+              }}
             />
+            {fieldErrors.phone && <span className="bk-field-error">{fieldErrors.phone}</span>}
           </label>
           <label className="bk-field bk-field-full">
             <span className="bk-field-label">{bk.notesLabel}</span>
@@ -1085,12 +1168,15 @@ function Step3({
         </div>
       )}
 
-      <div className="bk-card" style={{ marginTop: 14 }}>
+      <div className="bk-card" style={{ marginTop: 14 }} ref={agreeRef}>
         <label className="bk-agree-row">
           <input
             type="checkbox"
             checked={agreed}
-            onChange={e => setAgreed(e.target.checked)}
+            onChange={e => {
+              setAgreed(e.target.checked);
+              if (e.target.checked) setFieldErrors(p => { const n = { ...p }; delete n.agree; return n; });
+            }}
           />
           <span className="bk-agree-txt">
             {bk.agree(
@@ -1099,6 +1185,7 @@ function Step3({
             )}
           </span>
         </label>
+        {fieldErrors.agree && <span className="bk-field-error">{fieldErrors.agree}</span>}
       </div>
 
       {error && <div className="bk-alert-err" style={{ marginTop: 12 }}>{error}</div>}
@@ -1107,12 +1194,14 @@ function Step3({
         <button type="button" className="bk-btn bk-btn-ghost" onClick={onBack} disabled={submitting}>
           <IcArrowLeft /> {bk.btnBack}
         </button>
-        <button type="submit" className="bk-btn bk-btn-gold" disabled={!canSubmit || submitting}>
+        <button type="submit" className="bk-btn bk-btn-gold" disabled={submitting}>
           {submitting
             ? <><span className="bk-spin" /> {bk.btnSubmitting}</>
             : <>{bk.btnSubmit} <IcArrowRight /></>}
         </button>
       </div>
+
+      {toast && <IncompleteToast key={toast.key} title={bk.toastIncomplete} items={toast.items} onClose={closeToast} />}
     </form>
   );
 }
