@@ -161,7 +161,7 @@ CREATE TABLE `schedule_settings` (
     `close_time` VARCHAR(5) NOT NULL DEFAULT '22:00',
     `slot_duration_minutes` INTEGER NOT NULL DEFAULT 60,
     `max_bookings_per_slot` INTEGER NOT NULL DEFAULT 3,
-    `min_prebooking_minutes` INTEGER NOT NULL DEFAULT 120,
+    `min_prebooking_minutes` INTEGER NOT NULL DEFAULT 60,
 
     UNIQUE INDEX `schedule_settings_day_of_week_key`(`day_of_week`),
     PRIMARY KEY (`id`)

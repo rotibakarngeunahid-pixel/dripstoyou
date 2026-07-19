@@ -34,7 +34,7 @@ try {
         $db->prepare(
             'INSERT INTO schedule_settings
              (id, day_of_week, is_open, open_time, close_time, slot_duration_minutes, max_bookings_per_slot, min_prebooking_minutes)
-             VALUES (?, ?, 1, ?, ?, 60, 3, 120)'
+             VALUES (?, ?, 1, ?, ?, 60, 3, 60)'
         )->execute([generateId(), $day, '08:00', '22:00']);
         $scheduleInserted++;
     }

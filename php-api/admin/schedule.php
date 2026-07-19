@@ -45,7 +45,7 @@ if ($method === 'PUT') {
         $closeTime       = preg_match('/^\d{2}:\d{2}$/', $day['closeTime'] ?? '') ? $day['closeTime'] : '22:00';
         $slotDur         = max(15, min(480, (int)($day['slotDurationMinutes'] ?? 60)));
         $maxPerSlot      = max(1, min(20, (int)($day['maxBookingsPerSlot'] ?? 3)));
-        $minPrebooking   = max(0, (int)($day['minPrebookingMinutes'] ?? 120));
+        $minPrebooking   = max(0, (int)($day['minPrebookingMinutes'] ?? 60));
 
         // Check if exists
         $chk = $db->prepare('SELECT id FROM schedule_settings WHERE day_of_week = ? LIMIT 1');
