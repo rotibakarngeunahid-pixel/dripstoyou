@@ -87,6 +87,33 @@ if ($method === 'GET' && !empty($_GET['schedule'])) {
 
 // ── List nurses + workload ─────────────────────────────────────────────────────
 if ($method === 'GET') {
+    // Self-heal roster: akun crm_staff role NURSE yang dibuat sebelum sinkronisasi
+    // roster ada di staff.php tidak punya baris di `nurses`, sehingga modal
+    // Assign Nurse kosong padahal nurse-nya ada. Buat baris yang hilang dan
+    // sinkronkan nama/status aktif dari crm_staff.
+    $now = date('Y-m-d H:i:s');
+    $missing = $db->query(
+        "SELECT s.id, s.name, s.is_active
+         FROM crm_staff s
+         LEFT JOIN nurses n ON n.staff_id = s.id
+         WHERE s.role = 'NURSE' AND n.id IS NULL"
+    )->fetchAll();
+    if ($missing) {
+        $ins = $db->prepare(
+            'INSERT INTO nurses (id, staff_id, name, phone_encrypted, phone_last4, is_active, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        foreach ($missing as $s) {
+            $ins->execute([generateId(), $s['id'], $s['name'], encryptField('0000000000'), '0000', (int)$s['is_active'], $now, $now]);
+        }
+    }
+    $db->prepare(
+        "UPDATE nurses n
+         JOIN crm_staff s ON s.id = n.staff_id
+         SET n.name = s.name, n.is_active = s.is_active, n.updated_at = ?
+         WHERE s.role = 'NURSE' AND (n.name <> s.name OR n.is_active <> s.is_active)"
+    )->execute([$now]);
+
     // By default only return active nurses — the assign modal must only show
     // nurses who can actually be assigned. Pass ?all=1 to include inactive
     // nurses (used by the nurse schedule admin view / workload panel).
