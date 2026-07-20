@@ -6,7 +6,7 @@ import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import {
   LayoutDashboard, Calendar, Users, Stethoscope, Package, ShoppingCart,
   Wallet, MapPin, MessageCircle, Shield, ClipboardList, LogOut, X, ChevronDown,
-  MoreHorizontal, type LucideIcon,
+  MoreHorizontal, Star, type LucideIcon,
 } from 'lucide-react';
 import type { CRMRole } from '@/lib/crm-session';
 
@@ -26,6 +26,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/crm/dashboard', label: 'Dashboard', icon: LayoutDashboard, module: 'dashboard' },
       { href: '/crm/booking', label: 'Booking', icon: Calendar, module: 'booking' },
+      { href: '/crm/feedback', label: 'Feedback', icon: Star, module: 'booking' },
       { href: '/crm/pasien', label: 'Pasien', icon: Users, module: 'patient' },
       { href: '/crm/nurse', label: 'Nurse', icon: Stethoscope, module: 'nurse_portal' },
     ],

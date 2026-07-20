@@ -8,8 +8,8 @@ export const CRM_PERMISSIONS: Record<CRMRole, string[]> = {
     'dashboard', 'booking', 'patient', 'nurse', 'inventory', 'purchase_order',
     'finance', 'whatsapp', 'staff', 'area', 'audit', 'screening', 'consent', 'treatment',
   ],
-  ADMIN: ['booking', 'patient', 'nurse', 'whatsapp', 'area', 'screening', 'consent', 'treatment'],
-  NURSE: ['nurse_portal', 'screening', 'consent', 'treatment'],
+  ADMIN: ['booking', 'patient', 'nurse', 'whatsapp', 'area', 'screening', 'consent', 'treatment', 'feedback'],
+  NURSE: ['nurse_portal', 'screening', 'consent', 'treatment', 'feedback'],
   FINANCE: ['finance', 'purchase_order'],
 };
 
@@ -29,6 +29,7 @@ export const CRM_MODULE_LABELS: { key: string; label: string }[] = [
   { key: 'screening', label: 'Screening' },
   { key: 'consent', label: 'Consent' },
   { key: 'treatment', label: 'Treatment' },
+  { key: 'feedback', label: 'Feedback' },
   { key: 'inventory', label: 'Inventory' },
   { key: 'purchase_order', label: 'Purchase Order' },
   { key: 'finance', label: 'Finance' },

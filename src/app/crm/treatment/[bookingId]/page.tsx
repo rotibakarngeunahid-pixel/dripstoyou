@@ -1,9 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, FileSignature, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, FileSignature, Plus, Trash2 } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { crmBookingHref } from '@/lib/crm-permissions';
 import StatusBadge from '@/components/crm/StatusBadge';
@@ -35,7 +35,6 @@ const FOLLOWUP_CHIPS = ['Hidrasi cukup 24 jam', 'Reminder sesi berikutnya 2 ming
 
 export default function TreatmentPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
-  const router = useRouter();
   const staff = useCRMStaff();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [consent, setConsent] = useState<ConsentInfo>(null);
@@ -45,6 +44,7 @@ export default function TreatmentPage() {
   const [saving, setSaving] = useState<'' | 'save' | 'complete'>('');
   const [msg, setMsg] = useState('');
   const [completed, setCompleted] = useState(false);
+  const [justCompleted, setJustCompleted] = useState(false);
 
   const [checklist, setChecklist] = useState<ChecklistItem[]>(DEFAULT_CHECKLIST);
   const [items, setItems] = useState<UsedItem[]>([]);
@@ -104,7 +104,7 @@ export default function TreatmentPage() {
         follow_up_recommendation: allFollowups.join(' · '),
         complete,
       });
-      if (complete) { router.push(backHref); return; }
+      if (complete) { setCompleted(true); setJustCompleted(true); return; }
       setMsg('Treatment tersimpan.');
     } catch (e) { setMsg(e instanceof Error ? e.message : 'Gagal menyimpan'); }
     finally { setSaving(''); }
@@ -112,6 +112,28 @@ export default function TreatmentPage() {
 
   if (loading) return <LoadingBlock />;
   if (error || !booking) return <ErrorBlock message={error || 'Tidak ditemukan'} onRetry={load} />;
+
+  if (justCompleted) {
+    return (
+      <div className="crm-page mx-auto max-w-2xl">
+        <div className="crm-card p-6 text-center">
+          <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#D6EAEA] text-[#205251]"><CheckCircle2 size={24} /></span>
+          <h3 className="crm-section-title mb-1">Treatment Selesai</h3>
+          <p className="mx-auto mb-4 max-w-sm text-sm text-[#4d6060]">
+            Treatment untuk {booking.customer_name} sudah ditandai selesai. Kirim link feedback supaya pasien bisa kasih rating &amp; komentar.
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <Link href={`/crm/feedback-link/${bookingId}`} className="inline-flex h-12 items-center justify-center rounded-xl bg-[#205251] px-6 text-sm font-semibold text-white">
+              Kirim Link Feedback →
+            </Link>
+            <Link href={backHref} className="inline-flex h-12 items-center justify-center rounded-xl border border-[#205251] px-6 text-sm font-semibold text-[#205251]">
+              Kembali
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Flow guard (mirrors treatment.php): no treatment before informed consent.
   if (!consentSigned && !completed) {

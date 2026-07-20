@@ -16,9 +16,9 @@ require_once __DIR__ . '/../helpers.php';
 function crmPermissions(): array {
     return [
         'OWNER'   => ['dashboard','booking','patient','nurse','inventory','purchase_order',
-                      'finance','whatsapp','staff','area','audit','screening','consent','treatment','service'],
-        'ADMIN'   => ['booking','patient','nurse','whatsapp','area','service','screening','consent','treatment'],
-        'NURSE'   => ['nurse_portal','screening','consent','treatment'],
+                      'finance','whatsapp','staff','area','audit','screening','consent','treatment','service','feedback'],
+        'ADMIN'   => ['booking','patient','nurse','whatsapp','area','service','screening','consent','treatment','feedback'],
+        'NURSE'   => ['nurse_portal','screening','consent','treatment','feedback'],
         'FINANCE' => ['finance','purchase_order'],
     ];
 }
@@ -26,7 +26,7 @@ function crmPermissions(): array {
 // Every grantable module key (used for OWNER access + custom-permission toggles).
 function crmAllModules(): array {
     return ['dashboard','booking','patient','nurse','nurse_portal','service','screening',
-            'consent','treatment','inventory','purchase_order','finance','area','whatsapp','staff','audit'];
+            'consent','treatment','feedback','inventory','purchase_order','finance','area','whatsapp','staff','audit'];
 }
 
 // The modules a staff member may access:
@@ -387,22 +387,23 @@ function crmGenerateShortToken(int $length = 14): string {
     return $token;
 }
 
-// Rate limit for endpoints with no staff session (public consent link). Keyed by
-// IP + a named action; backed by crm_audit_logs under module "CONSENT_LINK" so no
-// extra table is needed (mirrors checkBookingRateLimit() in helpers.php, which
-// counts audit_logs the same way). Every call — pass or fail — is itself logged
-// so it counts toward the window.
-function crmCheckPublicRateLimit(string $ipHash, string $action, int $windowMinutes, int $maxAttempts): void {
+// Rate limit for endpoints with no staff session (public consent/feedback link).
+// Keyed by IP + a named action; backed by crm_audit_logs under a caller-chosen
+// module so no extra table is needed (mirrors checkBookingRateLimit() in
+// helpers.php, which counts audit_logs the same way). Every call — pass or
+// fail — is itself logged so it counts toward the window. $module defaults to
+// "CONSENT_LINK" for backward compatibility with existing call sites.
+function crmCheckPublicRateLimit(string $ipHash, string $action, int $windowMinutes, int $maxAttempts, string $module = 'CONSENT_LINK'): void {
     $db = getDb();
     $windowStart = date('Y-m-d H:i:s', strtotime("-{$windowMinutes} minutes"));
     $stmt = $db->prepare(
         'SELECT COUNT(*) AS cnt FROM crm_audit_logs
-         WHERE module = "CONSENT_LINK" AND action = ? AND ip_address_hash = ? AND created_at > ?'
+         WHERE module = ? AND action = ? AND ip_address_hash = ? AND created_at > ?'
     );
-    $stmt->execute([$action, $ipHash, $windowStart]);
+    $stmt->execute([$module, $action, $ipHash, $windowStart]);
     $row = $stmt->fetch();
     if ((int)($row['cnt'] ?? 0) >= $maxAttempts) {
         jsonError('Terlalu banyak percobaan. Silakan coba lagi beberapa saat lagi.', 429);
     }
-    crmAuditLog(null, 'CONSENT_LINK', $action, null, null);
+    crmAuditLog(null, $module, $action, null, null);
 }

@@ -72,6 +72,10 @@ if ($method === 'GET' && ($id || $code)) {
     $tr->execute([$bookingId]);
     $b['treatment'] = $tr->fetch() ?: null;
 
+    $fb = $db->prepare('SELECT id, rating, submitted_at FROM feedbacks WHERE booking_id = ? LIMIT 1');
+    $fb->execute([$bookingId]);
+    $b['feedback'] = $fb->fetch() ?: null;
+
     // Payment summary
     $pay = $db->prepare("SELECT COALESCE(SUM(CASE WHEN status='PAID' THEN amount ELSE 0 END),0) AS paid,
                                 COALESCE(SUM(CASE WHEN status='DP' THEN amount ELSE 0 END),0) AS dp,

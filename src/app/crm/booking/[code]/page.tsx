@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, MessageCircle, RefreshCw, Stethoscope, UserPlus, ClipboardCheck, FileSignature, Syringe } from 'lucide-react';
+import { ArrowLeft, MessageCircle, RefreshCw, Stethoscope, UserPlus, ClipboardCheck, FileSignature, Syringe, Star } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { formatRupiah, formatDateTimeWITA } from '@/lib/crm-format';
 import { STATUS_LABEL, STATUS_RANK, TIMELINE_STEPS, nextStatuses, type CRMBookingStatus } from '@/lib/crm-status';
@@ -35,6 +35,7 @@ type Detail = {
   screening: { id: string; conclusion: string; submitted_at: string | null } | null;
   consent: { id: string; agreed_at: string | null } | null;
   treatment: { id: string; completed_at: string | null } | null;
+  feedback: { id: string; rating: number; submitted_at: string } | null;
   payment: { paid: number; dp: number; count: number; total: number };
 };
 
@@ -176,10 +177,11 @@ export default function BookingDetailPage() {
           </Card>
 
           {/* Clinical quick links */}
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             <ClinicalLink href={`/crm/screening/${b.id}`} icon={Stethoscope} label="Screening" done={!!b.screening?.submitted_at} />
             <ClinicalLink href={`/crm/consent/${b.id}`} icon={FileSignature} label="Consent" done={!!b.consent} />
             <ClinicalLink href={`/crm/treatment/${b.id}`} icon={Syringe} label="Treatment" done={!!b.treatment?.completed_at} />
+            <ClinicalLink href={`/crm/feedback-link/${b.id}`} icon={Star} label="Feedback" done={!!b.feedback} />
           </div>
         </div>
 
