@@ -1,9 +1,13 @@
 <?php
 // CRM Inventory endpoint
-//   GET  /php-api/crm/inventory.php             — list items + stats
-//   GET  /php-api/crm/inventory.php?id=xxx      — single item + recent movements
-//   POST /php-api/crm/inventory.php             — create/update item (id optional)
+//   GET  /php-api/crm/inventory.php                     — list items + stats
+//   GET  /php-api/crm/inventory.php?id=xxx              — single item + recent movements
+//   GET  /php-api/crm/inventory.php?view=log&...        — global stock movement ledger (filterable)
+//   GET  /php-api/crm/inventory.php?view=opname         — list past stock-opname sessions
+//   GET  /php-api/crm/inventory.php?view=opname&id=xxx  — single opname session + item detail
+//   POST /php-api/crm/inventory.php                     — create/update item (id optional)
 //   POST /php-api/crm/inventory.php  {action:'movement', inventory_item_id, type, quantity, notes}
+//   POST /php-api/crm/inventory.php  {action:'opname', opname_date, notes, counts:[{inventory_item_id, counted_qty}]}
 
 require_once __DIR__ . '/_crm.php';
 handleCors();
@@ -14,6 +18,78 @@ requireCRMPermission($staff, 'inventory');
 $method = strtoupper($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'] ?? getMethod());
 $db     = getDb();
 $id     = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
+$view   = isset($_GET['view']) ? str_clean($_GET['view'], 20) : null;
+
+// ── Global stock movement ledger (all items, filterable) ───────────────────────
+if ($method === 'GET' && $view === 'log') {
+    $limit  = min(100, max(1, (int)($_GET['limit'] ?? 20)));
+    $offset = max(0, (int)($_GET['offset'] ?? 0));
+
+    $where = []; $params = [];
+    if (!empty($_GET['item_id'])) { $where[] = 'm.inventory_item_id = ?'; $params[] = str_clean($_GET['item_id'], 191); }
+    if (!empty($_GET['type']) && in_array($_GET['type'], ['IN', 'OUT', 'ADJUSTMENT'], true)) {
+        $where[] = 'm.type = ?'; $params[] = $_GET['type'];
+    }
+    if (!empty($_GET['date_from'])) { $where[] = 'm.created_at >= ?'; $params[] = str_clean($_GET['date_from'], 10) . ' 00:00:00'; }
+    if (!empty($_GET['date_to']))   { $where[] = 'm.created_at <= ?'; $params[] = str_clean($_GET['date_to'], 10) . ' 23:59:59'; }
+    $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+    $countStmt = $db->prepare("SELECT COUNT(*) FROM stock_movements m $whereClause");
+    $countStmt->execute($params);
+    $total = (int)$countStmt->fetchColumn();
+
+    $stmt = $db->prepare(
+        "SELECT m.id, m.type, m.quantity, m.reference_type, m.reference_id, m.notes, m.created_at,
+                i.id AS item_id, i.name AS item_name, i.unit,
+                st.name AS staff_name
+         FROM stock_movements m
+         JOIN inventory_items i ON i.id = m.inventory_item_id
+         LEFT JOIN crm_staff st ON st.id = m.performed_by_staff_id
+         $whereClause
+         ORDER BY m.created_at DESC LIMIT $limit OFFSET $offset"
+    );
+    $stmt->execute($params);
+
+    $itemOptions = $db->query('SELECT id, name FROM inventory_items ORDER BY name ASC')->fetchAll();
+
+    jsonSuccess([
+        'items'        => $stmt->fetchAll(),
+        'total'        => $total,
+        'limit'        => $limit,
+        'offset'       => $offset,
+        'item_options' => $itemOptions,
+    ]);
+}
+
+// ── Stock opname (physical count) sessions ──────────────────────────────────────
+if ($method === 'GET' && $view === 'opname') {
+    if ($id) {
+        $s = $db->prepare(
+            'SELECT o.*, st.name AS staff_name FROM stock_opnames o
+             LEFT JOIN crm_staff st ON st.id = o.performed_by_staff_id
+             WHERE o.id = ? LIMIT 1'
+        );
+        $s->execute([$id]);
+        $opname = $s->fetch();
+        if (!$opname) jsonError('Sesi opname tidak ditemukan', 404);
+        $it = $db->prepare('SELECT * FROM stock_opname_items WHERE stock_opname_id = ? ORDER BY item_name ASC');
+        $it->execute([$id]);
+        $opname['items'] = $it->fetchAll();
+        jsonSuccess($opname);
+    }
+
+    $limit  = min(50, max(1, (int)($_GET['limit'] ?? 20)));
+    $offset = max(0, (int)($_GET['offset'] ?? 0));
+    $total  = (int)$db->query('SELECT COUNT(*) FROM stock_opnames')->fetchColumn();
+    $rows   = $db->prepare(
+        "SELECT o.id, o.opname_date, o.notes, o.total_items, o.total_variance, o.created_at, st.name AS staff_name
+         FROM stock_opnames o
+         LEFT JOIN crm_staff st ON st.id = o.performed_by_staff_id
+         ORDER BY o.created_at DESC LIMIT $limit OFFSET $offset"
+    );
+    $rows->execute();
+    jsonSuccess(['items' => $rows->fetchAll(), 'total' => $total, 'limit' => $limit, 'offset' => $offset]);
+}
 
 if ($method === 'GET' && $id) {
     $s = $db->prepare('SELECT * FROM inventory_items WHERE id = ? LIMIT 1');
@@ -40,6 +116,72 @@ if ($method === 'GET') {
 if ($method === 'POST') {
     $body = getBodyJson();
     $action = $body['action'] ?? '';
+
+    // ── Stock opname (bulk physical count reconciliation) ──
+    if ($action === 'opname') {
+        requireFields($body, ['counts']);
+        $counts = is_array($body['counts']) ? $body['counts'] : [];
+        if (count($counts) === 0) jsonError('Minimal 1 item harus dihitung', 422);
+
+        $opnameDate = !empty($body['opname_date']) ? str_clean($body['opname_date'], 10) : date('Y-m-d');
+        $opnameNotes = !empty($body['notes']) ? str_clean($body['notes'], 500) : null;
+        $opnameId = generateId();
+        $totalItems = 0;
+        $totalVariance = 0;
+        $now = date('Y-m-d H:i:s');
+
+        $db->beginTransaction();
+        try {
+            foreach ($counts as $c) {
+                $invId = str_clean($c['inventory_item_id'] ?? '', 191);
+                if ($invId === '' || !isset($c['counted_qty'])) continue;
+                $counted = (int)$c['counted_qty'];
+                if ($counted < 0) continue;
+
+                $chk = $db->prepare('SELECT stock_current, name, unit FROM inventory_items WHERE id = ? LIMIT 1');
+                $chk->execute([$invId]);
+                $item = $chk->fetch();
+                if (!$item) continue;
+
+                $systemQty = (int)$item['stock_current'];
+                $variance  = $counted - $systemQty;
+                $totalItems++;
+                $totalVariance += abs($variance);
+
+                $db->prepare(
+                    'INSERT INTO stock_opname_items (id, stock_opname_id, inventory_item_id, item_name, unit, system_qty, counted_qty, variance)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                )->execute([generateId(), $opnameId, $invId, $item['name'], $item['unit'], $systemQty, $counted, $variance]);
+
+                if ($variance !== 0) {
+                    $db->prepare('UPDATE inventory_items SET stock_current = ?, updated_at = NOW() WHERE id = ?')
+                       ->execute([$counted, $invId]);
+                    $db->prepare(
+                        'INSERT INTO stock_movements (id, inventory_item_id, type, quantity, reference_type, reference_id, notes, performed_by_staff_id, created_at)
+                         VALUES (?, ?, "ADJUSTMENT", ?, "STOCK_OPNAME", ?, ?, ?, NOW(3))'
+                    )->execute([generateId(), $invId, abs($variance), $opnameId, "Stok opname: sistem {$systemQty} -> hitung {$counted}", $staff['staff_id']]);
+                }
+            }
+
+            if ($totalItems === 0) {
+                $db->rollBack();
+                jsonError('Tidak ada item valid untuk dihitung', 422);
+            }
+
+            $db->prepare(
+                'INSERT INTO stock_opnames (id, opname_date, notes, total_items, total_variance, performed_by_staff_id, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)'
+            )->execute([$opnameId, $opnameDate, $opnameNotes, $totalItems, $totalVariance, $staff['staff_id'], $now]);
+
+            $db->commit();
+        } catch (Throwable $e) {
+            if ($db->inTransaction()) $db->rollBack();
+            jsonError('Gagal menyimpan stok opname', 500);
+        }
+
+        crmAuditLog($staff, 'INVENTORY', 'STOCK_OPNAME', $opnameId, "Stok opname: $totalItems item dihitung, total selisih $totalVariance unit");
+        jsonSuccess(['id' => $opnameId, 'total_items' => $totalItems, 'total_variance' => $totalVariance], 'Stok opname tersimpan');
+    }
 
     // ── Stock movement ──
     if ($action === 'movement') {

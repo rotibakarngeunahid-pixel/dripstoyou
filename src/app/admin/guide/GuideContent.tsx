@@ -844,6 +844,57 @@ function buildSections(lang: 'id' | 'en'): Section[] {
       ],
     },
     {
+      id: 'inventory-crm',
+      icon: '📦',
+      title: id ? 'Inventory CRM — Stok Obat & Alat' : 'Inventory CRM — Medical Stock',
+      blocks: [
+        {
+          type: 'callout',
+          variant: 'info',
+          text: id
+            ? 'Inventory BUKAN bagian dari admin panel ini — halamannya ada di portal CRM terpisah: /crm/inventory. Login CRM memakai akun yang sama (SSO), tapi secara default hanya role OWNER yang punya akses modul Inventory & Purchase Order. Staff lain butuh izin custom dari OWNER lewat menu Staff & Role di CRM.'
+            : 'Inventory is NOT part of this admin panel — its page lives in a separate CRM portal: /crm/inventory. CRM login uses the same account (SSO), but by default only the OWNER role has access to the Inventory & Purchase Order modules. Other staff need a custom permission grant from OWNER via the Staff & Role menu in the CRM.',
+        },
+        {
+          type: 'steps',
+          items: id ? [
+            { title: 'Tambah item baru', desc: 'Klik "+ Tambah Item" di kanan atas. Isi nama, kategori (Cairan/Vitamin/Alat/Obat/Lainnya), satuan, stok awal, stok minimum, tanggal expired, supplier, dan harga per unit.', detail: 'Stok minimum menentukan kapan item ditandai "Menipis" — sesuaikan dengan kecepatan pemakaian tiap item.' },
+            { title: 'Tambah Stok (restock cepat)', desc: 'Klik "+ Tambah Stok" di kanan atas header. Pilih item dari dropdown, isi jumlah yang masuk, dan catatan opsional (misal "Restock dari supplier X"). Ini langsung menambah stok tanpa harus buka detail item satu per satu.', detail: 'Cara lain: klik tombol "Stok" pada baris item di tab "Item", lalu pilih tipe "Masuk".' },
+            { title: 'Kurangi / sesuaikan stok manual', desc: 'Klik tombol "Stok" pada baris item, pilih tipe "Keluar" (mengurangi, misal rusak/hilang) atau "Penyesuaian" (isi angka stok akhir yang benar, sistem otomatis hitung selisihnya).' },
+            { title: 'Stok Opname (hitung fisik berkala)', desc: 'Buka tab "Stok Opname" → klik "Mulai Stok Opname Baru". Sistem menampilkan SEMUA item aktif dengan stok sistem saat ini — isi kolom "Stok Fisik" sesuai hasil hitung manual di lapangan, selisih muncul otomatis (hijau = lebih, merah = kurang). Tambahkan catatan sesi lalu klik "Simpan Stok Opname".', detail: 'Setiap sesi tersimpan permanen di riwayat (termasuk item yang stoknya cocok/tidak ada selisih) sebagai bukti stok pernah dicek fisik — berguna untuk audit dan mendeteksi kebocoran/kehilangan stok.' },
+            { title: 'Lihat riwayat sesi Stok Opname', desc: 'Masih di tab "Stok Opname", daftar di bawah tombol "Mulai" menampilkan semua sesi sebelumnya (tanggal, jumlah item, total selisih, siapa yang melakukan). Klik salah satu sesi untuk melihat rincian per item (stok sistem vs stok fisik saat itu).' },
+            { title: 'Riwayat Pergerakan Stok', desc: 'Buka tab "Riwayat Stok" untuk melihat SEMUA pergerakan (Masuk/Keluar/Penyesuaian) dari semua item dalam satu daftar — bisa difilter per item, tipe, dan rentang tanggal. Kolom "Referensi" menunjukkan asal pergerakan: Manual, Purchase Order (diterima otomatis saat PO di-terima), Treatment (dipakai saat sesi IV Therapy), atau Stok Opname.' },
+            { title: 'Terima stok dari Purchase Order', desc: 'Pembelian stok ke supplier dikelola di menu terpisah "Purchase Order" (CRM). Setelah barang tiba, buka PO terkait dan klik "Terima Stok" — stok item otomatis bertambah, tercatat di Riwayat Stok, dan pengeluaran (expense) tercatat otomatis di menu Finance.' },
+          ] : [
+            { title: 'Add a new item', desc: 'Click "+ Tambah Item" top right. Fill in name, category (Fluid/Vitamin/Equipment/Medicine/Other), unit, starting stock, minimum stock, expiry date, supplier, and price per unit.', detail: 'Minimum stock determines when an item is flagged "Low" — tune it to each item\'s usage rate.' },
+            { title: 'Add Stock (quick restock)', desc: 'Click "+ Tambah Stok" in the top-right header. Pick an item from the dropdown, enter the incoming quantity, and an optional note (e.g. "Restocked from supplier X"). This adds stock immediately without opening each item\'s detail one by one.', detail: 'Alternative: click the "Stok" button on an item row in the "Item" tab, then choose type "Masuk" (In).' },
+            { title: 'Reduce / manually adjust stock', desc: 'Click the "Stok" button on an item row, choose type "Keluar" (Out — reduces stock, e.g. damaged/lost) or "Penyesuaian" (Adjustment — enter the correct final stock count, the system computes the difference automatically).' },
+            { title: 'Stock Opname (periodic physical count)', desc: 'Open the "Stok Opname" tab → click "Mulai Stok Opname Baru" (Start New Stock Opname). The system lists ALL active items with their current system stock — fill in "Stok Fisik" (physical count) with what you counted on the ground; the variance appears automatically (green = surplus, red = shortage). Add a session note then click "Simpan Stok Opname".', detail: 'Every session is permanently saved to history (including items with zero variance) as proof a physical check happened — useful for audits and catching stock leakage/loss.' },
+            { title: 'View Stock Opname history', desc: 'Still in the "Stok Opname" tab, the list below the "Mulai" button shows every past session (date, item count, total variance, who performed it). Click a session to see the per-item breakdown (system stock vs. physical count at that time).' },
+            { title: 'Stock Movement History', desc: 'Open the "Riwayat Stok" tab to see EVERY movement (In/Out/Adjustment) across all items in one list — filterable by item, type, and date range. The "Referensi" column shows the movement\'s source: Manual, Purchase Order (auto-recorded when a PO is received), Treatment (used during an IV Therapy session), or Stock Opname.' },
+            { title: 'Receive stock from a Purchase Order', desc: 'Stock purchases from suppliers are managed in the separate "Purchase Order" menu (CRM). Once goods arrive, open the related PO and click "Terima Stok" (Receive Stock) — item stock increases automatically, is logged in Stock Movement History, and the expense is auto-recorded in the Finance menu.' },
+          ],
+        },
+        {
+          type: 'table',
+          headers: id ? ['Status', 'Kondisi'] : ['Status', 'Condition'],
+          rows: id ? [
+            ['Aman', 'Stok di atas batas minimum, belum mendekati expired'],
+            ['Menipis', 'Stok ≤ stok minimum tapi belum habis'],
+            ['Habis', 'Stok = 0'],
+            ['Exp Soon', 'Tanggal expired ≤ 30 hari dari sekarang'],
+            ['Expired', 'Sudah melewati tanggal expired — segera keluarkan dari stok aktif'],
+          ] : [
+            ['Aman (Safe)', 'Stock above minimum threshold, not near expiry'],
+            ['Menipis (Low)', 'Stock ≤ minimum threshold but not zero'],
+            ['Habis (Out)', 'Stock = 0'],
+            ['Exp Soon', 'Expiry date ≤ 30 days from now'],
+            ['Expired', 'Past expiry date — remove from active stock promptly'],
+          ],
+        },
+      ],
+    },
+    {
       id: 'roles',
       icon: '🔑',
       title: id ? 'Role & Hak Akses' : 'Roles & Permissions',

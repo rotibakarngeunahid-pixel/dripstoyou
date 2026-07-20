@@ -13,6 +13,7 @@ const ACTION_BADGE: Record<string, string> = {
   STATUS_CHANGE: 'bg-violet-100 text-violet-700', LOGIN: 'bg-green-100 text-green-700', LOGOUT: 'bg-gray-100 text-gray-600',
   ASSIGN: 'bg-cyan-100 text-cyan-700', RECEIVE: 'bg-teal-100 text-teal-700', PAYMENT: 'bg-green-100 text-green-700',
   EXPENSE: 'bg-orange-100 text-orange-700', MOVEMENT: 'bg-indigo-100 text-indigo-700',
+  STOCK_OPNAME: 'bg-purple-100 text-purple-700',
 };
 
 export default function AuditPage() {
