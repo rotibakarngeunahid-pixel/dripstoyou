@@ -5,9 +5,11 @@
 //   GET  /php-api/crm/inventory.php?view=log&...        — global stock movement ledger (filterable)
 //   GET  /php-api/crm/inventory.php?view=opname         — list past stock-opname sessions
 //   GET  /php-api/crm/inventory.php?view=opname&id=xxx  — single opname session + item detail
-//   POST /php-api/crm/inventory.php                     — create/update item (id optional)
+//   POST /php-api/crm/inventory.php                     — create/update item (id optional, category_id required)
 //   POST /php-api/crm/inventory.php  {action:'movement', inventory_item_id, type, quantity, notes}
 //   POST /php-api/crm/inventory.php  {action:'opname', opname_date, notes, counts:[{inventory_item_id, counted_qty}]}
+//
+// Categories are managed separately — see inventory-category.php.
 
 require_once __DIR__ . '/_crm.php';
 handleCors();
@@ -92,7 +94,11 @@ if ($method === 'GET' && $view === 'opname') {
 }
 
 if ($method === 'GET' && $id) {
-    $s = $db->prepare('SELECT * FROM inventory_items WHERE id = ? LIMIT 1');
+    $s = $db->prepare(
+        'SELECT i.*, c.name AS category_name FROM inventory_items i
+         JOIN inventory_categories c ON c.id = i.category_id
+         WHERE i.id = ? LIMIT 1'
+    );
     $s->execute([$id]);
     $item = $s->fetch();
     if (!$item) jsonError('Item tidak ditemukan', 404);
@@ -103,7 +109,11 @@ if ($method === 'GET' && $id) {
 }
 
 if ($method === 'GET') {
-    $items = $db->query('SELECT * FROM inventory_items ORDER BY is_active DESC, name ASC')->fetchAll();
+    $items = $db->query(
+        'SELECT i.*, c.name AS category_name FROM inventory_items i
+         JOIN inventory_categories c ON c.id = i.category_id
+         ORDER BY i.is_active DESC, i.name ASC'
+    )->fetchAll();
     $stats = [
         'total'       => (int)$db->query('SELECT COUNT(*) FROM inventory_items WHERE is_active = 1')->fetchColumn(),
         'low'         => (int)$db->query('SELECT COUNT(*) FROM inventory_items WHERE is_active = 1 AND stock_current <= stock_minimum AND stock_current > 0')->fetchColumn(),
@@ -211,9 +221,12 @@ if ($method === 'POST') {
     }
 
     // ── Create / update item ──
-    requireFields($body, ['name', 'category']);
+    requireFields($body, ['name', 'category_id']);
     $name  = str_clean($body['name'], 200);
-    $cat   = in_array($body['category'], ['CAIRAN','VITAMIN','ALAT','OBAT','LAINNYA'], true) ? $body['category'] : 'LAINNYA';
+    $catId = str_clean($body['category_id'], 191);
+    $catChk = $db->prepare('SELECT id FROM inventory_categories WHERE id = ? LIMIT 1');
+    $catChk->execute([$catId]);
+    if (!$catChk->fetch()) jsonError('Kategori tidak valid', 422);
     $unit  = !empty($body['unit']) ? str_clean($body['unit'], 20) : 'pcs';
     $min   = max(0, (int)($body['stock_minimum'] ?? 5));
     $exp   = !empty($body['expired_date']) ? str_clean($body['expired_date'], 10) : null;
@@ -224,17 +237,17 @@ if ($method === 'POST') {
     $iid   = !empty($body['id']) ? str_clean($body['id'], 191) : null;
 
     if ($iid) {
-        $db->prepare('UPDATE inventory_items SET name=?, category=?, unit=?, stock_minimum=?, expired_date=?, supplier=?, price_per_unit=?, is_active=?, updated_at=? WHERE id=?')
-           ->execute([$name, $cat, $unit, $min, $exp, $sup, $price, $active, $now, $iid]);
+        $db->prepare('UPDATE inventory_items SET name=?, category_id=?, unit=?, stock_minimum=?, expired_date=?, supplier=?, price_per_unit=?, is_active=?, updated_at=? WHERE id=?')
+           ->execute([$name, $catId, $unit, $min, $exp, $sup, $price, $active, $now, $iid]);
         crmAuditLog($staff, 'INVENTORY', 'UPDATE', $iid, "Update item $name");
         jsonSuccess(['id' => $iid], 'Item diperbarui');
     }
 
     $iid = generateId();
     $startStock = max(0, (int)($body['stock_current'] ?? 0));
-    $db->prepare('INSERT INTO inventory_items (id, name, category, stock_current, stock_minimum, unit, expired_date, supplier, price_per_unit, is_active, created_at, updated_at)
+    $db->prepare('INSERT INTO inventory_items (id, name, category_id, stock_current, stock_minimum, unit, expired_date, supplier, price_per_unit, is_active, created_at, updated_at)
                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-       ->execute([$iid, $name, $cat, $startStock, $min, $unit, $exp, $sup, $price, $active, $now, $now]);
+       ->execute([$iid, $name, $catId, $startStock, $min, $unit, $exp, $sup, $price, $active, $now, $now]);
     if ($startStock > 0) {
         $db->prepare('INSERT INTO stock_movements (id, inventory_item_id, type, quantity, reference_type, notes, performed_by_staff_id, created_at)
                       VALUES (?, ?, "IN", ?, "MANUAL", "Stok awal", ?, NOW(3))')
