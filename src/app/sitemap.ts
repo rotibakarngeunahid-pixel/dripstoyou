@@ -2,6 +2,13 @@ import type { MetadataRoute } from 'next';
 
 const BASE_URL = 'https://dripstoyou.com';
 
+// Target PRD §2: artikel yang dipublikasikan muncul di sitemap.xml ≤ 1 jam.
+// 15 menit memberi margin nyaman terhadap batas itu (sebelumnya window-nya
+// persis 1 jam, tepat di garis batas).
+export const revalidate = 900;
+
+const SOURCE_REVALIDATE = 900;
+
 type TreatmentEntry = { slug: string; updated_at?: string | null };
 
 type BlogEntry = { slug: string; updated_at?: string | null; published_at?: string | null };
@@ -21,7 +28,7 @@ async function fetchTreatmentSlugs(): Promise<TreatmentEntry[]> {
   if (!base) return [];
   try {
     const res = await fetch(`${base}/products.php`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: SOURCE_REVALIDATE },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     if (!res.ok) return [];
@@ -46,7 +53,7 @@ async function fetchBlogSlugs(): Promise<BlogEntry[]> {
   try {
     for (let page = 1; page <= maxPages; page += 1) {
       const res = await fetch(`${base}/blog.php?page=${page}&per_page=${perPage}`, {
-        next: { revalidate: 3600 },
+        next: { revalidate: SOURCE_REVALIDATE },
         signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
       if (!res.ok) break;
@@ -70,7 +77,7 @@ async function fetchBlogCategorySlugs(): Promise<BlogCategoryEntry[]> {
   if (!base) return [];
   try {
     const res = await fetch(`${base}/blog-categories.php`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: SOURCE_REVALIDATE },
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
     if (!res.ok) return [];
