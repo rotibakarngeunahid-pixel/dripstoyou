@@ -7,7 +7,7 @@ export type Lang = 'id' | 'en';
 export interface Translations {
   nav: {
     treatments: string; howToBook: string; coverage: string;
-    about: string; contact: string; bookNow: string;
+    about: string; contact: string; blog: string; bookNow: string;
   };
   hero: {
     pill: string; line1: string; line2: string; lineEm: string;
@@ -47,7 +47,7 @@ export interface Translations {
   };
   footer: {
     brandDesc: string; colTreatments: string; colInfo: string; colContact: string;
-    seeAll: string; about: string; howToBook: string; faq: string;
+    seeAll: string; about: string; howToBook: string; faq: string; blog: string;
     hours: string; copyright: string;
     termsConditions: string; privacyPolicy: string; waFloatMessage: string;
   };
@@ -91,13 +91,23 @@ export interface Translations {
     emptyState: string; stillQ: string; stillQDesc: string;
     askBtn: string; waMessage: string;
   };
+  blog: {
+    eyebrow: string; title: string; titleEm: string; subtitle: string;
+    allCategories: string; emptyState: string; readArticle: string;
+    minRead: string; publishedOn: string; updatedOn: string; writtenBy: string;
+    inCategory: string; relatedTitle: string; backToBlog: string;
+    prevPage: string; nextPage: string; pageOf: string;
+    categoryEyebrow: string; articleCount: string;
+    ctaTitle: string; ctaSub: string; ctaBook: string; ctaTreatments: string;
+    disclaimer: string;
+  };
 }
 
 export const translations: Record<Lang, Translations> = {
   id: {
     nav: {
       treatments: 'Treatment', howToBook: 'Cara Booking', coverage: 'Cakupan',
-      about: 'Tentang', contact: 'Kontak', bookNow: 'Pesan Sekarang',
+      about: 'Tentang', contact: 'Kontak', blog: 'Blog', bookNow: 'Pesan Sekarang',
     },
     hero: {
       pill: 'Tersedia di Area Layanan Aktif',
@@ -164,7 +174,7 @@ export const translations: Record<Lang, Translations> = {
       brandDesc: 'Layanan mobile IV therapy premium yang hadir langsung ke villa, hotel, atau Airbnb Anda di area layanan aktif kami.',
       colTreatments: 'Treatment', colInfo: 'Informasi', colContact: 'Kontak',
       seeAll: 'Lihat Semua →', about: 'Tentang Kami', howToBook: 'Cara Booking',
-      faq: 'FAQ', hours: '08:00 – 22:00 WITA',
+      faq: 'FAQ', blog: 'Blog', hours: '08:00 – 22:00 WITA',
       copyright: 'Hak cipta dilindungi. Mobile IV Therapy Premium di Bali.',
       termsConditions: 'Syarat & Ketentuan',
       privacyPolicy: 'Kebijakan Privasi',
@@ -269,12 +279,29 @@ export const translations: Record<Lang, Translations> = {
       askBtn: 'Tanya via WhatsApp',
       waMessage: 'Halo, saya punya pertanyaan tentang layanan Drips To You - Bali',
     },
+    blog: {
+      eyebrow: 'Blog & Edukasi',
+      title: 'Wawasan', titleEm: 'IV Therapy & Wellness',
+      subtitle: 'Panduan dan edukasi dari tim medis kami seputar hidrasi, pemulihan, dan menjaga kondisi tubuh selama di Bali.',
+      allCategories: 'Semua Artikel',
+      emptyState: 'Artikel akan segera tersedia. Sementara itu, lihat treatment kami atau hubungi tim via WhatsApp.',
+      readArticle: 'Baca Artikel',
+      minRead: 'menit baca',
+      publishedOn: 'Dipublikasikan', updatedOn: 'Diperbarui', writtenBy: 'Ditulis oleh',
+      inCategory: 'Kategori', relatedTitle: 'Artikel Terkait', backToBlog: '← Kembali ke Blog',
+      prevPage: '← Sebelumnya', nextPage: 'Berikutnya →', pageOf: 'Halaman {n} dari {total}',
+      categoryEyebrow: 'Kategori Blog', articleCount: '{n} artikel',
+      ctaTitle: 'Siap merasakan manfaatnya?',
+      ctaSub: 'Tim medis bersertifikat kami datang ke villa, hotel, atau tempat menginap Anda di Bali.',
+      ctaBook: 'Pesan Sekarang', ctaTreatments: 'Lihat Semua Treatment',
+      disclaimer: 'Konten ini bersifat edukatif dan tidak menggantikan konsultasi medis. Tim medis kami akan melakukan skrining sebelum treatment.',
+    },
   },
 
   en: {
     nav: {
       treatments: 'Treatments', howToBook: 'How to Book', coverage: 'Coverage',
-      about: 'About', contact: 'Contact', bookNow: 'Book Now',
+      about: 'About', contact: 'Contact', blog: 'Blog', bookNow: 'Book Now',
     },
     hero: {
       pill: 'Available in Active Service Areas',
@@ -341,7 +368,7 @@ export const translations: Record<Lang, Translations> = {
       brandDesc: 'Premium mobile IV therapy delivered to your villa, hotel, or Airbnb within our active service areas.',
       colTreatments: 'Treatments', colInfo: 'Information', colContact: 'Contact',
       seeAll: 'See All →', about: 'About Us', howToBook: 'How to Book',
-      faq: 'FAQ', hours: '08:00 – 22:00 WITA',
+      faq: 'FAQ', blog: 'Blog', hours: '08:00 – 22:00 WITA',
       copyright: 'All rights reserved. Premium Mobile IV Therapy in Bali.',
       termsConditions: 'Terms & Conditions',
       privacyPolicy: 'Privacy Policy',
@@ -445,6 +472,23 @@ export const translations: Record<Lang, Translations> = {
       stillQDesc: 'Our team is ready to help you via WhatsApp.',
       askBtn: 'Ask via WhatsApp',
       waMessage: 'Hi, I have a question about Drips To You - Bali services',
+    },
+    blog: {
+      eyebrow: 'Blog & Education',
+      title: 'Insights on', titleEm: 'IV Therapy & Wellness',
+      subtitle: 'Guides from our medical team on hydration, recovery, and staying well while you are in Bali.',
+      allCategories: 'All Articles',
+      emptyState: 'Articles are coming soon. In the meantime, browse our treatments or reach our team on WhatsApp.',
+      readArticle: 'Read Article',
+      minRead: 'min read',
+      publishedOn: 'Published', updatedOn: 'Updated', writtenBy: 'Written by',
+      inCategory: 'Category', relatedTitle: 'Related Articles', backToBlog: '← Back to Blog',
+      prevPage: '← Previous', nextPage: 'Next →', pageOf: 'Page {n} of {total}',
+      categoryEyebrow: 'Blog Category', articleCount: '{n} articles',
+      ctaTitle: 'Ready to feel the difference?',
+      ctaSub: 'Our certified medical team comes to your villa, hotel, or accommodation across Bali.',
+      ctaBook: 'Book Now', ctaTreatments: 'See All Treatments',
+      disclaimer: 'This content is educational and does not replace medical advice. Our medical team screens every guest before treatment.',
     },
   },
 };

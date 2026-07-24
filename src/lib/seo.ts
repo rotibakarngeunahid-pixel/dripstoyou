@@ -156,6 +156,42 @@ export function faqPageJsonLd(faqs: { question: string; answer: string }[]) {
   };
 }
 
+// BlogPosting (subtipe Article) untuk halaman artikel — docs/PRD-Blog.md §8.5.
+// `publisher` merujuk @id Organization yang sudah dirender di layout root,
+// sehingga graf schema.org tetap satu kesatuan (tidak menduplikasi node brand).
+export function blogPostingJsonLd(opts: {
+  title: string;
+  slug: string;
+  description: string;
+  image?: string | null;
+  datePublished?: string | null;
+  dateModified?: string | null;
+  authorName?: string | null;
+  section?: string | null;
+}) {
+  const url = `${SITE_URL}/blog/${opts.slug}`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    // Google memotong headline di 110 karakter.
+    headline: opts.title.slice(0, 110),
+    image: [opts.image || DEFAULT_OG_IMAGE],
+    ...(opts.datePublished ? { datePublished: opts.datePublished } : {}),
+    ...(opts.dateModified ? { dateModified: opts.dateModified } : {}),
+    author: {
+      '@type': 'Organization',
+      name: opts.authorName || SITE_NAME,
+      url: SITE_URL,
+    },
+    publisher: { '@id': ORG_ID },
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    url,
+    description: opts.description,
+    ...(opts.section ? { articleSection: opts.section } : {}),
+    inLanguage: 'en',
+  };
+}
+
 export function breadcrumbJsonLd(items: { name: string; url: string }[]) {
   return {
     '@context': 'https://schema.org',

@@ -15,6 +15,7 @@ import {
   MapPinned,
   Menu,
   MessageCircle,
+  Newspaper,
   PackagePlus,
   Settings,
   Share2,
@@ -44,7 +45,7 @@ export function useAdminLang() {
 const ADMIN_LABELS: Record<AdminLang, {
   mainMenu: string; dashboard: string; booking: string;
   services: string; treatment: string; schedule: string; coverage: string;
-  content: string; faq: string; socialLinks: string;
+  content: string; faq: string; socialLinks: string; blog: string;
   settings: string; generalSettings: string; waTemplate: string;
   help: string; adminGuide: string; adminUsers: string; resetData: string;
   crmGroup: string; crmInternal: string;
@@ -55,7 +56,7 @@ const ADMIN_LABELS: Record<AdminLang, {
   id: {
     mainMenu: 'Menu Utama', dashboard: 'Dashboard', booking: 'Booking',
     services: 'Layanan', treatment: 'Treatment', schedule: 'Jadwal', coverage: 'Area Layanan',
-    content: 'Konten Website', faq: 'FAQ', socialLinks: 'Social Links',
+    content: 'Konten Website', faq: 'FAQ', socialLinks: 'Social Links', blog: 'Blog',
     settings: 'Pengaturan', generalSettings: 'Pengaturan Umum', waTemplate: 'WhatsApp Template',
     help: 'Bantuan', adminGuide: 'Panduan Admin', adminUsers: 'Manajemen Admin', resetData: 'Reset Data',
     crmGroup: 'CRM Internal', crmInternal: 'Buka CRM',
@@ -66,7 +67,7 @@ const ADMIN_LABELS: Record<AdminLang, {
   en: {
     mainMenu: 'Main Menu', dashboard: 'Dashboard', booking: 'Bookings',
     services: 'Services', treatment: 'Treatments', schedule: 'Schedule', coverage: 'Service Areas',
-    content: 'Website Content', faq: 'FAQ', socialLinks: 'Social Links',
+    content: 'Website Content', faq: 'FAQ', socialLinks: 'Social Links', blog: 'Blog',
     settings: 'Settings', generalSettings: 'General Settings', waTemplate: 'WhatsApp Template',
     help: 'Help', adminGuide: 'Admin Guide', adminUsers: 'Admin Management', resetData: 'Reset Data',
     crmGroup: 'CRM Internal', crmInternal: 'Open CRM',
@@ -118,6 +119,11 @@ function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang], role?: string | nul
     {
       label: lbl.content,
       items: [
+        // Blog memakai permission content:* — ADMIN_OPERASIONAL tidak punya akses
+        // (proxy & PHP menolak 403), jadi menunya pun tidak ditampilkan.
+        ...(role !== 'ADMIN_OPERASIONAL'
+          ? [{ href: '/admin/blog', label: lbl.blog, icon: Newspaper }]
+          : []),
         { href: '/admin/faqs', label: lbl.faq, icon: CircleHelp },
         { href: '/admin/social-links', label: lbl.socialLinks, icon: Share2 },
       ],

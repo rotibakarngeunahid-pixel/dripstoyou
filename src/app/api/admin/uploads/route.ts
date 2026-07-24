@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
-import { adminApiHandler } from '@/lib/auth';
+import { adminApiHandler, can } from '@/lib/auth';
 import type { SessionData } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 const WEBP_QUALITY = 82;
+
+// Subfolder tujuan di php-api/uploads/. `products` tetap default supaya
+// pemanggil lama (ProductForm) tidak perlu berubah.
+const UPLOAD_TYPES = ['products', 'blog'] as const;
+type UploadType = (typeof UPLOAD_TYPES)[number];
+
+function resolveUploadType(value: FormDataEntryValue | null): UploadType {
+  return typeof value === 'string' && (UPLOAD_TYPES as readonly string[]).includes(value)
+    ? (value as UploadType)
+    : 'products';
+}
 
 async function toWebP(file: File): Promise<{ buffer: Buffer; filename: string }> {
   const original = Buffer.from(await file.arrayBuffer());
@@ -18,12 +29,20 @@ async function toWebP(file: File): Promise<{ buffer: Buffer; filename: string }>
   return { buffer, filename };
 }
 
-export const POST = adminApiHandler('products:write', async (req: NextRequest, session: SessionData) => {
+// Permission dicek di dalam handler karena tergantung `type`: upload cover blog
+// butuh content:write, upload foto produk butuh products:write.
+export const POST = adminApiHandler(null, async (req: NextRequest, session: SessionData) => {
   let formData: FormData;
   try {
     formData = await req.formData();
   } catch {
     return NextResponse.json({ error: 'Format request tidak valid' }, { status: 400 });
+  }
+
+  const uploadType = resolveUploadType(formData.get('type'));
+  const permission = uploadType === 'blog' ? 'content:write' : 'products:write';
+  if (!can(session.role, permission)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   const file = formData.get('file');
@@ -52,10 +71,11 @@ export const POST = adminApiHandler('products:write', async (req: NextRequest, s
 
   const phpFormData = new FormData();
   phpFormData.append('file', uploadBlob, uploadFilename);
+  phpFormData.append('type', uploadType);
 
   try {
     const phpRes = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/upload.php`,
+      `${process.env.NEXT_PUBLIC_API_BASE_URL}/admin/upload.php?type=${uploadType}`,
       {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.adminToken ?? ''}` },

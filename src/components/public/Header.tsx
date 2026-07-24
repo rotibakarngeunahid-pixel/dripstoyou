@@ -72,6 +72,7 @@ export default function Header() {
           <a href={sectionHref('treatments', pathname)}>{t.nav.treatments}</a>
           <a href={sectionHref('how-to-book', pathname)}>{t.nav.howToBook}</a>
           <a href={sectionHref('areas', pathname)}>{t.nav.coverage}</a>
+          <Link href="/blog" className={isActive('/blog') ? 'nav-active' : ''}>{t.nav.blog}</Link>
           <Link href="/about" className={isActive('/about') ? 'nav-active' : ''}>{t.nav.about}</Link>
           <Link href="/contact" className={isActive('/contact') ? 'nav-active' : ''}>{t.nav.contact}</Link>
         </nav>
@@ -114,6 +115,7 @@ export default function Header() {
         <a href={sectionHref('treatments', pathname)} onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.treatments}</a>
         <a href={sectionHref('how-to-book', pathname)} onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.howToBook}</a>
         <a href={sectionHref('areas', pathname)} onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.coverage}</a>
+        <Link href="/blog" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.blog}</Link>
         <Link href="/about" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.about}</Link>
         <Link href="/contact" onClick={closeMenu} tabIndex={mobileTabIndex}>{t.nav.contact}</Link>
 

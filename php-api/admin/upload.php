@@ -14,8 +14,16 @@ if (getMethod() !== 'POST') jsonError('Method not allowed', 405);
 // ── Tentukan path dan URL upload ──────────────────────────────────────────────
 // Path selalu dihitung dari lokasi file ini (php-api/admin/upload.php)
 // sehingga tidak perlu UPLOAD_DIR di config.php.
+//
+// `type` memilih subfolder: products (default, backward-compatible) atau blog.
+// Whitelist ketat — nilai lain ditolak, tidak pernah dipakai langsung ke path.
+$type = strtolower(str_clean($_GET['type'] ?? ($_POST['type'] ?? 'products'), 20));
+if (!in_array($type, ['products', 'blog'], true)) {
+    jsonError('Tipe upload tidak valid', 422);
+}
+
 $phpApiDir = realpath(__DIR__ . '/..') ?: dirname(__DIR__);
-$uploadDir = $phpApiDir . '/uploads/products';
+$uploadDir = $phpApiDir . '/uploads/' . $type;
 
 // URL publik — gunakan UPLOAD_BASE_URL dari config jika ada, atau auto-detect
 if (defined('UPLOAD_BASE_URL')) {
@@ -101,12 +109,18 @@ if (!move_uploaded_file($file['tmp_name'], $destPath)) {
 }
 
 // ── Audit & response ──────────────────────────────────────────────────────────
-$publicUrl = $uploadBaseUrl . '/uploads/products/' . $filename;
+$publicUrl = $uploadBaseUrl . '/uploads/' . $type . '/' . $filename;
 
-auditLog('UPDATE_PRODUCT', $admin['admin_id'], 'Product', null, [
-    'operation' => 'upload_image',
-    'filename'  => $filename,
-    'mime'      => $mime,
-]);
+auditLog(
+    $type === 'blog' ? 'UPLOAD_BLOG_IMAGE' : 'UPDATE_PRODUCT',
+    $admin['admin_id'],
+    $type === 'blog' ? 'BlogPost' : 'Product',
+    null,
+    [
+        'operation' => 'upload_image',
+        'filename'  => $filename,
+        'mime'      => $mime,
+    ]
+);
 
 jsonSuccess(['publicUrl' => $publicUrl, 'mimeType' => $mime], 'Upload berhasil');

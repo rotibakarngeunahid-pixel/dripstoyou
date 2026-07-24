@@ -164,6 +164,7 @@ export default function SiteFooterClient({ waNumber, displayNumber }: Props) {
               <div className="footer-links">
                 <Link href="/about">{t.footer.about}</Link>
                 <Link href="/#how-to-book">{t.footer.howToBook}</Link>
+                <Link href="/blog">{t.footer.blog}</Link>
                 <Link href="/faq">{t.footer.faq}</Link>
                 <Link href="/legal/terms-conditions">{t.footer.termsConditions}</Link>
                 <Link href="/legal/privacy-policy">{t.footer.privacyPolicy}</Link>
