@@ -37,6 +37,30 @@ const CLOCK_SVG = (
   </svg>
 );
 
+// Daftar nomor halaman yang dipersingkat: 1 … 4 5 6 … 12.
+// Di layar kecil, merender SEMUA nomor membuat blok paginasi membungkus jadi
+// beberapa baris dan mendorong footer jauh ke bawah. Rantai crawl tetap utuh
+// karena tiap halaman selalu menautkan tetangganya (plus prev/next).
+function pageWindow(current: number, total: number, span: number): (number | 'gap')[] {
+  if (total <= span * 2 + 5) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  const pages = new Set<number>([1, total, current]);
+  for (let offset = 1; offset <= span; offset += 1) {
+    if (current - offset > 1) pages.add(current - offset);
+    if (current + offset < total) pages.add(current + offset);
+  }
+
+  const sorted = [...pages].sort((a, b) => a - b);
+  const out: (number | 'gap')[] = [];
+  sorted.forEach((page, i) => {
+    if (i > 0 && page - sorted[i - 1] > 1) out.push('gap');
+    out.push(page);
+  });
+  return out;
+}
+
 export default function BlogListContent({
   posts, categories, pagination, activeCategory, basePath, heading,
 }: Props) {
@@ -175,16 +199,21 @@ export default function BlogListContent({
         {/* Nomor halaman eksplisit — memberi crawler jalur langsung ke halaman dalam. */}
         {totalPages > 1 && (
           <div className="blog-page-numbers">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
-              <Link
-                key={n}
-                href={pagedUrl(basePath, n)}
-                className={`blog-page-num${n === page ? ' active' : ''}`}
-                aria-current={n === page ? 'page' : undefined}
-              >
-                {n}
-              </Link>
-            ))}
+            {pageWindow(page, totalPages, 1).map((n, i) =>
+              n === 'gap' ? (
+                <span className="blog-page-gap" key={`gap-${i}`} aria-hidden="true">…</span>
+              ) : (
+                <Link
+                  key={n}
+                  href={pagedUrl(basePath, n)}
+                  className={`blog-page-num${n === page ? ' active' : ''}`}
+                  aria-current={n === page ? 'page' : undefined}
+                  aria-label={b.pageOf.replace('{n}', String(n)).replace('{total}', String(totalPages))}
+                >
+                  {n}
+                </Link>
+              ),
+            )}
           </div>
         )}
       </section>

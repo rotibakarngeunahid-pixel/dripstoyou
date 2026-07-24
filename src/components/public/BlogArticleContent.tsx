@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
 import { useLanguage } from '@/contexts/language';
 import { blogAuthorName, formatBlogDate, type BlogPost, type BlogPostCard } from '@/lib/blog';
 
@@ -41,6 +42,46 @@ function trackCtaClick(slug: string, target: string) {
   w.dataLayer?.push({ event: 'blog_cta_click', ...params });
 }
 
+// Indikator progres baca. Di ponsel tidak ada scrollbar, jadi pembaca tidak
+// punya petunjuk seberapa panjang artikelnya — bar tipis ini menggantikannya.
+// Dipasang lewat transform (bukan width) + rAF + listener passive supaya tidak
+// memicu layout ulang dan tidak merusak target INP.
+function ReadingProgress() {
+  const barRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let frame = 0;
+
+    const update = () => {
+      frame = 0;
+      const el = barRef.current;
+      if (!el) return;
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      const ratio = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0;
+      el.style.transform = `scaleX(${ratio})`;
+    };
+
+    const onScroll = () => {
+      if (frame === 0) frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, []);
+
+  return (
+    <div className="blog-progress" aria-hidden="true">
+      <div className="blog-progress-bar" ref={barRef} />
+    </div>
+  );
+}
+
 export default function BlogArticleContent({ post, contentHtml, related }: Props) {
   const { t, lang } = useLanguage();
   const b = t.blog;
@@ -52,6 +93,7 @@ export default function BlogArticleContent({ post, contentHtml, related }: Props
 
   return (
     <main className="page-shell blog-article-shell">
+      <ReadingProgress />
       <article className="blog-article">
         {/* Breadcrumb tampilan — pasangan visual dari BreadcrumbList JSON-LD. */}
         <nav className="blog-breadcrumb" aria-label="Breadcrumb">
@@ -155,7 +197,9 @@ export default function BlogArticleContent({ post, contentHtml, related }: Props
                         src={item.cover_image_url}
                         alt=""
                         fill
-                        sizes="(max-width: 640px) 100vw, 260px"
+                        /* Di ponsel kartu ini jadi baris ringkas dgn thumbnail
+                           ~112px — jangan tarik gambar selebar viewport. */
+                        sizes="(max-width: 767px) 120px, 260px"
                         className="blog-related-photo"
                       />
                     </Link>
