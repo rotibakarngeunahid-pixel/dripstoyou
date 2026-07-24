@@ -6,6 +6,7 @@ import { useAdminLang } from '@/app/admin/AdminLayoutClient';
 import { ADMIN_T } from '@/lib/admin-i18n';
 import { ConfirmModal } from '@/components/admin/ConfirmModal';
 import { adminMutate } from '@/lib/admin-mutate';
+import RichTextEditor from '@/components/admin/RichTextEditor';
 import { estimateReadingMinutes, renderMarkdown } from '@/lib/markdown';
 import { BLOG_STATUSES, type BlogStatus } from '@/lib/blog-status';
 
@@ -229,6 +230,13 @@ export default function BlogForm({
     e.preventDefault();
     setError('');
 
+    // Editor WYSIWYG bukan <textarea>, jadi `required` bawaan browser tidak
+    // berlaku — isi kosong dicegat di sini sebelum menempuh perjalanan ke Zod.
+    if (!body.trim()) {
+      setError(lang === 'id' ? 'Isi artikel wajib diisi.' : 'Article body is required.');
+      return;
+    }
+
     if (coverUrl && !coverAlt.trim()) {
       setError(lang === 'id'
         ? 'Alt text cover wajib diisi bila ada gambar cover.'
@@ -377,13 +385,11 @@ export default function BlogForm({
               {showPreview ? (lang === 'id' ? 'Tutup Pratinjau' : 'Close Preview') : t.pratinjauLangsung}
             </button>
           </div>
-          <textarea
-            className="control"
+          <RichTextEditor
             value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={18}
-            style={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 14, lineHeight: 1.7 }}
-            required
+            onChange={setBody}
+            lang={lang}
+            ariaLabel={t.isiArtikel}
           />
           <span className="admin-help">{t.isiArtikelHelp}</span>
           <span className="admin-help">

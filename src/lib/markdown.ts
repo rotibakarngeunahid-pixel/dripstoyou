@@ -13,6 +13,10 @@
 // Subset yang didukung sengaja dibatasi: H2/H3/H4 (H1 dinormalisasi jadi H2
 // karena H1 halaman milik judul artikel — §8.8), paragraf, list, blockquote,
 // fenced code, hr, gambar, link, bold/italic/inline-code.
+//
+// Backslash-escape (`\*`, `\_`, `\#`, …) didukung supaya editor WYSIWYG bisa
+// menulis ulang teks apa adanya: kalimat "diskon 50 * 2" tidak boleh berubah
+// jadi teks miring hanya karena penulis mengetik bintang.
 
 const HEADING_RE = /^(#{1,6})\s+(.*)$/;
 const UL_RE = /^[-*+]\s+(.*)$/;
@@ -28,6 +32,12 @@ const IMAGE_ONLY_RE = /^!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;([^&]*)&quot;)?\)$/;
 // Sentinel penampung potongan HTML jadi. Aman karena karakter kontrol dibuang
 // dari sumber sebelum apa pun diproses.
 const PH = '\u0001';
+
+// Karakter yang boleh di-escape dengan backslash. Regex ini berjalan SETELAH
+// escapeHtml, jadi `\>` sudah berbentuk `\&gt;` — entitasnya ikut didaftarkan.
+const ESCAPED_CHAR_RE = /\\(&(?:gt|lt|amp|quot);|[\\`*_[\]()#+\-.!~|])/g;
+// Versi untuk sumber MENTAH (belum di-escape), dipakai turunan teks polos.
+const RAW_ESCAPED_CHAR_RE = /\\([\\`*_[\]()#+\-.!~|<>&"])/g;
 
 export interface MarkdownImage {
   alt: string;
@@ -84,6 +94,10 @@ function renderInline(escaped: string): string {
   // 1. Inline code — disimpan lebih dulu supaya isinya tidak ikut diproses.
   out = out.replace(/`([^`]+)`/g, (_m, code: string) => keep(`<code>${code}</code>`));
 
+  // 1b. Backslash-escape — karakter yang di-escape disimpan sebagai teks jadi,
+  // sehingga tidak pernah ikut jadi penanda emphasis / link / gambar.
+  out = out.replace(ESCAPED_CHAR_RE, (_m, char: string) => keep(char));
+
   // 2. Gambar ![alt](url)
   out = out.replace(
     /!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g,
@@ -106,10 +120,12 @@ function renderInline(escaped: string): string {
     },
   );
 
-  // 4. Emphasis
+  // 4. Emphasis — `**` diproses lebih dulu dan non-greedy supaya kombinasi
+  // tebal+miring ("**tebal dengan *miring* di dalam**") tetap terbaca; pola
+  // lama `[^*]+` putus begitu ada bintang di dalamnya.
   out = out
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+    .replace(/\*\*([^\n]+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/__([^\n]+?)__/g, '<strong>$1</strong>')
     .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
     .replace(/(^|[^\w])_([^_\n]+)_/g, '$1<em>$2</em>');
 
@@ -235,8 +251,19 @@ export function renderMarkdown(source: string | null | undefined): string {
 // fallback meta description & excerpt, jadi harus enak dibaca.
 export function markdownToPlainText(source: string | null | undefined): string {
   if (!source) return '';
-  return stripControlChars(source)
+
+  // Karakter yang di-escape penulis (`\*`) disimpan dulu supaya tidak ikut
+  // terbuang oleh pembersihan penanda Markdown di bawah — "diskon 50 \* 2"
+  // harus tetap terbaca "diskon 50 * 2" di meta description.
+  const literals: string[] = [];
+  const source0 = stripControlChars(source)
     .replace(/\r\n?/g, '\n')
+    .replace(RAW_ESCAPED_CHAR_RE, (_m, char: string) => {
+      literals.push(char);
+      return `${PH}${literals.length - 1}${PH}`;
+    });
+
+  return source0
     .replace(/```[\s\S]*?```/g, ' ')
     // Buang HTML mentah yang mungkin diketik penulis — teks turunan ini dipakai
     // untuk meta description/excerpt, jadi harus bersih dari markup.
@@ -248,6 +275,7 @@ export function markdownToPlainText(source: string | null | undefined): string {
     .replace(/^[-*+]\s+/gm, '')
     .replace(/^\d+[.)]\s+/gm, '')
     .replace(/[*_`~]/g, '')
+    .replace(new RegExp(`${PH}(\\d+)${PH}`, 'g'), (_m, i: string) => literals[Number(i)] ?? '')
     .replace(/\s+/g, ' ')
     .trim();
 }
