@@ -16,6 +16,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   Bold,
   Code,
   ImagePlus,
@@ -44,6 +47,9 @@ const TXT = {
     blockHelp: 'Gaya teks — "Judul 1" jadi H2 karena H1 halaman dipakai judul artikel',
     bold: 'Tebal (Ctrl+B)',
     italic: 'Miring (Ctrl+I)',
+    alignLeft: 'Rata kiri',
+    alignCenter: 'Rata tengah',
+    alignRight: 'Rata kanan',
     bullet: 'Daftar poin',
     numbered: 'Daftar bernomor',
     quote: 'Kutipan',
@@ -84,6 +90,9 @@ const TXT = {
     blockHelp: 'Text style — "Heading 1" maps to H2 because the page H1 is the article title',
     bold: 'Bold (Ctrl+B)',
     italic: 'Italic (Ctrl+I)',
+    alignLeft: 'Align left',
+    alignCenter: 'Align center',
+    alignRight: 'Align right',
     bullet: 'Bulleted list',
     numbered: 'Numbered list',
     quote: 'Quote',
@@ -126,6 +135,9 @@ type BlockTag = (typeof BLOCK_OPTIONS)[number];
 const TOOLBAR_ITEMS = [
   { key: 'bold', icon: Bold },
   { key: 'italic', icon: Italic },
+  { key: 'alignLeft', icon: AlignLeft },
+  { key: 'alignCenter', icon: AlignCenter },
+  { key: 'alignRight', icon: AlignRight },
   { key: 'bullet', icon: List },
   { key: 'numbered', icon: ListOrdered },
   { key: 'quote', icon: Quote },
@@ -244,7 +256,10 @@ export default function RichTextEditor({
 
   const [mode, setMode] = useState<'rich' | 'markdown'>('rich');
   const [blockTag, setBlockTag] = useState<BlockTag>('p');
-  const [active, setActive] = useState({ bold: false, italic: false, ul: false, ol: false, quote: false });
+  const [active, setActive] = useState({
+    bold: false, italic: false, ul: false, ol: false, quote: false,
+    alignLeft: false, alignCenter: false, alignRight: false,
+  });
   const [dialog, setDialog] = useState<null | 'link' | 'image'>(null);
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
@@ -315,6 +330,9 @@ export default function RichTextEditor({
       ul: document.queryCommandState('insertUnorderedList'),
       ol: document.queryCommandState('insertOrderedList'),
       quote: inQuote,
+      alignLeft: document.queryCommandState('justifyLeft'),
+      alignCenter: document.queryCommandState('justifyCenter'),
+      alignRight: document.queryCommandState('justifyRight'),
     });
   }, [selectionInsideEditor]);
 
@@ -488,6 +506,9 @@ export default function RichTextEditor({
     switch (key) {
       case 'bold': return run('bold');
       case 'italic': return run('italic');
+      case 'alignLeft': return run('justifyLeft');
+      case 'alignCenter': return run('justifyCenter');
+      case 'alignRight': return run('justifyRight');
       case 'bullet': return run('insertUnorderedList');
       case 'numbered': return run('insertOrderedList');
       case 'quote': return toggleQuote();
@@ -506,6 +527,9 @@ export default function RichTextEditor({
     switch (key) {
       case 'bold': return active.bold;
       case 'italic': return active.italic;
+      case 'alignLeft': return active.alignLeft;
+      case 'alignCenter': return active.alignCenter;
+      case 'alignRight': return active.alignRight;
       case 'bullet': return active.ul;
       case 'numbered': return active.ol;
       case 'quote': return active.quote;

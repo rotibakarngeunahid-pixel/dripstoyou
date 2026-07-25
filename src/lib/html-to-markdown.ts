@@ -173,6 +173,22 @@ function imageMarkdown(el: HTMLElement): string {
   return `![${alt}](${encodeUrl(src)}${title ? ` "${title}"` : ''})`;
 }
 
+/* ─── Perataan (rata kiri/tengah/kanan) ─── */
+
+const ALIGN_VALUES = new Set(['left', 'center', 'right']);
+
+// execCommand('justifyLeft'/'justifyCenter'/'justifyRight') menaruh perataan
+// LANGSUNG di block element yang tersentuh seleksi (bukan wrapper) — lewat
+// `style="text-align:…"`, atau (browser/`styleWithCSS=false` lawas) atribut
+// `align="…"`. Keduanya dicek. Diserialisasi jadi penanda ala-Pandoc
+// `{.center}` / `{.right}` di akhir baris; `left` (default) sengaja tidak
+// pernah ditulis. Pasangannya (yang MEMBACA penanda ini) ada di
+// src/lib/markdown.ts.
+function alignSuffix(el: HTMLElement): string {
+  const value = (el.style.textAlign || el.getAttribute('align') || '').toLowerCase();
+  return ALIGN_VALUES.has(value) && value !== 'left' ? ` {.${value}}` : '';
+}
+
 /* ─── Block ─── */
 
 function wrapsBlocks(el: HTMLElement): boolean {
@@ -238,6 +254,12 @@ function elementBlocks(el: HTMLElement): string[] {
     case 'H6':
       return headingBlock(el, 4);
 
+    case 'P': {
+      const text = collapseWhitespace(inlineChildren(el));
+      if (text === '') return [];
+      return [escapeBlockStart(text) + alignSuffix(el)];
+    }
+
     case 'HR':
       return ['---'];
 
@@ -270,7 +292,7 @@ function elementBlocks(el: HTMLElement): string[] {
 function headingBlock(el: HTMLElement, level: number): string[] {
   const text = collapseWhitespace(inlineChildren(el));
   if (text === '') return [];
-  return [`${'#'.repeat(level)} ${text}`];
+  return [`${'#'.repeat(level)} ${text}${alignSuffix(el)}`];
 }
 
 function codeBlock(el: HTMLElement): string {

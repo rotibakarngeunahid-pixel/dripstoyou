@@ -29,6 +29,14 @@ const FENCE_RE = /^```\s*([a-zA-Z0-9+#-]*)\s*$/;
 // opsional sudah berbentuk &quot;.
 const IMAGE_ONLY_RE = /^!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;([^&]*)&quot;)?\)$/;
 
+// Perataan (rata kiri/tengah/kanan) tidak punya sintaks Markdown baku. Kita
+// pakai penanda ala-Pandoc `{.center}` / `{.right}` di AKHIR baris paragraf
+// atau judul — pasangannya (yang MENULIS penanda ini) ada di
+// html-to-markdown.ts. `left` adalah default dan sengaja tidak pernah ditulis.
+const ALIGN_SUFFIX_RE = /\s*\{\.(left|center|right)\}\s*$/;
+// Versi untuk sumber Markdown MENTAH (dipakai markdownToPlainText, multi-baris).
+const ALIGN_SUFFIX_RAW_RE = /[ \t]*\{\.(?:left|center|right)\}[ \t]*$/gm;
+
 // Sentinel penampung potongan HTML jadi. Aman karena karakter kontrol dibuang
 // dari sumber sebelum apa pun diproses.
 const PH = '\u0001';
@@ -124,6 +132,20 @@ function inlineToPlainText(html: string): string {
 // gambar sebelum ia terunduh dan isi artikel melompat saat gambar muncul:
 // penyumbang CLS terbesar di halaman artikel (target PRD maksimal 0.1).
 // Sumber di sini SUDAH di-escape, jadi pemisah query berbentuk `&amp;`.
+// Melucuti penanda `{.center}`/`{.right}` dari akhir teks blok dan
+// mengembalikan nilai perataannya (`null` untuk `left`/tanpa penanda, sehingga
+// atribut style tidak pernah ditulis untuk kasus default).
+function extractAlign(text: string): { text: string; align: 'center' | 'right' | null } {
+  const match = ALIGN_SUFFIX_RE.exec(text);
+  if (!match) return { text, align: null };
+  const align = match[1] === 'left' ? null : (match[1] as 'center' | 'right');
+  return { text: text.slice(0, match.index), align };
+}
+
+function alignAttr(align: 'center' | 'right' | null): string {
+  return align ? ` style="text-align:${align}"` : '';
+}
+
 function imageDimensionAttrs(escapedUrl: string): string {
   const width = /[?&](?:amp;)?w=(\d{1,5})(?![\d])/.exec(escapedUrl)?.[1];
   const height = /[?&](?:amp;)?h=(\d{1,5})(?![\d])/.exec(escapedUrl)?.[1];
@@ -230,11 +252,11 @@ export function renderMarkdownDocument(source: string | null | undefined): Rende
     const heading = HEADING_RE.exec(line);
     if (heading) {
       const level = Math.min(4, Math.max(2, heading[1].length));
-      const raw = heading[2].trim();
+      const { text: raw, align } = extractAlign(heading[2].trim());
       const text = renderInline(raw);
       const id = nextHeadingId(raw);
       headings.push({ id, level, text: inlineToPlainText(text) });
-      out.push(`<h${level} id="${id}">${text}</h${level}>`);
+      out.push(`<h${level} id="${id}"${alignAttr(align)}>${text}</h${level}>`);
       i += 1;
       continue;
     }
@@ -299,7 +321,8 @@ export function renderMarkdownDocument(source: string | null | undefined): Rende
       i += 1;
     }
     if (para.length > 0) {
-      out.push(`<p>${renderInline(para.join(' '))}</p>`);
+      const { text: paraText, align } = extractAlign(para.join(' '));
+      out.push(`<p${alignAttr(align)}>${renderInline(paraText)}</p>`);
     }
   }
 
@@ -329,6 +352,7 @@ export function markdownToPlainText(source: string | null | undefined): string {
     });
 
   return source0
+    .replace(ALIGN_SUFFIX_RAW_RE, '')
     .replace(/```[\s\S]*?```/g, ' ')
     // Buang HTML mentah yang mungkin diketik penulis — teks turunan ini dipakai
     // untuk meta description/excerpt, jadi harus bersih dari markup.
