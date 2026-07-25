@@ -20,7 +20,7 @@ requireAdminModule($admin, 'blog', $method === 'GET' ? 'view' : ($method === 'DE
 $id     = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
 $db     = getDb();
 
-const BLOG_STATUSES = ['draft', 'scheduled', 'published', 'archived'];
+const BLOG_STATUSES = ['draft', 'published', 'archived'];
 
 // ── GET ───────────────────────────────────────────────────────────────────────
 if ($method === 'GET') {
@@ -134,9 +134,6 @@ if ($method === 'POST') {
     $publishedAt = normalizeBlogDateTime($publishedAtRaw);
     $now         = date('Y-m-d H:i:s');
     if ($status === 'published' && !$publishedAt) $publishedAt = $now;
-    if ($status === 'scheduled' && !$publishedAt) {
-        jsonError('Artikel terjadwal butuh tanggal tayang (publishedAt)', 422);
-    }
 
     $readingMinutes = isset($body['readingMinutes'])
         ? max(1, (int)$body['readingMinutes'])
@@ -291,11 +288,6 @@ if ($method === 'PATCH') {
         } elseif ($current['status'] === 'published' && $newStatus !== 'published') {
             $auditAction = 'UNPUBLISH_BLOG_POST';
         }
-    }
-
-    $effectiveStatus = $newStatus ?? $current['status'];
-    if ($effectiveStatus === 'scheduled' && !$requestedPublishedAt && empty($current['published_at'])) {
-        jsonError('Artikel terjadwal butuh tanggal tayang (publishedAt)', 422);
     }
 
     if ($requestedPublishedAt) {

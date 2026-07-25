@@ -5,8 +5,8 @@
 // Query detail: include_related=1
 //
 // SEMUA query publik wajib memfilter status='published' AND published_at <= NOW().
-// Draft / scheduled (belum waktunya) / archived tidak pernah keluar dari sini,
-// sehingga otomatis tidak masuk sitemap dan URL-nya 404 di Next.js.
+// Draft / archived tidak pernah keluar dari sini, sehingga otomatis tidak masuk
+// sitemap dan URL-nya 404 di Next.js.
 
 require_once __DIR__ . '/helpers.php';
 handleCors();

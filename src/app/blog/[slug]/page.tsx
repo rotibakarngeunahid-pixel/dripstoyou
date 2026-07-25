@@ -91,7 +91,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<{ sl
   const post = await fetchBlogPost(slug);
 
   // blog.php hanya mengembalikan artikel published & published_at <= NOW(), jadi
-  // draft / scheduled / archived otomatis 404 di URL publik (§8.7).
+  // draft / archived otomatis 404 di URL publik (§8.7).
   if (!post) notFound();
 
   // Body dirender ulang dari Markdown di server. Kolom `content` (HTML turunan)

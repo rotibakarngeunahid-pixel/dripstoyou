@@ -5,7 +5,7 @@
 // boundary terakhir — endpoint PHP bisa dipanggil tanpa lewat proxy ini).
 
 import { z } from 'zod';
-import { BLOG_STATUSES, type BlogStatus } from '@/lib/blog-status';
+import { BLOG_STATUSES } from '@/lib/blog-status';
 import {
   estimateReadingMinutes,
   extractMarkdownImages,
@@ -68,8 +68,6 @@ type BlogInput = {
   coverImageUrl?: string | null;
   coverImageAlt?: string | null;
   contentSource?: string | null;
-  status?: BlogStatus;
-  publishedAt?: string | null;
 };
 
 // Aturan lintas-field yang dipakai create & update.
@@ -100,15 +98,6 @@ function checkCrossFieldRules(value: BlogInput, ctx: z.RefinementCtx): void {
         message: 'Setiap gambar di body wajib punya alt text: ![deskripsi gambar](url).',
       });
     }
-  }
-
-  // Artikel terjadwal harus punya waktu tayang.
-  if (value.status === 'scheduled' && !value.publishedAt) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['publishedAt'],
-      message: 'Artikel terjadwal butuh tanggal & jam tayang.',
-    });
   }
 }
 

@@ -3,9 +3,8 @@
 // tanpa ikut menarik Zod + renderer Markdown ke bundle browser.
 //
 //   draft     — belum pernah tayang; URL publik 404, tidak di sitemap.
-//   scheduled — sama seperti draft sampai published_at <= NOW() (gate, bukan cron).
 //   published — tayang, indexable, masuk sitemap.
 //   archived  — ditarik dari publik.
 
-export const BLOG_STATUSES = ['draft', 'scheduled', 'published', 'archived'] as const;
+export const BLOG_STATUSES = ['draft', 'published', 'archived'] as const;
 export type BlogStatus = (typeof BLOG_STATUSES)[number];

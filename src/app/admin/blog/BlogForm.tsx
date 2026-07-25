@@ -247,7 +247,6 @@ export default function BlogForm({
 
   const statusLabels: Record<BlogStatus, string> = {
     draft: t.statusDraft,
-    scheduled: t.statusScheduled,
     published: t.statusPublished,
     archived: t.statusArchived,
   };
@@ -524,7 +523,6 @@ export default function BlogForm({
               type="datetime-local"
               value={publishedAt}
               onChange={(e) => setPublishedAt(e.target.value)}
-              required={status === 'scheduled'}
             />
             <span className="admin-help">{t.publishedAtHelp}</span>
           </label>

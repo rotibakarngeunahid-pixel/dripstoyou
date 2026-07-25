@@ -38,7 +38,6 @@ async function getPost(id: string, token: string): Promise<PreviewPost | null> {
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Draft',
-  scheduled: 'Terjadwal',
   published: 'Tayang',
   archived: 'Arsip',
 };

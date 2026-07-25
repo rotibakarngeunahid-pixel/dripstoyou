@@ -3,7 +3,7 @@
 // Halaman publik memanggil PHP langsung dari Server Component (persis pola
 // treatments/[slug]) — tidak ada proxy Next.js untuk blog publik. Endpoint
 // `blog.php` sendiri sudah hanya mengembalikan artikel published, jadi draft /
-// scheduled / archived tidak pernah bocor ke sini maupun ke sitemap.
+// archived tidak pernah bocor ke sini maupun ke sitemap.
 
 import { toDirectImageUrl } from '@/lib/images';
 import { markdownToPlainText } from '@/lib/markdown';

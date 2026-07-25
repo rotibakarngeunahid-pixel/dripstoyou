@@ -24,7 +24,6 @@ export interface AdminBlogPost {
 
 const STATUS_COLORS: Record<BlogStatus, { color: string; background: string }> = {
   draft:     { color: '#7a6a3f', background: 'rgba(201,148,76,.14)' },
-  scheduled: { color: '#1d6b7a', background: 'rgba(41,128,139,.14)' },
   published: { color: '#1b8f4d', background: 'rgba(27,143,77,.12)' },
   archived:  { color: '#6b7280', background: 'rgba(107,114,128,.14)' },
 };
@@ -54,7 +53,6 @@ export default function BlogListClient({
 
   const statusLabels: Record<BlogStatus, string> = {
     draft: t.statusDraft,
-    scheduled: t.statusScheduled,
     published: t.statusPublished,
     archived: t.statusArchived,
   };
@@ -110,7 +108,6 @@ export default function BlogListClient({
           >
             <option value="">{t.semuaStatus}</option>
             <option value="draft">{t.statusDraft}</option>
-            <option value="scheduled">{t.statusScheduled}</option>
             <option value="published">{t.statusPublished}</option>
             <option value="archived">{t.statusArchived}</option>
           </select>

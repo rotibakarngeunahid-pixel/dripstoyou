@@ -59,7 +59,7 @@ Website dripstoyou.com saat ini tidak punya kanal konten/edukasi. Semua halaman 
 - Halaman publik: `/blog` (listing + pagination), `/blog/[slug]` (detail).
 - Halaman kategori `/blog/kategori/[slug]`.
 - Admin UI: `/admin/blog` (list), `/admin/blog/new`, `/admin/blog/[id]/edit` (mirror `admin/products`).
-- Status lifecycle: **draft → published → archived**, plus **scheduled** (via gate `published_at`).
+- Status lifecycle: **draft → published → archived** (publish selalu manual — lihat §7.4).
 - SEO lengkap (§8): meta, canonical, OG/Twitter, JSON-LD `BlogPosting` + `BreadcrumbList`, sitemap dinamis, noindex draft, heading hierarchy, alt text wajib, ISR, pagination crawlable.
 - Cover image via `php-api/admin/upload.php` (reuse, folder `blog`), kompresi/serve WebP lewat `next/image`.
 - Internal linking: CTA ke `/booking` & `/treatments`, related posts by kategori.
@@ -72,7 +72,7 @@ Website dripstoyou.com saat ini tidak punya kanal konten/edukasi. Semua halaman 
 | **RSS/Atom feed** | Future (nice-to-have) | Mudah ditambah dari data published; bukan prioritas v1. |
 | **Tags (many-to-many)** | Future | v1 cukup kategori tunggal per artikel. |
 | **Full-text search di blog** | Future | v1 mengandalkan navigasi kategori + Google. |
-| **Scheduled publish via cron** | Diganti pendekatan gate | Shared hosting Rumahweb tidak ideal untuk cron; dipenuhi lewat `status=scheduled` + `published_at <= NOW()` + ISR (§7.3). |
+| **Scheduled publish** | **Dihapus** (lihat §7.4) | Gate `status=scheduled` tidak pernah bekerja (endpoint publik selalu mensyaratkan `status='published'`); dicabut daripada diperbaiki. Publish selalu manual. |
 | **Multi-bahasa / hreflang** | **DITUNDA** (kebijakan proyek) | Keputusan i18n ditunda; jangan pasang hreflang tanpa URL per bahasa. |
 | **Author sebagai entitas/profil** | Future | v1: nama author sebagai string (default brand). |
 | **View counter / popularitas** | Optional v1 | Kolom `view_count` disiapkan tapi increment-nya opsional. |
@@ -146,8 +146,8 @@ Konvensi mengikuti tabel `products`: PK `CHAR(36)` (UUID via `generateId()`), ti
 | `og_image_url` | VARCHAR(500) | ✅ | NULL | Opsional; kosong → `cover_image_url` → `DEFAULT_OG_IMAGE` |
 | `author_name` | VARCHAR(120) | ✅ | NULL | Kosong → `SITE_NAME` ("Drips To You - Bali") |
 | `author_admin_id` | CHAR(36) | ✅ | NULL | Jejak penulis internal (tidak ditampilkan publik di v1) |
-| `status` | ENUM('draft','scheduled','published','archived') | ❌ | 'draft' | Lifecycle (§7.3) |
-| `published_at` | DATETIME | ✅ | NULL | Diisi saat publish; untuk `scheduled` = waktu tayang mendatang |
+| `status` | ENUM('draft','published','archived') | ❌ | 'draft' | Lifecycle (§7.3) |
+| `published_at` | DATETIME | ✅ | NULL | Diisi saat publish; bisa di-override manual (backdating/urutan) |
 | `reading_minutes` | INT | ✅ | NULL | Estimasi baca (dihitung dari `content` saat simpan) |
 | `view_count` | INT | ❌ | 0 | Opsional (increment di v1 bersifat opsional) |
 | `created_at` | DATETIME | ❌ | — | |
@@ -160,7 +160,7 @@ Konvensi mengikuti tabel `products`: PK `CHAR(36)` (UUID via `generateId()`), ti
 - (Opsional future) `FULLTEXT(title, excerpt, content)` untuk search internal.
 
 **Aturan integritas kunci untuk SEO:**
-- Publik **hanya** melihat baris dengan `status='published' AND published_at <= NOW()`. Baris `draft`/`scheduled`/`archived` **tidak pernah** keluar dari endpoint publik → otomatis tidak masuk sitemap & tidak bisa diakses via URL (404).
+- Publik **hanya** melihat baris dengan `status='published' AND published_at <= NOW()`. Baris `draft`/`archived` **tidak pernah** keluar dari endpoint publik → otomatis tidak masuk sitemap & tidak bisa diakses via URL (404).
 - `slug` unik dan tidak berubah setelah publish (§8.1).
 
 ---
@@ -259,15 +259,25 @@ Komponen mirror pola treatments: `Header`, `SiteFooter`, `ScrollRevealInit`, `<J
 ```
         create
    ┌───────────────► draft ──publish──► published ──archive──► archived
-   │                   ▲  │                 │  ▲                    │
-   │        unpublish  │  │  set published_at (future)             │
-   │                   │  ▼                 ▼  │  unarchive/republish
-   └───────────  scheduled  ───(published_at <= NOW)──► (tampil publik otomatis)
+   │                                        │  ▲                    │
+   │                                        │  │  unarchive/republish
+   └────────────────unpublish───────────────┘  └────────────────────┘
 ```
 - **draft** — noindex, tidak dapat diakses publik (URL → 404), tidak di sitemap.
-- **scheduled** — sama seperti draft dari sisi publik **sampai** `published_at <= NOW()`. Karena endpoint publik memfilter `published_at <= NOW()` dan halaman ISR revalidate, artikel "muncul sendiri" saat waktunya tiba tanpa cron. Lag maksimum = window `revalidate`.
 - **published** — indexable, di sitemap, dapat diakses.
 - **archived** — ditarik dari publik (404 + hilang dari sitemap). URL bisa 301 ke `/blog` atau kategori (future) untuk menjaga link equity; v1 minimal 404/410.
+
+> **Scheduled publish dihapus (lihat §7.4).** Sebelumnya ada status `scheduled` yang
+> seharusnya jadi gate "tayang otomatis saat `published_at` tiba", tapi endpoint
+> publik (`blog.php`) selalu memfilter `status='published'` secara eksplisit —
+> artikel `scheduled` tidak pernah otomatis tayang. Fitur ini dicabut daripada
+> diperbaiki; publish sekarang selalu manual.
+
+### 7.4 Riwayat: Scheduled Publish (DIHAPUS)
+Fitur "tayang berjadwal" (status `scheduled` + field tanggal & jam tayang sebagai
+gate) telah dihapus dari kode maupun UI admin. Field `published_at` tetap ada
+sebagai override opsional untuk tanggal tampil/urutan artikel `published`
+(mis. backdating), tapi tidak lagi punya arti "jadwalkan tayang di masa depan".
 
 ---
 
@@ -330,11 +340,11 @@ Extend `src/app/sitemap.ts` (pola `fetchTreatmentSlugs`):
 - Tambah `fetchBlogSlugs()` → fetch `${NEXT_PUBLIC_API_BASE_URL}/blog.php` (endpoint publik = **hanya published**), `next: { revalidate: 3600 }`.
 - Map ke `${BASE_URL}/blog/${slug}` dengan `lastModified = toIsoDate(updated_at, now)`, `changeFrequency: 'weekly'`, `priority: 0.7`.
 - Tambah entri statik `${BASE_URL}/blog` (priority 0.8) dan tiap `/blog/kategori/{slug}` (priority 0.6, dari `blog-categories.php`).
-- **draft/scheduled/archived tidak pernah masuk** — otomatis, karena `blog.php` tidak mengembalikannya. (Tidak boleh menambang tabel mentah.)
+- **draft/archived tidak pernah masuk** — otomatis, karena `blog.php` tidak mengembalikannya. (Tidak boleh menambang tabel mentah.)
 - Pastikan pagination URL (`?page=n`) **tidak** dimasukkan ke sitemap (hanya URL kanonik artikel & halaman 1 listing/kategori).
 
 ### 8.7 Draft = noindex & tidak dapat diakses
-- **Akses publik:** halaman `/blog/[slug]` fetch `blog.php?slug=` yang hanya balas published → jika null → `notFound()` (404). Draft/scheduled/archived **tidak** dapat dibuka via URL langsung.
+- **Akses publik:** halaman `/blog/[slug]` fetch `blog.php?slug=` yang hanya balas published → jika null → `notFound()` (404). Draft/archived **tidak** dapat dibuka via URL langsung.
 - **Preview draft (admin):** route preview terautentikasi terpisah (mis. `/admin/blog/[id]/preview`) yang fetch via proxy admin (butuh session), **selalu `robots: { index: false, follow: false }`** dan `X-Robots-Tag: noindex`. Tidak memakai path `/blog/*` publik.
 - Semua halaman non-public (admin) sudah di-disallow di `robots.ts` (`/admin/`).
 
@@ -427,7 +437,7 @@ Belum ada library rich text di project. Opsi:
 ## 11. Open Questions
 1. **Bahasa konten (v1):** ID, EN, atau keduanya? *(i18n/hreflang DITUNDA — jadi v1 harus single-language; tetapkan **satu**.)* Rekomendasi menyusul strategi keyword & audiens (mayoritas pembaca treatment saat ini berbahasa EN — konten EN memengaruhi `og:locale`/`lang`).
 2. **Kebijakan komentar publik:** aktif atau tidak? (Default PRD: **tidak** di v1.) Bila ya → butuh moderasi, anti-spam, rate limit, penyimpanan PII → naik jadi epik terpisah.
-3. **Penjadwalan publish:** cukup manual publish, atau butuh **scheduled** (`published_at` mendatang + gate)? PRD menyiapkan `status='scheduled'` tapi realisasi otomatisnya bergantung ISR (bukan cron) — konfirmasi ekspektasi ketepatan waktu tayang.
+3. **Penjadwalan publish:** ~~scheduled via gate~~ — **dijawab**: dihapus (§7.4). Gate `status='scheduled'` tidak pernah bekerja (endpoint publik mensyaratkan `status='published'` secara eksplisit) dan tidak diperbaiki; publish selalu manual di v1.
 4. **Editor konten:** Markdown vs WYSIWYG (lihat §10.1) — perlu keputusan sebelum implementasi form.
 5. **Author display:** tampilkan nama penulis di artikel (butuh entitas Person + kebijakan privasi staf) atau selalu atas nama brand? (Default v1: **brand**.)
 6. **Halaman kategori:** rilis di v1 atau v1.1? (PRD default: v1, karena murah & bagus untuk struktur SEO.)
@@ -439,14 +449,14 @@ Belum ada library rich text di project. Opsi:
 **Data & API**
 - [ ] Migration membuat `blog_categories` & `blog_posts` sesuai §5 (index & unique slug ada).
 - [ ] `GET /api/blog.php` hanya mengembalikan artikel `status='published' AND published_at<=NOW()`; mendukung `page`/`per_page`/`category`; pagination di-bind int (bukan concat).
-- [ ] `GET /api/blog.php?slug=` mengembalikan 1 artikel published + related (opsional); slug draft/scheduled/archived → 404 dari halaman.
+- [ ] `GET /api/blog.php?slug=` mengembalikan 1 artikel published + related (opsional); slug draft/archived → 404 dari halaman.
 - [ ] CRUD admin (`admin/blog.php`) menegakkan `requireRole(SUPER_ADMIN, CONTENT_ADMIN)` untuk non-GET; slug tervalidasi regex + unik (409 bila bentrok).
 - [ ] Audit log tercatat untuk CREATE/UPDATE/DELETE/PUBLISH/UNPUBLISH.
 - [ ] Proxy admin menegakkan session (401) + `content:write` (403), meneruskan query `id` secara eksplisit, dan **memvalidasi body dengan Zod**.
 - [ ] ADMIN_OPERASIONAL tidak bisa mengakses admin blog (403 di proxy & PHP).
 
 **SEO (verifiable)**
-- [ ] Artikel **published muncul di `sitemap.xml` ≤ 1 jam** setelah publish; draft/scheduled/archived **tidak** ada di sitemap.
+- [ ] Artikel **published muncul di `sitemap.xml` ≤ 1 jam** setelah publish; draft/archived **tidak** ada di sitemap.
 - [ ] Setiap halaman artikel punya: 1× `<h1>`, canonical benar, OG `type=article` + `article:published_time`/`modified_time`, Twitter card, JSON-LD `BlogPosting` **valid** (lolos Rich Results Test) dengan `publisher` `@id` ke Organization existing, dan `BreadcrumbList`.
 - [ ] Halaman `/blog?page=2` self-canonical ke dirinya, title bersufiks halaman, dan tetap ter-crawl (ada link `<a>` antar halaman; tanpa JS pun navigasi jalan).
 - [ ] Halaman kategori punya meta title/description sendiri (bukan duplikat `/blog`) + self-canonical + breadcrumb.

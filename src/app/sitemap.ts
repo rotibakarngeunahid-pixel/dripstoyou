@@ -47,8 +47,8 @@ async function fetchTreatmentSlugs(): Promise<TreatmentEntry[]> {
 }
 
 // blog.php hanya mengembalikan artikel published & published_at <= NOW(), jadi
-// draft/scheduled/archived tidak pernah bisa masuk sitemap. Jangan pernah
-// mengganti sumbernya dengan query tabel mentah.
+// draft/archived tidak pernah bisa masuk sitemap. Jangan pernah mengganti
+// sumbernya dengan query tabel mentah.
 async function fetchBlogSlugs(): Promise<BlogEntry[]> {
   const base = apiBase();
   if (!base) return [];
