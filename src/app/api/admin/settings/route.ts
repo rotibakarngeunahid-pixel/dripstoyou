@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (session.role === 'CONTENT_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   return phpProxyPath('admin/settings.php', {
     headers: { Authorization: `Bearer ${session.adminToken}` },
   });
@@ -15,6 +16,7 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (session.role === 'CONTENT_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const body   = await req.text();
   return phpProxyPath('admin/settings.php', {
     method: 'PATCH',

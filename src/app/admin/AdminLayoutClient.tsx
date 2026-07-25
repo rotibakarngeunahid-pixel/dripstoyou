@@ -87,13 +87,21 @@ type AdminUser = {
 };
 
 function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang], role?: string | null): NavGroup[] {
+  // Booking, Jadwal, Area Layanan, dan Pengaturan Umum adalah ranah
+  // operasional — CONTENT_ADMIN diblok dari semuanya di backend (403), jadi
+  // menu-nya pun tidak ditampilkan. WhatsApp Template SENGAJA dikecualikan:
+  // CONTENT_ADMIN memang punya akses tulis ke situ (lihat wa-template.php).
   const mainItems: NavItem[] = [
     { href: '/admin/dashboard', label: lbl.dashboard, icon: LayoutDashboard },
-    { href: '/admin/bookings',  label: lbl.booking,   icon: ClipboardList },
+    ...(role !== 'CONTENT_ADMIN'
+      ? [{ href: '/admin/bookings', label: lbl.booking, icon: ClipboardList }]
+      : []),
   ];
   const settingsItems: NavItem[] = [
-    { href: '/admin/settings',             label: lbl.generalSettings, icon: Settings },
-    { href: '/admin/settings/wa-template', label: lbl.waTemplate,      icon: MessageCircle },
+    ...(role !== 'CONTENT_ADMIN'
+      ? [{ href: '/admin/settings', label: lbl.generalSettings, icon: Settings }]
+      : []),
+    { href: '/admin/settings/wa-template', label: lbl.waTemplate, icon: MessageCircle },
   ];
   if (role === 'SUPER_ADMIN') {
     settingsItems.push({ href: '/admin/users', label: lbl.adminUsers, icon: Users });
@@ -112,8 +120,12 @@ function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang], role?: string | nul
       label: lbl.services,
       items: [
         { href: '/admin/products', label: lbl.treatment, icon: PackagePlus },
-        { href: '/admin/schedule', label: lbl.schedule, icon: CalendarDays },
-        { href: '/admin/coverage', label: lbl.coverage, icon: MapPinned },
+        ...(role !== 'CONTENT_ADMIN'
+          ? [
+              { href: '/admin/schedule', label: lbl.schedule, icon: CalendarDays },
+              { href: '/admin/coverage', label: lbl.coverage, icon: MapPinned },
+            ]
+          : []),
       ],
     },
     {
