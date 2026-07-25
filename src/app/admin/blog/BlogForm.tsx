@@ -7,8 +7,11 @@ import { ADMIN_T } from '@/lib/admin-i18n';
 import { ConfirmModal } from '@/components/admin/ConfirmModal';
 import { adminMutate } from '@/lib/admin-mutate';
 import RichTextEditor from '@/components/admin/RichTextEditor';
-import { estimateReadingMinutes, renderMarkdown } from '@/lib/markdown';
+import { estimateReadingMinutes } from '@/lib/markdown';
 import { BLOG_STATUSES, type BlogStatus } from '@/lib/blog-status';
+
+// Harus sama dengan BLOG_PREVIEW_STORAGE_KEY di src/app/admin/blog/preview/page.tsx.
+const PREVIEW_STORAGE_KEY = 'drip-blog-preview';
 
 export interface AdminBlogCategory {
   id: string;
@@ -202,7 +205,6 @@ export default function BlogForm({
   const [status, setStatus] = useState<BlogStatus>(post?.status ?? 'draft');
   const [publishedAt, setPublishedAt] = useState(toLocalInput(post?.published_at ?? null));
 
-  const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -211,8 +213,37 @@ export default function BlogForm({
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const effectiveSlug = slugTouched || isEdit ? slug : slugify(title);
-  const previewHtml = useMemo(() => (showPreview ? renderMarkdown(body) : ''), [showPreview, body]);
   const readingMinutes = useMemo(() => estimateReadingMinutes(body), [body]);
+
+  // Pratinjau dibuka di TAB BARU: isi form terkini dititip lewat localStorage,
+  // lalu /admin/blog/preview membacanya & merender persis seperti artikel publik.
+  // Beda dari editor WYSIWYG di bawah — di sini tampil dengan cover, judul H1,
+  // daftar isi, dan CTA seperti yang dilihat pembaca. Jalan untuk artikel baru
+  // (belum punya id) maupun yang sedang diedit, dan selalu memakai editan
+  // TERKINI (bukan versi tersimpan seperti /admin/blog/[id]/preview).
+  function openPreview() {
+    if (typeof window === 'undefined') return;
+    const payload = {
+      title,
+      excerpt,
+      contentSource: body,
+      coverUrl,
+      coverAlt,
+      categoryName: categories.find((c) => c.id === categoryId)?.name ?? '',
+      authorName,
+      readingMinutes,
+      savedAt: Date.now(),
+    };
+    try {
+      localStorage.setItem(PREVIEW_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // Kuota localStorage penuh (isi sangat besar) — tetap buka tab; tab akan
+      // menampilkan data pratinjau sebelumnya bila ada.
+    }
+    // Nama tab tetap "blog-preview" + query anti-cache: klik berikutnya memuat
+    // ulang tab yang SAMA dengan konten terbaru, bukan menumpuk tab baru.
+    window.open(`/admin/blog/preview?v=${payload.savedAt}`, 'blog-preview');
+  }
 
   const statusLabels: Record<BlogStatus, string> = {
     draft: t.statusDraft,
@@ -380,9 +411,10 @@ export default function BlogForm({
               type="button"
               className="button button-secondary"
               style={{ minHeight: 34, padding: '4px 14px', fontSize: 13 }}
-              onClick={() => setShowPreview((v) => !v)}
+              onClick={openPreview}
+              title={lang === 'id' ? 'Buka pratinjau di tab baru' : 'Open preview in a new tab'}
             >
-              {showPreview ? (lang === 'id' ? 'Tutup Pratinjau' : 'Close Preview') : t.pratinjauLangsung}
+              {t.pratinjauLangsung} ↗
             </button>
           </div>
           <RichTextEditor
@@ -395,12 +427,6 @@ export default function BlogForm({
           <span className="admin-help">
             ≈ {readingMinutes} {lang === 'id' ? 'menit baca' : 'min read'}
           </span>
-
-          {showPreview && (
-            <div className="surface-card" style={{ marginTop: 14 }}>
-              <div className="blog-prose" dangerouslySetInnerHTML={{ __html: previewHtml }} />
-            </div>
-          )}
         </div>
 
         {/* Cover */}
