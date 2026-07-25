@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { can } from '@/lib/auth';
+import { can, adminHomePath } from '@/lib/auth';
 import { renderMarkdown } from '@/lib/markdown';
 import { toDirectImageUrl } from '@/lib/images';
 import { SITE_NAME } from '@/lib/seo';
@@ -46,7 +46,7 @@ const STATUS_LABELS: Record<string, string> = {
 export default async function BlogPreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
-  if (!can(session, 'blog', 'view')) redirect('/admin/dashboard');
+  if (!can(session, 'blog', 'view')) redirect(adminHomePath(session));
 
   const { id } = await params;
   const post = await getPost(id, session.adminToken);

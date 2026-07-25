@@ -10,7 +10,7 @@ type AdminRole = 'SUPER_ADMIN' | 'ADMIN_OPERASIONAL' | 'CONTENT_ADMIN';
 // adminUsers/export stay hard-locked to SUPER_ADMIN in the backend and are
 // deliberately NOT here — showing them as togglable would recreate the exact
 // "checkbox does nothing" bug this system just got fixed for.
-type PermKey = 'booking' | 'treatment' | 'schedule' | 'coverage' | 'blog' | 'faq' | 'social_links' | 'settings' | 'wa_template';
+type PermKey = 'dashboard' | 'booking' | 'treatment' | 'schedule' | 'coverage' | 'blog' | 'faq' | 'social_links' | 'settings' | 'wa_template';
 type PermEntry = { view: boolean; manage: boolean; delete: boolean };
 type PermissionMatrix = Record<PermKey, PermEntry>;
 
@@ -40,6 +40,7 @@ const ROLE_COLORS: Record<AdminRole, { bg: string; color: string }> = {
 };
 
 const PERM_MODULES: { key: PermKey; label: string }[] = [
+  { key: 'dashboard',    label: 'Dashboard' },
   { key: 'booking',      label: 'Booking' },
   { key: 'treatment',    label: 'Treatment' },
   { key: 'schedule',     label: 'Jadwal' },
@@ -61,6 +62,7 @@ const EMPTY_PERM_ENTRY: PermEntry = { view: false, manage: false, delete: false 
 // in sync; this is the single source of truth on the display side.
 const DEFAULT_PERMS: Record<AdminRole, PermissionMatrix> = {
   SUPER_ADMIN: {
+    dashboard:    { view: true,  manage: true,  delete: true  },
     booking:      { view: true,  manage: true,  delete: true  },
     treatment:    { view: true,  manage: true,  delete: true  },
     schedule:     { view: true,  manage: true,  delete: true  },
@@ -72,6 +74,7 @@ const DEFAULT_PERMS: Record<AdminRole, PermissionMatrix> = {
     wa_template:  { view: true,  manage: true,  delete: true  },
   },
   ADMIN_OPERASIONAL: {
+    dashboard:    { view: true,  manage: false, delete: false },
     booking:      { view: true,  manage: true,  delete: false },
     treatment:    { view: true,  manage: false, delete: false },
     schedule:     { view: true,  manage: true,  delete: true  },
@@ -83,6 +86,7 @@ const DEFAULT_PERMS: Record<AdminRole, PermissionMatrix> = {
     wa_template:  { view: true,  manage: false, delete: false },
   },
   CONTENT_ADMIN: {
+    dashboard:    { view: true,  manage: false, delete: false },
     booking:      { view: false, manage: false, delete: false },
     treatment:    { view: true,  manage: true,  delete: true  },
     schedule:     { view: false, manage: false, delete: false },

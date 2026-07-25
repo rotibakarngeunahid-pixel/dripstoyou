@@ -156,7 +156,7 @@ function requireRole(array $admin, string ...$roles): void {
 // permissions_json.
 
 function adminAllModules(): array {
-    return ['booking', 'treatment', 'schedule', 'coverage', 'blog', 'faq', 'social_links', 'settings', 'wa_template'];
+    return ['dashboard', 'booking', 'treatment', 'schedule', 'coverage', 'blog', 'faq', 'social_links', 'settings', 'wa_template'];
 }
 
 function adminPermissions(): array {
@@ -169,6 +169,7 @@ function adminPermissions(): array {
         // Ranah operasional: booking/schedule/coverage/settings. Baca-saja untuk
         // treatment/faq/social_links/wa_template (konten bukan tanggung jawabnya).
         'ADMIN_OPERASIONAL' => [
+            'dashboard'    => $viewOnly,
             'booking'      => $noDelete,
             'treatment'    => $viewOnly,
             'schedule'     => $full,
@@ -180,8 +181,12 @@ function adminPermissions(): array {
             'wa_template'  => $viewOnly,
         ],
         // Ranah konten: treatment/blog/faq/social_links/wa_template. Tidak ada
-        // akses booking/schedule/coverage/settings sama sekali.
+        // akses booking/schedule/coverage/settings sama sekali. Dashboard tetap
+        // default nyala (ringkasan booking di dalamnya sudah masking PII untuk
+        // role ini — lihat dashboard.php) supaya akun default tidak berubah;
+        // admin custom-permission (mis. blog-only) boleh mematikannya.
         'CONTENT_ADMIN' => [
+            'dashboard'    => $viewOnly,
             'booking'      => $none,
             'treatment'    => $full,
             'schedule'     => $none,

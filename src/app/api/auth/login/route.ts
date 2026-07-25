@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, AdminRole, AdminModulePermissions } from '@/lib/session';
+import { adminHomePath } from '@/lib/auth';
 import { getCRMSession, CRMRole } from '@/lib/crm-session';
 import { crmHomePath } from '@/lib/crm-permissions';
 
@@ -103,7 +104,8 @@ export async function POST(req: NextRequest) {
     if (!isWebsiteAdmin && !crmTarget) {
       return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 });
     }
-    return NextResponse.json({ success: true, target: crmTarget ?? '/admin/dashboard' });
+    const adminTarget = data.admin ? adminHomePath({ role: data.admin.admin.role as AdminRole, permissions: data.admin.admin.permissions ?? {} }) : '/admin/dashboard';
+    return NextResponse.json({ success: true, target: crmTarget ?? adminTarget });
   }
   if (uni.status === 401) {
     return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 });
@@ -111,12 +113,14 @@ export async function POST(req: NextRequest) {
 
   // ── Fallback: unified-login.php not deployed yet (404/405/5xx) ───────────────
   let isWebsiteAdmin = false;
+  let adminPayload: AdminPayload | null = null;
 
   // 1. Website admin
   const adminRes = await callPhp('admin/login.php');
   if (adminRes.status === 429) return rateLimited(adminRes.json);
   if (adminRes.ok && adminRes.json.success) {
-    await saveAdminSession(adminRes.json.data as AdminPayload);
+    adminPayload = adminRes.json.data as AdminPayload;
+    await saveAdminSession(adminPayload);
     isWebsiteAdmin = true;
   } else if (adminRes.status === 503) {
     return NextResponse.json({ error: 'Server autentikasi tidak dapat dihubungi. Coba lagi.' }, { status: 503 });
@@ -134,6 +138,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email atau password salah' }, { status: 401 });
   }
 
-  // Prefer the CRM home; admins without CRM access (CONTENT_ADMIN) go to /admin.
-  return NextResponse.json({ success: true, target: crmTarget ?? '/admin/dashboard' });
+  // Prefer the CRM home; admins without CRM access (CONTENT_ADMIN) go to their
+  // first available admin module (adminHomePath).
+  const adminTarget = adminPayload ? adminHomePath({ role: adminPayload.admin.role as AdminRole, permissions: adminPayload.admin.permissions ?? {} }) : '/admin/dashboard';
+  return NextResponse.json({ success: true, target: crmTarget ?? adminTarget });
 }

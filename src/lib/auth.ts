@@ -19,6 +19,32 @@ export async function requireAdmin(): Promise<SessionData> {
   return requireSession();
 }
 
+// Landing page after login / when an admin lacks 'dashboard' access — the
+// first module they can actually open, in priority order. Mirrors
+// crmHomePath()/HOME_PRIORITY in src/lib/crm-permissions.ts.
+const HOME_PRIORITY: { module: AdminModuleKey; path: string }[] = [
+  { module: 'dashboard',    path: '/admin/dashboard' },
+  { module: 'booking',      path: '/admin/bookings' },
+  { module: 'blog',         path: '/admin/blog' },
+  { module: 'treatment',    path: '/admin/products' },
+  { module: 'faq',          path: '/admin/faqs' },
+  { module: 'social_links', path: '/admin/social-links' },
+  { module: 'schedule',     path: '/admin/schedule' },
+  { module: 'coverage',     path: '/admin/coverage' },
+  { module: 'settings',     path: '/admin/settings' },
+  { module: 'wa_template',  path: '/admin/settings/wa-template' },
+];
+
+export function adminHomePath(session: Pick<SessionData, 'role' | 'permissions'>): string {
+  if (session.role === 'SUPER_ADMIN') return '/admin/dashboard';
+  for (const h of HOME_PRIORITY) {
+    if (can(session, h.module, 'view')) return h.path;
+  }
+  // Akun tanpa modul apa pun (mis-konfigurasi) — jangan biarkan redirect
+  // gagal, meski halamannya sendiri akan menampilkan "tidak ada akses".
+  return '/admin/dashboard';
+}
+
 export async function requireModule(
   module: AdminModuleKey,
   action: ModuleAction = 'view',

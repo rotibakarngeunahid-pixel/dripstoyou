@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { can } from '@/lib/auth';
+import { can, adminHomePath } from '@/lib/auth';
 import BlogForm, { type AdminBlogCategory, type AdminBlogPostDetail } from '../../BlogForm';
 
 async function getPost(id: string, token: string): Promise<AdminBlogPostDetail | null> {
@@ -37,7 +37,7 @@ async function getCategories(token: string): Promise<AdminBlogCategory[]> {
 export default async function EditBlogPostPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
-  if (!can(session, 'blog', 'manage')) redirect('/admin/dashboard');
+  if (!can(session, 'blog', 'manage')) redirect(adminHomePath(session));
 
   const { id } = await params;
   const [post, categories] = await Promise.all([

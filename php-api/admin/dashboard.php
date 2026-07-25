@@ -5,6 +5,7 @@ require_once __DIR__ . '/../helpers.php';
 handleCors();
 requireMethod('GET');
 $admin = requireAuth();
+requireAdminModule($admin, 'dashboard', 'view');
 // CONTENT_ADMIN tidak boleh melihat PII booking — nomor HP tidak didekripsi.
 $canSeePhone = in_array($admin['role'] ?? '', ['SUPER_ADMIN', 'ADMIN_OPERASIONAL'], true);
 

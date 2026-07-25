@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { can } from '@/lib/auth';
+import { can, adminHomePath } from '@/lib/auth';
 import BlogListClient, { type AdminBlogPost } from './BlogListClient';
 import type { AdminBlogCategory } from './BlogForm';
 
@@ -38,7 +38,7 @@ export default async function AdminBlogPage() {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
   // Blog = permission konten. ADMIN_OPERASIONAL tidak punya content:* sama sekali.
-  if (!can(session, 'blog', 'view')) redirect('/admin/dashboard');
+  if (!can(session, 'blog', 'view')) redirect(adminHomePath(session));
 
   const [posts, categories] = await Promise.all([
     getPosts(session.adminToken),

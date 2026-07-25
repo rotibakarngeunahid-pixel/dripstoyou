@@ -99,6 +99,31 @@ function hasView(role: string | null | undefined, permissions: AdminModulePermis
   return permissions?.[module]?.view ?? false;
 }
 
+// Duplikat sengaja dari adminHomePath()/HOME_PRIORITY di src/lib/auth.ts —
+// tidak bisa diimpor langsung di sini karena auth.ts membawa next/server
+// (server-only), sedangkan file ini Client Component. Kalau prioritasnya
+// diubah, ubah DUA-duanya.
+const HOME_PRIORITY: { module: AdminModuleKey; path: string }[] = [
+  { module: 'dashboard',     path: '/admin/dashboard' },
+  { module: 'booking',       path: '/admin/bookings' },
+  { module: 'blog',          path: '/admin/blog' },
+  { module: 'treatment',     path: '/admin/products' },
+  { module: 'faq',           path: '/admin/faqs' },
+  { module: 'social_links',  path: '/admin/social-links' },
+  { module: 'schedule',      path: '/admin/schedule' },
+  { module: 'coverage',      path: '/admin/coverage' },
+  { module: 'settings',      path: '/admin/settings' },
+  { module: 'wa_template',   path: '/admin/settings/wa-template' },
+];
+
+function homePath(role: string | null | undefined, permissions: AdminModulePermissions | undefined): string {
+  if (role === 'SUPER_ADMIN') return '/admin/dashboard';
+  for (const h of HOME_PRIORITY) {
+    if (hasView(role, permissions, h.module)) return h.path;
+  }
+  return '/admin/dashboard';
+}
+
 function buildNavGroups(
   lbl: typeof ADMIN_LABELS[AdminLang],
   role?: string | null,
@@ -107,7 +132,7 @@ function buildNavGroups(
   const has = (module: AdminModuleKey) => hasView(role, permissions, module);
 
   const mainItems: NavItem[] = [
-    { href: '/admin/dashboard', label: lbl.dashboard, icon: LayoutDashboard },
+    ...(has('dashboard') ? [{ href: '/admin/dashboard', label: lbl.dashboard, icon: LayoutDashboard }] : []),
     ...(has('booking') ? [{ href: '/admin/bookings', label: lbl.booking, icon: ClipboardList }] : []),
   ];
   const settingsItems: NavItem[] = [
@@ -315,7 +340,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
           aria-label="Admin navigation"
         >
           <div className="admin-sidebar-head">
-            <Link href="/admin/dashboard" className="admin-sidebar-brand" aria-label="Dashboard admin">
+            <Link href={homePath(admin?.role, admin?.permissions)} className="admin-sidebar-brand" aria-label="Dashboard admin">
               <span className="admin-sidebar-logo">D</span>
               <span>
                 Drips To You

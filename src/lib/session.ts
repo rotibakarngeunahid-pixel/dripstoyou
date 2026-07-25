@@ -5,7 +5,7 @@ export type AdminRole = 'SUPER_ADMIN' | 'ADMIN_OPERASIONAL' | 'CONTENT_ADMIN';
 
 // Mirrors adminAllModules() in php-api/helpers.php.
 export type AdminModuleKey =
-  | 'booking' | 'treatment' | 'schedule' | 'coverage'
+  | 'dashboard' | 'booking' | 'treatment' | 'schedule' | 'coverage'
   | 'blog' | 'faq' | 'social_links' | 'settings' | 'wa_template';
 
 export interface AdminModuleGrant {

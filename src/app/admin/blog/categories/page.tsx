@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { can } from '@/lib/auth';
+import { can, adminHomePath } from '@/lib/auth';
 import BlogCategoriesClient, { type AdminBlogCategoryRow } from './BlogCategoriesClient';
 
 async function getCategories(token: string): Promise<AdminBlogCategoryRow[]> {
@@ -21,7 +21,7 @@ async function getCategories(token: string): Promise<AdminBlogCategoryRow[]> {
 export default async function BlogCategoriesPage() {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
-  if (!can(session, 'blog', 'view')) redirect('/admin/dashboard');
+  if (!can(session, 'blog', 'view')) redirect(adminHomePath(session));
 
   const categories = await getCategories(session.adminToken);
   return <BlogCategoriesClient categories={categories} />;

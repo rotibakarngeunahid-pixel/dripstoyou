@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/session';
-import { can } from '@/lib/auth';
+import { can, adminHomePath } from '@/lib/auth';
 import BlogForm, { type AdminBlogCategory } from '../BlogForm';
 
 async function getCategories(token: string): Promise<AdminBlogCategory[]> {
@@ -21,7 +21,7 @@ async function getCategories(token: string): Promise<AdminBlogCategory[]> {
 export default async function NewBlogPostPage() {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
-  if (!can(session, 'blog', 'manage')) redirect('/admin/dashboard');
+  if (!can(session, 'blog', 'manage')) redirect(adminHomePath(session));
 
   const categories = await getCategories(session.adminToken);
 
