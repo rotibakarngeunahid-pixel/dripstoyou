@@ -5,7 +5,7 @@ import { useAdminLang } from '@/app/admin/AdminLayoutClient';
 import { ADMIN_T } from '@/lib/admin-i18n';
 
 type AdminRole = 'SUPER_ADMIN' | 'ADMIN_OPERASIONAL' | 'CONTENT_ADMIN';
-type PermKey = 'booking' | 'treatment' | 'jadwal' | 'areaLayanan' | 'faqKonten' | 'pengaturan' | 'exportData' | 'adminUsers';
+type PermKey = 'booking' | 'treatment' | 'jadwal' | 'areaLayanan' | 'faqKonten' | 'blog' | 'pengaturan' | 'exportData' | 'adminUsers';
 type PermEntry = { view: boolean; manage: boolean; delete: boolean };
 type PermissionMatrix = Record<PermKey, PermEntry>;
 
@@ -40,10 +40,16 @@ const PERM_MODULES: { key: PermKey; label: string }[] = [
   { key: 'jadwal',      label: 'Jadwal' },
   { key: 'areaLayanan', label: 'Area Layanan' },
   { key: 'faqKonten',   label: 'FAQ & Konten' },
+  { key: 'blog',        label: 'Blog' },
   { key: 'pengaturan',  label: 'Pengaturan' },
   { key: 'exportData',  label: 'Export Data' },
   { key: 'adminUsers',  label: 'Admin Users' },
 ];
+
+// Admin lama bisa punya `permissions_json` custom tersimpan dari sebelum modul
+// baru ditambahkan ke PERM_MODULES (mis. `blog`) — fallback ini mencegah crash
+// baca `undefined.view` saat modul itu belum ada di JSON tersimpannya.
+const EMPTY_PERM_ENTRY: PermEntry = { view: false, manage: false, delete: false };
 
 const DEFAULT_PERMS: Record<AdminRole, PermissionMatrix> = {
   SUPER_ADMIN: {
@@ -52,6 +58,7 @@ const DEFAULT_PERMS: Record<AdminRole, PermissionMatrix> = {
     jadwal:      { view: true,  manage: true,  delete: false },
     areaLayanan: { view: true,  manage: true,  delete: true  },
     faqKonten:   { view: true,  manage: true,  delete: true  },
+    blog:        { view: true,  manage: true,  delete: true  },
     pengaturan:  { view: true,  manage: true,  delete: false },
     exportData:  { view: true,  manage: true,  delete: false },
     adminUsers:  { view: true,  manage: true,  delete: true  },
@@ -62,6 +69,7 @@ const DEFAULT_PERMS: Record<AdminRole, PermissionMatrix> = {
     jadwal:      { view: true,  manage: true,  delete: false },
     areaLayanan: { view: true,  manage: true,  delete: false },
     faqKonten:   { view: false, manage: false, delete: false },
+    blog:        { view: false, manage: false, delete: false },
     pengaturan:  { view: false, manage: false, delete: false },
     exportData:  { view: false, manage: false, delete: false },
     adminUsers:  { view: false, manage: false, delete: false },
@@ -72,6 +80,7 @@ const DEFAULT_PERMS: Record<AdminRole, PermissionMatrix> = {
     jadwal:      { view: false, manage: false, delete: false },
     areaLayanan: { view: false, manage: false, delete: false },
     faqKonten:   { view: true,  manage: true,  delete: true  },
+    blog:        { view: true,  manage: true,  delete: true  },
     pengaturan:  { view: false, manage: false, delete: false },
     exportData:  { view: false, manage: false, delete: false },
     adminUsers:  { view: false, manage: false, delete: false },
@@ -142,7 +151,7 @@ function PermissionsModal({
             </thead>
             <tbody>
               {PERM_MODULES.map(m => {
-                const p = perms[m.key];
+                const p = perms[m.key] ?? EMPTY_PERM_ENTRY;
                 return (
                   <tr key={m.key} style={{ borderTop: '1px solid #f0ede8' }}>
                     <td style={{ padding: '9px 14px', fontWeight: 600, color: '#333' }}>{m.label}</td>
@@ -178,7 +187,7 @@ function PermissionsEditor({
   const isSuperAdmin = role === 'SUPER_ADMIN';
 
   function toggle(key: PermKey, col: 'view' | 'manage' | 'delete', checked: boolean) {
-    const prev = perms[key];
+    const prev = perms[key] ?? EMPTY_PERM_ENTRY;
     const next = { ...prev, [col]: checked };
     if (col === 'view' && !checked) { next.manage = false; next.delete = false; }
     if ((col === 'manage' || col === 'delete') && checked) next.view = true;
@@ -214,7 +223,7 @@ function PermissionsEditor({
           </thead>
           <tbody>
             {PERM_MODULES.map(m => {
-              const p = isSuperAdmin ? DEFAULT_PERMS.SUPER_ADMIN[m.key] : perms[m.key];
+              const p = isSuperAdmin ? DEFAULT_PERMS.SUPER_ADMIN[m.key] : (perms[m.key] ?? EMPTY_PERM_ENTRY);
               return (
                 <tr key={m.key} style={{ borderTop: '1px solid #f0ede8' }}>
                   <td style={{ padding: '8px 14px', fontWeight: 600, color: '#333' }}>{m.label}</td>
