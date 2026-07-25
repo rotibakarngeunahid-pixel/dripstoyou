@@ -22,6 +22,13 @@ function getDb(): PDO {
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES   => false,
         ]);
+        // Semua DATETIME di DB & timestamp PHP (date_default_timezone_set di atas)
+        // memakai jam dinding WITA (UTC+8, tanpa DST). Tanpa baris ini, NOW() MySQL
+        // ikut default server (biasanya UTC) — artikel/sesi yang baru dibuat jadi
+        // "di masa depan" dibanding NOW(), sehingga published_at <= NOW() gagal dan
+        // artikel published tampil 404 sampai jam UTC menyusul (lihat memory
+        // bali-datetime-offset-convention).
+        $pdo->exec("SET time_zone = '+08:00'");
     } catch (PDOException $e) {
         // Don't expose DB error to client
         http_response_code(500);
