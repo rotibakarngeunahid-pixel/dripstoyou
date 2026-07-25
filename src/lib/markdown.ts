@@ -29,13 +29,14 @@ const FENCE_RE = /^```\s*([a-zA-Z0-9+#-]*)\s*$/;
 // opsional sudah berbentuk &quot;.
 const IMAGE_ONLY_RE = /^!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;([^&]*)&quot;)?\)$/;
 
-// Perataan (rata kiri/tengah/kanan) tidak punya sintaks Markdown baku. Kita
-// pakai penanda ala-Pandoc `{.center}` / `{.right}` di AKHIR baris paragraf
-// atau judul — pasangannya (yang MENULIS penanda ini) ada di
-// html-to-markdown.ts. `left` adalah default dan sengaja tidak pernah ditulis.
-const ALIGN_SUFFIX_RE = /\s*\{\.(left|center|right)\}\s*$/;
+// Perataan (rata kiri/tengah/kanan/kiri-kanan) tidak punya sintaks Markdown
+// baku. Kita pakai penanda ala-Pandoc `{.center}` / `{.right}` / `{.justify}`
+// di AKHIR baris paragraf atau judul — pasangannya (yang MENULIS penanda ini)
+// ada di html-to-markdown.ts. `left` adalah default dan sengaja tidak pernah
+// ditulis.
+const ALIGN_SUFFIX_RE = /\s*\{\.(left|center|right|justify)\}\s*$/;
 // Versi untuk sumber Markdown MENTAH (dipakai markdownToPlainText, multi-baris).
-const ALIGN_SUFFIX_RAW_RE = /[ \t]*\{\.(?:left|center|right)\}[ \t]*$/gm;
+const ALIGN_SUFFIX_RAW_RE = /[ \t]*\{\.(?:left|center|right|justify)\}[ \t]*$/gm;
 
 // Sentinel penampung potongan HTML jadi. Aman karena karakter kontrol dibuang
 // dari sumber sebelum apa pun diproses.
@@ -135,14 +136,14 @@ function inlineToPlainText(html: string): string {
 // Melucuti penanda `{.center}`/`{.right}` dari akhir teks blok dan
 // mengembalikan nilai perataannya (`null` untuk `left`/tanpa penanda, sehingga
 // atribut style tidak pernah ditulis untuk kasus default).
-function extractAlign(text: string): { text: string; align: 'center' | 'right' | null } {
+function extractAlign(text: string): { text: string; align: 'center' | 'right' | 'justify' | null } {
   const match = ALIGN_SUFFIX_RE.exec(text);
   if (!match) return { text, align: null };
-  const align = match[1] === 'left' ? null : (match[1] as 'center' | 'right');
+  const align = match[1] === 'left' ? null : (match[1] as 'center' | 'right' | 'justify');
   return { text: text.slice(0, match.index), align };
 }
 
-function alignAttr(align: 'center' | 'right' | null): string {
+function alignAttr(align: 'center' | 'right' | 'justify' | null): string {
   return align ? ` style="text-align:${align}"` : '';
 }
 

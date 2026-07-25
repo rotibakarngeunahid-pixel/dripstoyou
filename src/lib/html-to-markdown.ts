@@ -175,14 +175,14 @@ function imageMarkdown(el: HTMLElement): string {
 
 /* ─── Perataan (rata kiri/tengah/kanan) ─── */
 
-const ALIGN_VALUES = new Set(['left', 'center', 'right']);
+const ALIGN_VALUES = new Set(['left', 'center', 'right', 'justify']);
 
-// execCommand('justifyLeft'/'justifyCenter'/'justifyRight') menaruh perataan
-// LANGSUNG di block element yang tersentuh seleksi (bukan wrapper) — lewat
-// `style="text-align:…"`, atau (browser/`styleWithCSS=false` lawas) atribut
-// `align="…"`. Keduanya dicek. Diserialisasi jadi penanda ala-Pandoc
-// `{.center}` / `{.right}` di akhir baris; `left` (default) sengaja tidak
-// pernah ditulis. Pasangannya (yang MEMBACA penanda ini) ada di
+// execCommand('justifyLeft'/'justifyCenter'/'justifyRight'/'justifyFull') menaruh
+// perataan LANGSUNG di block element yang tersentuh seleksi (bukan wrapper) —
+// lewat `style="text-align:…"`, atau (browser/`styleWithCSS=false` lawas)
+// atribut `align="…"`. Keduanya dicek. Diserialisasi jadi penanda ala-Pandoc
+// `{.center}` / `{.right}` / `{.justify}` di akhir baris; `left` (default)
+// sengaja tidak pernah ditulis. Pasangannya (yang MEMBACA penanda ini) ada di
 // src/lib/markdown.ts.
 function alignSuffix(el: HTMLElement): string {
   const value = (el.style.textAlign || el.getAttribute('align') || '').toLowerCase();

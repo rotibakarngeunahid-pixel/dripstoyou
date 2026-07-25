@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AlignCenter,
+  AlignJustify,
   AlignLeft,
   AlignRight,
   Bold,
@@ -50,6 +51,7 @@ const TXT = {
     alignLeft: 'Rata kiri',
     alignCenter: 'Rata tengah',
     alignRight: 'Rata kanan',
+    alignJustify: 'Rata kiri-kanan',
     bullet: 'Daftar poin',
     numbered: 'Daftar bernomor',
     quote: 'Kutipan',
@@ -93,6 +95,7 @@ const TXT = {
     alignLeft: 'Align left',
     alignCenter: 'Align center',
     alignRight: 'Align right',
+    alignJustify: 'Justify',
     bullet: 'Bulleted list',
     numbered: 'Numbered list',
     quote: 'Quote',
@@ -138,6 +141,7 @@ const TOOLBAR_ITEMS = [
   { key: 'alignLeft', icon: AlignLeft },
   { key: 'alignCenter', icon: AlignCenter },
   { key: 'alignRight', icon: AlignRight },
+  { key: 'alignJustify', icon: AlignJustify },
   { key: 'bullet', icon: List },
   { key: 'numbered', icon: ListOrdered },
   { key: 'quote', icon: Quote },
@@ -258,7 +262,7 @@ export default function RichTextEditor({
   const [blockTag, setBlockTag] = useState<BlockTag>('p');
   const [active, setActive] = useState({
     bold: false, italic: false, ul: false, ol: false, quote: false,
-    alignLeft: false, alignCenter: false, alignRight: false,
+    alignLeft: false, alignCenter: false, alignRight: false, alignJustify: false,
   });
   const [dialog, setDialog] = useState<null | 'link' | 'image'>(null);
   const [linkUrl, setLinkUrl] = useState('');
@@ -333,6 +337,7 @@ export default function RichTextEditor({
       alignLeft: document.queryCommandState('justifyLeft'),
       alignCenter: document.queryCommandState('justifyCenter'),
       alignRight: document.queryCommandState('justifyRight'),
+      alignJustify: document.queryCommandState('justifyFull'),
     });
   }, [selectionInsideEditor]);
 
@@ -509,6 +514,7 @@ export default function RichTextEditor({
       case 'alignLeft': return run('justifyLeft');
       case 'alignCenter': return run('justifyCenter');
       case 'alignRight': return run('justifyRight');
+      case 'alignJustify': return run('justifyFull');
       case 'bullet': return run('insertUnorderedList');
       case 'numbered': return run('insertOrderedList');
       case 'quote': return toggleQuote();
@@ -530,6 +536,7 @@ export default function RichTextEditor({
       case 'alignLeft': return active.alignLeft;
       case 'alignCenter': return active.alignCenter;
       case 'alignRight': return active.alignRight;
+      case 'alignJustify': return active.alignJustify;
       case 'bullet': return active.ul;
       case 'numbered': return active.ol;
       case 'quote': return active.quote;
