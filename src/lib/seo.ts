@@ -23,6 +23,30 @@ export const FALLBACK_AREAS = [
 const ORG_ID = `${SITE_URL}/#organization`;
 const BUSINESS_ID = `${SITE_URL}/#business`;
 const WEBSITE_ID = `${SITE_URL}/#website`;
+// Node Blog dipakai sebagai induk bersama: tiap artikel menunjuk ke sini lewat
+// `isPartOf`, jadi Google melihat satu blog dengan banyak artikel, bukan
+// kumpulan artikel lepas.
+const BLOG_ID = `${SITE_URL}/blog#blog`;
+
+// Directive robots untuk halaman konten: preview gambar besar adalah syarat
+// tampil di Google Discover & rich result, dan snippet tanpa batas mencegah
+// Google memotong deskripsi artikel terlalu pendek.
+export const CONTENT_ROBOTS = {
+  index: true,
+  follow: true,
+  googleBot: {
+    index: true,
+    follow: true,
+    'max-image-preview': 'large',
+    'max-snippet': -1,
+    'max-video-preview': -1,
+  },
+} as const;
+
+// Halaman yang boleh ditelusuri tapi tidak layak masuk indeks (paginasi di luar
+// jangkauan, kategori kosong). `follow` tetap ON supaya link di dalamnya
+// tetap mengalirkan crawl ke artikel yang valid.
+export const NOINDEX_FOLLOW = { index: false, follow: true } as const;
 
 type SocialLink = { platform?: string; normalizedUrl?: string | null };
 
@@ -163,32 +187,116 @@ export function blogPostingJsonLd(opts: {
   title: string;
   slug: string;
   description: string;
+  /** Canonical efektif — dipakai bila artikel meng-override canonical_url. */
+  canonicalUrl?: string | null;
   image?: string | null;
   datePublished?: string | null;
   dateModified?: string | null;
   authorName?: string | null;
   section?: string | null;
+  wordCount?: number | null;
+  readingMinutes?: number | null;
 }) {
-  const url = `${SITE_URL}/blog/${opts.slug}`;
+  const url = opts.canonicalUrl?.trim() || `${SITE_URL}/blog/${opts.slug}`;
+  const authorName = opts.authorName?.trim() || SITE_NAME;
+
+  // Penulis brand = node Organization yang sama dengan publisher (satu graf).
+  // Nama lain diperlakukan sebagai Person supaya kredit penulis tidak
+  // menyesatkan Google seolah artikel ditulis oleh badan usaha lain.
+  const author =
+    authorName === SITE_NAME
+      ? { '@id': ORG_ID, '@type': 'Organization', name: SITE_NAME, url: SITE_URL }
+      : { '@type': 'Person', name: authorName };
+
   return {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
+    '@id': `${url}#article`,
     // Google memotong headline di 110 karakter.
     headline: opts.title.slice(0, 110),
+    name: opts.title,
     image: [opts.image || DEFAULT_OG_IMAGE],
     ...(opts.datePublished ? { datePublished: opts.datePublished } : {}),
     ...(opts.dateModified ? { dateModified: opts.dateModified } : {}),
-    author: {
-      '@type': 'Organization',
-      name: opts.authorName || SITE_NAME,
-      url: SITE_URL,
-    },
+    author,
     publisher: { '@id': ORG_ID },
     mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    isPartOf: { '@id': BLOG_ID },
     url,
     description: opts.description,
     ...(opts.section ? { articleSection: opts.section } : {}),
+    ...(opts.wordCount && opts.wordCount > 0 ? { wordCount: opts.wordCount } : {}),
+    ...(opts.readingMinutes && opts.readingMinutes > 0
+      ? { timeRequired: `PT${opts.readingMinutes}M` }
+      : {}),
     inLanguage: 'en',
+  };
+}
+
+export interface BlogListingItem {
+  title: string;
+  slug: string;
+  description?: string | null;
+  image?: string | null;
+  datePublished?: string | null;
+  dateModified?: string | null;
+}
+
+// Halaman listing (/blog) dan kategori (/blog/kategori/x).
+//
+// `/blog` halaman 1 memakai @id kanonik BLOG_ID sehingga artikel bisa merujuk
+// balik lewat `isPartOf`. Halaman paginasi & kategori memakai @id turunan
+// URL-nya sendiri supaya tidak ada dua node berbeda dengan @id sama.
+export function blogListingJsonLd(opts: {
+  url: string;
+  name: string;
+  description: string;
+  items: BlogListingItem[];
+  /** true untuk halaman kategori (CollectionPage, bukan Blog). */
+  collection?: boolean;
+}) {
+  const isCollection = opts.collection === true;
+  const itemUrl = (slug: string) => `${SITE_URL}/blog/${slug}`;
+
+  const posts = opts.items.map((item) => ({
+    '@type': 'BlogPosting',
+    '@id': `${itemUrl(item.slug)}#article`,
+    headline: item.title.slice(0, 110),
+    url: itemUrl(item.slug),
+    mainEntityOfPage: { '@type': 'WebPage', '@id': itemUrl(item.slug) },
+    ...(item.description ? { description: item.description } : {}),
+    ...(item.image ? { image: [item.image] } : {}),
+    ...(item.datePublished ? { datePublished: item.datePublished } : {}),
+    ...(item.dateModified ? { dateModified: item.dateModified } : {}),
+    author: { '@id': ORG_ID },
+    publisher: { '@id': ORG_ID },
+  }));
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': isCollection ? 'CollectionPage' : 'Blog',
+    '@id': isCollection ? `${opts.url}#collection` : `${opts.url}#blog`,
+    url: opts.url,
+    name: opts.name,
+    description: opts.description,
+    inLanguage: 'en',
+    publisher: { '@id': ORG_ID },
+    isPartOf: isCollection ? { '@id': BLOG_ID } : { '@id': WEBSITE_ID },
+    ...(isCollection
+      ? {
+          mainEntity: {
+            '@type': 'ItemList',
+            itemListOrder: 'https://schema.org/ItemListOrderDescending',
+            numberOfItems: posts.length,
+            itemListElement: posts.map((post, i) => ({
+              '@type': 'ListItem',
+              position: i + 1,
+              url: post.url,
+              name: post.headline,
+            })),
+          },
+        }
+      : { blogPost: posts }),
   };
 }
 

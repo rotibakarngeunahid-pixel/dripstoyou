@@ -6,6 +6,7 @@ import { useLanguage } from '@/contexts/language';
 import {
   formatBlogDate,
   pagedUrl,
+  toIsoOrNull,
   type BlogCategory,
   type BlogPagination,
   type BlogPostCard,
@@ -78,6 +79,14 @@ export default function BlogListContent({
     subtitle: b.subtitle,
   };
 
+  // Kategori tanpa artikel tayang adalah jalan buntu: halamannya kosong dan
+  // sudah diberi noindex, jadi tidak perlu ditawarkan ke pembaca maupun crawler.
+  // Kategori yang sedang dibuka tetap ditampilkan supaya penanda "halaman ini"
+  // tidak hilang saat artikel terakhirnya baru saja ditarik.
+  const visibleCategories = categories.filter(
+    (cat) => cat.post_count > 0 || cat.slug === activeCategory,
+  );
+
   return (
     <main className="page-shell">
       <section className="page-hero centered">
@@ -92,7 +101,7 @@ export default function BlogListContent({
 
       <section className="page-section">
         {/* Filter kategori — link <a> biasa, bukan filter JS, supaya bisa di-crawl. */}
-        {categories.length > 0 && (
+        {visibleCategories.length > 0 && (
           <nav className="blog-cat-nav" aria-label={b.inCategory}>
             <Link
               href="/blog"
@@ -101,7 +110,7 @@ export default function BlogListContent({
             >
               {b.allCategories}
             </Link>
-            {categories.map((cat) => (
+            {visibleCategories.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/blog/kategori/${cat.slug}`}
@@ -150,10 +159,11 @@ export default function BlogListContent({
                   {post.excerpt && <p className="blog-card-excerpt">{post.excerpt}</p>}
 
                   <div className="blog-card-meta">
-                    <time dateTime={post.published_at ?? undefined}>
+                    {/* datetime wajib ISO 8601 — nilai mentah MySQL tidak valid. */}
+                    <time dateTime={toIsoOrNull(post.published_at) ?? undefined}>
                       {formatBlogDate(post.published_at, lang)}
                     </time>
-                    {post.reading_minutes && (
+                    {(post.reading_minutes ?? 0) > 0 && (
                       <span className="blog-card-read">
                         {CLOCK_SVG}
                         {post.reading_minutes} {b.minRead}

@@ -95,7 +95,7 @@ export interface Translations {
     eyebrow: string; title: string; titleEm: string; subtitle: string;
     allCategories: string; emptyState: string; readArticle: string;
     minRead: string; publishedOn: string; updatedOn: string; writtenBy: string;
-    inCategory: string; relatedTitle: string; backToBlog: string;
+    inCategory: string; relatedTitle: string; backToBlog: string; tocTitle: string;
     prevPage: string; nextPage: string; pageOf: string;
     categoryEyebrow: string; articleCount: string;
     ctaTitle: string; ctaSub: string; ctaBook: string; ctaTreatments: string;
@@ -289,6 +289,7 @@ export const translations: Record<Lang, Translations> = {
       minRead: 'menit baca',
       publishedOn: 'Dipublikasikan', updatedOn: 'Diperbarui', writtenBy: 'Ditulis oleh',
       inCategory: 'Kategori', relatedTitle: 'Artikel Terkait', backToBlog: '← Kembali ke Blog',
+      tocTitle: 'Daftar Isi',
       prevPage: '← Sebelumnya', nextPage: 'Berikutnya →', pageOf: 'Halaman {n} dari {total}',
       categoryEyebrow: 'Kategori Blog', articleCount: '{n} artikel',
       ctaTitle: 'Siap merasakan manfaatnya?',
@@ -483,6 +484,7 @@ export const translations: Record<Lang, Translations> = {
       minRead: 'min read',
       publishedOn: 'Published', updatedOn: 'Updated', writtenBy: 'Written by',
       inCategory: 'Category', relatedTitle: 'Related Articles', backToBlog: '← Back to Blog',
+      tocTitle: 'In this article',
       prevPage: '← Previous', nextPage: 'Next →', pageOf: 'Page {n} of {total}',
       categoryEyebrow: 'Blog Category', articleCount: '{n} articles',
       ctaTitle: 'Ready to feel the difference?',

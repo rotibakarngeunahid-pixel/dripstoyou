@@ -153,6 +153,37 @@ function renderInlineHtml(markdown: string): string {
 
 type UploadResponse = { success?: boolean; data?: { publicUrl: string }; error?: string };
 
+// Dimensi asli gambar dititipkan ke URL-nya (`?w=1600&h=900`) saat disisipkan.
+// Renderer publik membacanya kembali menjadi atribut width/height, sehingga
+// browser tahu rasio gambar sebelum file-nya terunduh dan teks artikel tidak
+// melompat saat gambar muncul (CLS). Backend tidak perlu tahu apa-apa: query
+// tambahan ini diabaikan saat file dilayani.
+const DIMENSION_PROBE_TIMEOUT_MS = 6000;
+
+function probeImageSize(url: string): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    let settled = false;
+    const finish = (value: { width: number; height: number } | null) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      resolve(value);
+    };
+    const timer = window.setTimeout(() => finish(null), DIMENSION_PROBE_TIMEOUT_MS);
+    img.onload = () => finish({ width: img.naturalWidth, height: img.naturalHeight });
+    img.onerror = () => finish(null);
+    img.src = url;
+  });
+}
+
+async function withImageDimensions(url: string): Promise<string> {
+  if (/[?&](w|h)=\d/.test(url)) return url;
+  const size = await probeImageSize(url);
+  if (!size || size.width <= 0 || size.height <= 0) return url;
+  return `${url}${url.includes('?') ? '&' : '?'}w=${size.width}&h=${size.height}`;
+}
+
 /* ─── Dialog kecil untuk tautan & gambar ─── */
 
 function RteDialog({
@@ -399,14 +430,21 @@ export default function RichTextEditor({
     }
   }
 
-  function submitImage() {
+  async function submitImage() {
     const url = imageUrl.trim();
     const alt = imageAlt.trim();
     if (url === '') { setDialogError(t.imageUrlRequired); return; }
     if (alt === '') { setDialogError(t.imageAltRequired); return; }
     const caption = imageCaption.trim().replace(/"/g, '');
+
+    // Dimensi dibaca dari gambar yang sudah terunggah; kalau gagal (URL luar
+    // yang tidak bisa dimuat), gambar tetap disisipkan tanpa width/height.
+    setUploading(true);
+    const sizedUrl = await withImageDimensions(url);
+    setUploading(false);
+
     setDialog(null);
-    insertHtml(renderMarkdown(`![${alt.replace(/[[\]]/g, '')}](${url}${caption ? ` "${caption}"` : ''})`));
+    insertHtml(renderMarkdown(`![${alt.replace(/[[\]]/g, '')}](${sizedUrl}${caption ? ` "${caption}"` : ''})`));
   }
 
   /* — event editor — */
@@ -606,7 +644,7 @@ export default function RichTextEditor({
           submitLabel={t.insert}
           cancelLabel={t.cancel}
           onClose={() => setDialog(null)}
-          onSubmit={submitImage}
+          onSubmit={() => void submitImage()}
         >
           <div className="admin-field">
             <button

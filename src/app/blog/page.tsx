@@ -5,8 +5,26 @@ import SiteFooter from '@/components/public/SiteFooter';
 import BlogListContent from '@/components/public/BlogListContent';
 import ScrollRevealInit from '@/components/public/ScrollRevealInit';
 import JsonLd from '@/components/seo/JsonLd';
-import { breadcrumbJsonLd, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo';
-import { BLOG_REVALIDATE, BLOG_URL, fetchBlogCategories, fetchBlogPosts, pagedUrl } from '@/lib/blog';
+import { toPublicImageUrl } from '@/lib/images';
+import {
+  blogListingJsonLd,
+  breadcrumbJsonLd,
+  CONTENT_ROBOTS,
+  DEFAULT_OG_IMAGE,
+  NOINDEX_FOLLOW,
+  SITE_NAME,
+  SITE_URL,
+} from '@/lib/seo';
+import {
+  BLOG_FEED_URL,
+  BLOG_REVALIDATE,
+  BLOG_URL,
+  fetchBlogCategories,
+  fetchBlogPosts,
+  pagedUrl,
+  toIsoOrNull,
+  type BlogListResult,
+} from '@/lib/blog';
 
 export const revalidate = 60;
 
@@ -20,10 +38,25 @@ function parsePage(value: string | string[] | undefined): number {
   return Number.isFinite(page) && page > 0 ? page : 1;
 }
 
+// Dipanggil dari generateMetadata DAN dari komponen halaman dengan argumen yang
+// sama persis, supaya Next.js hanya sekali menghubungi backend per request.
+function loadPage(page: number): Promise<BlogListResult> {
+  return fetchBlogPosts({ page, revalidate: BLOG_REVALIDATE });
+}
+
+// `?page=999` tetap membalas HTTP 200 di project ini (soft-404 app-wide karena
+// root loading.tsx membuat semua route streaming). Tanpa penanda ini, crawler
+// bisa mengindeks deret halaman kosong tak terbatas — jadi halaman di luar
+// jangkauan diberi noindex eksplisit, bukan hanya notFound().
+function isOutOfRange(page: number, list: BlogListResult): boolean {
+  return page > 1 && list.items.length === 0;
+}
+
 export async function generateMetadata(
   { searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> },
 ): Promise<Metadata> {
   const page = parsePage((await searchParams).page);
+  const list = await loadPage(page);
 
   // Halaman 1 → canonical bersih; halaman dalam → self-canonical + sufiks judul
   // agar tidak dianggap duplikat dan tetap ter-crawl (§8.3).
@@ -34,12 +67,14 @@ export async function generateMetadata(
   return {
     title: { absolute: `${title} | ${SITE_NAME}` },
     description,
+    robots: isOutOfRange(page, list) ? NOINDEX_FOLLOW : CONTENT_ROBOTS,
     openGraph: {
       title: `${title} | ${SITE_NAME}`,
       description,
       url,
       type: 'website',
       siteName: SITE_NAME,
+      locale: 'en_US',
       images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: 'Drips To You - Bali Mobile IV Therapy' }],
     },
     twitter: {
@@ -48,7 +83,10 @@ export async function generateMetadata(
       description,
       images: [DEFAULT_OG_IMAGE],
     },
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      types: { 'application/rss+xml': BLOG_FEED_URL },
+    },
   };
 }
 
@@ -57,17 +95,31 @@ export default async function BlogPage(
 ) {
   const page = parsePage((await searchParams).page);
 
-  const [list, categories] = await Promise.all([
-    fetchBlogPosts({ page, revalidate: BLOG_REVALIDATE }),
-    fetchBlogCategories(),
-  ]);
+  const [list, categories] = await Promise.all([loadPage(page), fetchBlogCategories()]);
 
   // Halaman paginasi di luar jangkauan → 404, supaya crawler tidak menemukan
   // rangkaian halaman kosong yang bisa di-index.
-  if (page > 1 && list.items.length === 0) notFound();
+  if (isOutOfRange(page, list)) notFound();
+
+  const url = pagedUrl(BLOG_URL, page);
 
   return (
     <>
+      <JsonLd
+        data={blogListingJsonLd({
+          url,
+          name: page > 1 ? `${TITLE} — Page ${page}` : TITLE,
+          description: DESCRIPTION,
+          items: list.items.map((post) => ({
+            title: post.title,
+            slug: post.slug,
+            description: post.excerpt,
+            image: toPublicImageUrl(post.cover_image_url),
+            datePublished: toIsoOrNull(post.published_at),
+            dateModified: toIsoOrNull(post.updated_at),
+          })),
+        })}
+      />
       <JsonLd
         data={breadcrumbJsonLd([
           { name: 'Home', url: SITE_URL },

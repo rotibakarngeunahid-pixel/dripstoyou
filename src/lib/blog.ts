@@ -109,13 +109,18 @@ export async function fetchBlogPosts(opts: {
   }
 }
 
-export async function fetchBlogPost(slug: string, includeRelated = true): Promise<BlogPost | null> {
+// URL-nya sengaja SATU bentuk saja (selalu `include_related=1`). generateMetadata
+// dan komponen halaman sama-sama memanggil fungsi ini; selama URL + opsinya
+// identik, Next.js mengingatnya untuk satu render sehingga backend PHP cuma
+// dihubungi sekali. Varian tanpa related dulu membuat setiap artikel dibaca dua
+// kali per request.
+export async function fetchBlogPost(slug: string): Promise<BlogPost | null> {
   const base = apiBase();
   if (!base) return null;
 
   try {
     const res = await fetch(
-      `${base}/blog.php?slug=${encodeURIComponent(slug)}${includeRelated ? '&include_related=1' : ''}`,
+      `${base}/blog.php?slug=${encodeURIComponent(slug)}&include_related=1`,
       { next: { revalidate: BLOG_REVALIDATE }, signal: AbortSignal.timeout(5000) },
     );
     if (!res.ok) return null;
@@ -166,8 +171,16 @@ export async function fetchBlogCategory(slug: string): Promise<BlogCategory | nu
 /* ─── URL helpers ─── */
 
 export const BLOG_URL = `${SITE_URL}/blog`;
+export const BLOG_FEED_URL = `${SITE_URL}/blog/feed.xml`;
 export const blogPostUrl = (slug: string) => `${SITE_URL}/blog/${slug}`;
 export const blogCategoryUrl = (slug: string) => `${SITE_URL}/blog/kategori/${slug}`;
+
+// Canonical efektif artikel: override manual bila diisi, kalau tidak
+// self-canonical. Dipakai bersama oleh <link rel=canonical>, og:url, dan
+// JSON-LD supaya ketiganya tidak pernah menunjuk URL yang berbeda.
+export function blogCanonicalUrl(post: Pick<BlogPost, 'slug' | 'canonical_url'>): string {
+  return post.canonical_url?.trim() || blogPostUrl(post.slug);
+}
 
 // Halaman 1 selalu URL bersih; halaman dalam pakai ?page=n (§8.3).
 export function pagedUrl(basePath: string, page: number): string {
@@ -199,10 +212,27 @@ export function blogMetaTitle(post: Pick<BlogPost, 'title' | 'meta_title'>): str
   return override || `${post.title} | ${SITE_NAME}`;
 }
 
-// "2026-07-20 09:00:00" → ISO untuk JSON-LD / OpenGraph.
+// Backend PHP berjalan di `Asia/Makassar` (helpers.php), jadi setiap DATETIME di
+// database adalah jam dinding Bali — WITA, UTC+8, tanpa DST.
+const BALI_UTC_OFFSET = '+08:00';
+
+// "2026-07-20 09:00:00" → ISO untuk JSON-LD / OpenGraph / <time datetime>.
+//
+// Zona waktunya WAJIB ditempelkan di sini. Tanpa itu string polos tadi diartikan
+// sebagai jam lokal *server yang merender*: di laptop (UTC+8) hasilnya kebetulan
+// benar, tapi di Vercel (UTC) setiap tanggal terbit meleset 8 jam — cukup untuk
+// menggeser tanggal tayang artikel sore ke hari berikutnya, di JSON-LD maupun di
+// tanggal yang dibaca pengunjung.
 export function toIsoOrNull(value: string | null | undefined): string | null {
   if (!value) return null;
-  const parsed = new Date(value.includes('T') ? value : value.replace(' ', 'T'));
+  const raw = value.trim();
+  if (raw === '') return null;
+
+  const normalized = raw.includes('T') ? raw : raw.replace(' ', 'T');
+  // Nilai yang sudah membawa zona sendiri ("...Z", "...+08:00") dipercaya apa adanya.
+  const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized);
+  const parsed = new Date(hasZone ? normalized : `${normalized}${BALI_UTC_OFFSET}`);
+
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 

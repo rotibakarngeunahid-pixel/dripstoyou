@@ -5,14 +5,26 @@ import SiteFooter from '@/components/public/SiteFooter';
 import BlogListContent from '@/components/public/BlogListContent';
 import ScrollRevealInit from '@/components/public/ScrollRevealInit';
 import JsonLd from '@/components/seo/JsonLd';
-import { breadcrumbJsonLd, DEFAULT_OG_IMAGE, SITE_NAME, SITE_URL } from '@/lib/seo';
+import { toPublicImageUrl } from '@/lib/images';
+import {
+  blogListingJsonLd,
+  breadcrumbJsonLd,
+  CONTENT_ROBOTS,
+  DEFAULT_OG_IMAGE,
+  NOINDEX_FOLLOW,
+  SITE_NAME,
+  SITE_URL,
+} from '@/lib/seo';
 import {
   blogCategoryUrl,
+  BLOG_FEED_URL,
   BLOG_URL,
   fetchBlogCategories,
   fetchBlogCategory,
   fetchBlogPosts,
   pagedUrl,
+  toIsoOrNull,
+  type BlogListResult,
 } from '@/lib/blog';
 
 export const revalidate = 60;
@@ -21,6 +33,20 @@ function parsePage(value: string | string[] | undefined): number {
   const raw = Array.isArray(value) ? value[0] : value;
   const page = Number.parseInt(raw ?? '1', 10);
   return Number.isFinite(page) && page > 0 ? page : 1;
+}
+
+// Argumen harus identik dengan pemanggilan di komponen halaman agar Next.js
+// memakai hasil fetch yang sama (satu request ke backend, bukan dua).
+function loadPage(page: number, category: string): Promise<BlogListResult> {
+  return fetchBlogPosts({ page, category });
+}
+
+// Halaman kategori kosong adalah halaman tipis: tidak ada yang bisa
+// diperingkatkan di sana, tapi tetap memakan crawl budget dan bisa terindeks
+// sebagai hasil kosong. Sama seperti paginasi di luar jangkauan, kategori tanpa
+// artikel diberi noindex (tetap follow) dan dikeluarkan dari sitemap.
+function isThin(list: BlogListResult): boolean {
+  return list.items.length === 0;
 }
 
 // Halaman kategori wajib punya meta sendiri — tidak boleh duplikat /blog (§8.11).
@@ -41,9 +67,10 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const [{ slug }, sp] = await Promise.all([params, searchParams]);
   const category = await fetchBlogCategory(slug);
-  if (!category) return { title: 'Not Found', robots: { index: false, follow: false } };
+  if (!category) return { title: 'Not Found', robots: NOINDEX_FOLLOW };
 
   const page = parsePage(sp.page);
+  const list = await loadPage(page, category.slug);
   const base = categoryMeta(category);
   const title = page > 1 ? `${base.title} — Page ${page}` : base.title;
   const url = pagedUrl(blogCategoryUrl(category.slug), page);
@@ -51,12 +78,14 @@ export async function generateMetadata(
   return {
     title: { absolute: title },
     description: base.description,
+    robots: isThin(list) ? NOINDEX_FOLLOW : CONTENT_ROBOTS,
     openGraph: {
       title,
       description: base.description,
       url,
       type: 'website',
       siteName: SITE_NAME,
+      locale: 'en_US',
       images: [{ url: DEFAULT_OG_IMAGE, width: 1200, height: 630, alt: 'Drips To You - Bali Mobile IV Therapy' }],
     },
     twitter: {
@@ -65,7 +94,10 @@ export async function generateMetadata(
       description: base.description,
       images: [DEFAULT_OG_IMAGE],
     },
-    alternates: { canonical: url },
+    alternates: {
+      canonical: url,
+      types: { 'application/rss+xml': BLOG_FEED_URL },
+    },
   };
 }
 
@@ -82,14 +114,33 @@ export default async function BlogCategoryPage(
   if (!category) notFound();
 
   const [list, categories] = await Promise.all([
-    fetchBlogPosts({ page, category: category.slug }),
+    loadPage(page, category.slug),
     fetchBlogCategories(),
   ]);
 
   if (page > 1 && list.items.length === 0) notFound();
 
+  const meta = categoryMeta(category);
+  const url = pagedUrl(blogCategoryUrl(category.slug), page);
+
   return (
     <>
+      <JsonLd
+        data={blogListingJsonLd({
+          url,
+          name: category.name,
+          description: meta.description,
+          collection: true,
+          items: list.items.map((post) => ({
+            title: post.title,
+            slug: post.slug,
+            description: post.excerpt,
+            image: toPublicImageUrl(post.cover_image_url),
+            datePublished: toIsoOrNull(post.published_at),
+            dateModified: toIsoOrNull(post.updated_at),
+          })),
+        })}
+      />
       <JsonLd
         data={breadcrumbJsonLd([
           { name: 'Home', url: SITE_URL },

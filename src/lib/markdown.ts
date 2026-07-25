@@ -44,6 +44,17 @@ export interface MarkdownImage {
   url: string;
 }
 
+export interface MarkdownHeading {
+  id: string;
+  level: number;
+  text: string;
+}
+
+export interface RenderedMarkdown {
+  html: string;
+  headings: MarkdownHeading[];
+}
+
 function stripControlChars(value: string): string {
   return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
 }
@@ -80,6 +91,45 @@ export function slugifyHeading(value: string): string {
     .slice(0, 60);
 }
 
+// Dua sub-judul dengan teks sama menghasilkan slug sama, jadi `id`-nya ganda di
+// satu halaman (HTML tidak valid, dan anchor daftar isi selalu melompat ke yang
+// pertama). Pabrik ini menomori duplikat: "biaya", "biaya-2", "biaya-3".
+function createHeadingIdFactory(): (text: string) => string {
+  const used = new Map<string, number>();
+  let fallback = 0;
+
+  return (text: string) => {
+    fallback += 1;
+    const base = slugifyHeading(text) || `section-${fallback}`;
+    const seen = used.get(base) ?? 0;
+    used.set(base, seen + 1);
+    return seen === 0 ? base : `${base}-${seen + 1}`;
+  };
+}
+
+// Teks jadi untuk daftar isi: HTML inline hasil renderInline dilucuti tag-nya,
+// lalu entitasnya dikembalikan supaya React merendernya sebagai teks apa adanya.
+function inlineToPlainText(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .trim();
+}
+
+// Gambar unggahan menyimpan dimensi aslinya di query (`?w=1600&h=900`, ditulis
+// editor saat menyisipkan). Tanpa atribut width/height, browser tidak tahu rasio
+// gambar sebelum ia terunduh dan isi artikel melompat saat gambar muncul:
+// penyumbang CLS terbesar di halaman artikel (target PRD maksimal 0.1).
+// Sumber di sini SUDAH di-escape, jadi pemisah query berbentuk `&amp;`.
+function imageDimensionAttrs(escapedUrl: string): string {
+  const width = /[?&](?:amp;)?w=(\d{1,5})(?![\d])/.exec(escapedUrl)?.[1];
+  const height = /[?&](?:amp;)?h=(\d{1,5})(?![\d])/.exec(escapedUrl)?.[1];
+  return width && height ? ` width="${width}" height="${height}"` : '';
+}
+
 /* ─── Inline ─── */
 
 function renderInline(escaped: string): string {
@@ -104,7 +154,9 @@ function renderInline(escaped: string): string {
     (_m, alt: string, url: string) => {
       const href = safeUrl(url);
       if (!href) return alt;
-      return keep(`<img src="${href}" alt="${alt}" loading="lazy" decoding="async" />`);
+      return keep(
+        `<img src="${href}" alt="${alt}"${imageDimensionAttrs(href)} loading="lazy" decoding="async" />`,
+      );
     },
   );
 
@@ -137,11 +189,17 @@ function renderInline(escaped: string): string {
 
 /* ─── Block ─── */
 
-export function renderMarkdown(source: string | null | undefined): string {
-  if (!source) return '';
+// Merender body sekaligus mengembalikan daftar sub-judulnya. Daftar isi WAJIB
+// lahir dari pass yang sama dengan HTML-nya: kalau `id` dihitung ulang di fungsi
+// terpisah, penomoran duplikat bisa bergeser dan setiap anchor daftar isi
+// menunjuk ke tempat yang salah.
+export function renderMarkdownDocument(source: string | null | undefined): RenderedMarkdown {
+  if (!source) return { html: '', headings: [] };
 
   const lines = escapeHtml(stripControlChars(source)).replace(/\r\n?/g, '\n').split('\n');
   const out: string[] = [];
+  const headings: MarkdownHeading[] = [];
+  const nextHeadingId = createHeadingIdFactory();
 
   let i = 0;
   while (i < lines.length) {
@@ -172,9 +230,11 @@ export function renderMarkdown(source: string | null | undefined): string {
     const heading = HEADING_RE.exec(line);
     if (heading) {
       const level = Math.min(4, Math.max(2, heading[1].length));
-      const text = renderInline(heading[2].trim());
-      const id = slugifyHeading(heading[2]);
-      out.push(`<h${level}${id ? ` id="${id}"` : ''}>${text}</h${level}>`);
+      const raw = heading[2].trim();
+      const text = renderInline(raw);
+      const id = nextHeadingId(raw);
+      headings.push({ id, level, text: inlineToPlainText(text) });
+      out.push(`<h${level} id="${id}">${text}</h${level}>`);
       i += 1;
       continue;
     }
@@ -187,7 +247,8 @@ export function renderMarkdown(source: string | null | undefined): string {
         const alt = imageOnly[1];
         const caption = imageOnly[3];
         out.push(
-          `<figure class="blog-figure"><img src="${href}" alt="${alt}" loading="lazy" decoding="async" />` +
+          `<figure class="blog-figure"><img src="${href}" alt="${alt}"${imageDimensionAttrs(href)}` +
+          ' loading="lazy" decoding="async" />' +
           (caption ? `<figcaption>${renderInline(caption)}</figcaption>` : '') +
           '</figure>',
         );
@@ -242,7 +303,11 @@ export function renderMarkdown(source: string | null | undefined): string {
     }
   }
 
-  return out.join('\n');
+  return { html: out.join('\n'), headings };
+}
+
+export function renderMarkdown(source: string | null | undefined): string {
+  return renderMarkdownDocument(source).html;
 }
 
 /* ─── Turunan teks ─── */
@@ -280,9 +345,12 @@ export function markdownToPlainText(source: string | null | undefined): string {
     .trim();
 }
 
+export function countWords(source: string | null | undefined): number {
+  return markdownToPlainText(source).split(' ').filter(Boolean).length;
+}
+
 export function estimateReadingMinutes(source: string | null | undefined): number {
-  const words = markdownToPlainText(source).split(' ').filter(Boolean).length;
-  return Math.max(1, Math.ceil(words / 200));
+  return Math.max(1, Math.ceil(countWords(source) / 200));
 }
 
 // Semua gambar Markdown di body — dipakai validasi "alt wajib" (§8.9).

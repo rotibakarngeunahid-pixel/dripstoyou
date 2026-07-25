@@ -4,14 +4,22 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { useLanguage } from '@/contexts/language';
-import { blogAuthorName, formatBlogDate, type BlogPost, type BlogPostCard } from '@/lib/blog';
+import type { MarkdownHeading } from '@/lib/markdown';
+import { blogAuthorName, formatBlogDate, toIsoOrNull, type BlogPost, type BlogPostCard } from '@/lib/blog';
 
 interface Props {
   post: BlogPost;
   /** HTML hasil renderMarkdown() di server — sudah escape-first, tidak pernah HTML mentah dari DB. */
   contentHtml: string;
+  /** Sub-judul body, dari pass render yang sama supaya anchor-nya pasti cocok. */
+  headings: MarkdownHeading[];
   related: BlogPostCard[];
 }
+
+// Daftar isi baru muncul saat artikel benar-benar panjang; di artikel pendek ia
+// hanya mendorong isi ke bawah tanpa menolong siapa pun. H4 sengaja tidak ikut
+// supaya daftarnya tetap terbaca sebagai kerangka, bukan salinan artikel.
+const TOC_MIN_HEADINGS = 3;
 
 const CLOCK_SVG = (
   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -82,7 +90,7 @@ function ReadingProgress() {
   );
 }
 
-export default function BlogArticleContent({ post, contentHtml, related }: Props) {
+export default function BlogArticleContent({ post, contentHtml, headings, related }: Props) {
   const { t, lang } = useLanguage();
   const b = t.blog;
 
@@ -90,6 +98,16 @@ export default function BlogArticleContent({ post, contentHtml, related }: Props
   const publishedLabel = formatBlogDate(post.published_at, lang);
   const updatedLabel = formatBlogDate(post.updated_at, lang);
   const showUpdated = updatedLabel && updatedLabel !== publishedLabel;
+  const readingMinutes = post.reading_minutes ?? 0;
+
+  // MySQL mengirim "2026-07-24 09:00:00"; atribut datetime HTML menuntut ISO
+  // 8601 ("2026-07-24T02:00:00.000Z"). Nilai mentah tadi tidak valid dan
+  // diabaikan parser tanggal, termasuk milik mesin pencari.
+  const publishedIso = toIsoOrNull(post.published_at);
+  const updatedIso = toIsoOrNull(post.updated_at);
+
+  const toc = headings.filter((heading) => heading.level <= 3);
+  const showToc = toc.length >= TOC_MIN_HEADINGS;
 
   return (
     <main className="page-shell blog-article-shell">
@@ -125,19 +143,19 @@ export default function BlogArticleContent({ post, contentHtml, related }: Props
             {publishedLabel && (
               <span>
                 {b.publishedOn}{' '}
-                <time dateTime={post.published_at ?? undefined}>{publishedLabel}</time>
+                <time dateTime={publishedIso ?? undefined}>{publishedLabel}</time>
               </span>
             )}
             {showUpdated && (
               <span>
                 {b.updatedOn}{' '}
-                <time dateTime={post.updated_at ?? undefined}>{updatedLabel}</time>
+                <time dateTime={updatedIso ?? undefined}>{updatedLabel}</time>
               </span>
             )}
-            {post.reading_minutes && (
+            {readingMinutes > 0 && (
               <span className="blog-article-read">
                 {CLOCK_SVG}
-                {post.reading_minutes} {b.minRead}
+                {readingMinutes} {b.minRead}
               </span>
             )}
           </div>
@@ -156,6 +174,19 @@ export default function BlogArticleContent({ post, contentHtml, related }: Props
               priority
             />
           </figure>
+        )}
+
+        {showToc && (
+          <nav className="blog-toc" aria-labelledby="blog-toc-title">
+            <h2 className="blog-toc-title" id="blog-toc-title">{b.tocTitle}</h2>
+            <ol className="blog-toc-list">
+              {toc.map((heading) => (
+                <li key={heading.id} className={`blog-toc-item level-${heading.level}`}>
+                  <a href={`#${heading.id}`}>{heading.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
         )}
 
         <div className="blog-prose" dangerouslySetInnerHTML={{ __html: contentHtml }} />

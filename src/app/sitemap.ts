@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { toPublicImageUrl } from '@/lib/images';
 
 const BASE_URL = 'https://dripstoyou.com';
 
@@ -11,8 +12,14 @@ const SOURCE_REVALIDATE = 900;
 
 type TreatmentEntry = { slug: string; updated_at?: string | null };
 
-type BlogEntry = { slug: string; updated_at?: string | null; published_at?: string | null };
-type BlogCategoryEntry = { slug: string };
+type BlogEntry = {
+  slug: string;
+  updated_at?: string | null;
+  published_at?: string | null;
+  cover_image_url?: string | null;
+};
+// `post_count` hanya menghitung artikel yang benar-benar tayang.
+type BlogCategoryEntry = { slug: string; post_count?: number };
 
 // Tanpa base URL, `fetch('/products.php')` bukan no-op: Next.js menyelesaikannya
 // terhadap host build sendiri dan menggantung sampai timeout — cukup untuk
@@ -88,9 +95,14 @@ async function fetchBlogCategorySlugs(): Promise<BlogCategoryEntry[]> {
   }
 }
 
+// DATETIME dari backend adalah jam dinding Bali (PHP `Asia/Makassar`); tanpa
+// offset eksplisit, `lastModified` bergeser 8 jam di server UTC. Lihat
+// toIsoOrNull() di src/lib/blog.ts.
 function toIsoDate(value: string | null | undefined, fallback: string): string {
   if (!value) return fallback;
-  const parsed = new Date(value.includes('T') ? value : value.replace(' ', 'T'));
+  const normalized = value.includes('T') ? value.trim() : value.trim().replace(' ', 'T');
+  const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(normalized);
+  const parsed = new Date(hasZone ? normalized : `${normalized}+08:00`);
   return Number.isNaN(parsed.getTime()) ? fallback : parsed.toISOString();
 }
 
@@ -125,17 +137,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
   // Hanya URL kanonik artikel — halaman paginasi (?page=n) sengaja tidak masuk.
+  // `images` membuat Next.js memancarkan namespace image sitemap, sehingga cover
+  // artikel ikut masuk antrean Google Images (sumber trafik terpisah dari web).
   const blogPostPages: MetadataRoute.Sitemap = blogPosts
     .filter((p) => typeof p.slug === 'string' && p.slug.length > 0)
-    .map((p) => ({
-      url: `${BASE_URL}/blog/${p.slug}`,
-      lastModified: toIsoDate(p.updated_at ?? p.published_at, now),
-      changeFrequency: 'weekly',
-      priority: 0.7,
-    }));
+    .map((p) => {
+      const cover = toPublicImageUrl(p.cover_image_url ?? null);
+      return {
+        url: `${BASE_URL}/blog/${p.slug}`,
+        lastModified: toIsoDate(p.updated_at ?? p.published_at, now),
+        changeFrequency: 'weekly',
+        priority: 0.7,
+        ...(cover ? { images: [cover] } : {}),
+      };
+    });
 
+  // Kategori tanpa artikel tayang adalah halaman kosong: halaman itu sendiri
+  // sudah diberi noindex, jadi memasukkannya ke sitemap justru mengirim dua
+  // sinyal yang bertabrakan ("indeks ini" vs "jangan indeks").
   const blogCategoryPages: MetadataRoute.Sitemap = blogCategories
-    .filter((c) => typeof c.slug === 'string' && c.slug.length > 0)
+    .filter((c) => typeof c.slug === 'string' && c.slug.length > 0 && (c.post_count ?? 0) > 0)
     .map((c) => ({
       url: `${BASE_URL}/blog/kategori/${c.slug}`,
       lastModified: now,
