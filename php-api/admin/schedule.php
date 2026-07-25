@@ -6,10 +6,8 @@ require_once __DIR__ . '/../helpers.php';
 handleCors();
 
 $admin  = requireAuth();
-// Jadwal adalah ranah operasional — CONTENT_ADMIN tidak punya akses
-// (konsisten dengan pemeriksaan di route Next.js).
-requireRole($admin, 'SUPER_ADMIN', 'ADMIN_OPERASIONAL');
 $method = getMethod();
+requireAdminModule($admin, 'schedule', $method === 'GET' ? 'view' : 'manage');
 $db     = getDb();
 
 if ($method === 'GET') {

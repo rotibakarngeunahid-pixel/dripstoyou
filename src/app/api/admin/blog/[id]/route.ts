@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!can(session.role, 'content:read')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!can(session, 'blog', 'view')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
   return phpProxyPath(`admin/blog.php?id=${encodeURIComponent(id)}`, {
@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!can(session.role, 'content:write')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!can(session, 'blog', 'manage')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   if (!(await verifyCsrf(req))) return csrfFailureResponse();
 
   const { id } = await params;
@@ -48,7 +48,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!can(session.role, 'content:write')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!can(session, 'blog', 'delete')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   if (!(await verifyCsrf(req))) return csrfFailureResponse();
 
   const { id } = await params;

@@ -46,7 +46,7 @@ const STATUS_LABELS: Record<string, string> = {
 export default async function BlogPreviewPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
-  if (!can(session.role, 'content:read')) redirect('/admin/dashboard');
+  if (!can(session, 'blog', 'view')) redirect('/admin/dashboard');
 
   const { id } = await params;
   const post = await getPost(id, session.adminToken);

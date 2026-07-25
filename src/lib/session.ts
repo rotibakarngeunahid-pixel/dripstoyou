@@ -3,12 +3,30 @@ import { cookies } from 'next/headers';
 
 export type AdminRole = 'SUPER_ADMIN' | 'ADMIN_OPERASIONAL' | 'CONTENT_ADMIN';
 
+// Mirrors adminAllModules() in php-api/helpers.php.
+export type AdminModuleKey =
+  | 'booking' | 'treatment' | 'schedule' | 'coverage'
+  | 'blog' | 'faq' | 'social_links' | 'settings' | 'wa_template';
+
+export interface AdminModuleGrant {
+  view: boolean;
+  manage: boolean;
+  delete: boolean;
+}
+
+// Effective permissions computed server-side (adminEffectivePermissions() in
+// helpers.php) and handed over at login — role default, or the admin's
+// custom permissions_json override when set. SUPER_ADMIN always has full
+// access regardless of this (checked separately, never relies on this map).
+export type AdminModulePermissions = Partial<Record<AdminModuleKey, AdminModuleGrant>>;
+
 export interface SessionData {
   adminId: string;
   email: string;
   role: AdminRole;
   name: string;
   adminToken: string;  // Bearer token for PHP API auth
+  permissions: AdminModulePermissions;
 }
 
 function getSessionOptions(): SessionOptions {

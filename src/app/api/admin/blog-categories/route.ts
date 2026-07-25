@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!can(session.role, 'content:read')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!can(session, 'blog', 'view')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const qs = req.nextUrl.searchParams.toString();
   return phpProxyPath(`admin/blog-categories.php${qs ? `?${qs}` : ''}`, {
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!can(session.role, 'content:write')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!can(session, 'blog', 'manage')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   if (!(await verifyCsrf(req))) return csrfFailureResponse();
 
   let raw: unknown;

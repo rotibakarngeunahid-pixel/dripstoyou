@@ -6,10 +6,8 @@ require_once __DIR__ . '/../helpers.php';
 handleCors();
 
 $admin  = requireAuth();
-// Pengaturan situs (nomor WA, jam operasional, mata uang, dll) adalah ranah
-// operasional — CONTENT_ADMIN tidak punya akses.
-requireRole($admin, 'SUPER_ADMIN', 'ADMIN_OPERASIONAL');
 $method = getMethod();
+requireAdminModule($admin, 'settings', $method === 'GET' ? 'view' : 'manage');
 $db     = getDb();
 ensureCurrencySchema($db);
 

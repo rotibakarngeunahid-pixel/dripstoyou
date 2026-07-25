@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
+import { can } from '@/lib/auth';
 import { phpProxy } from '@/lib/php-fetch';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +12,7 @@ function phpUrl(id: string) {
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (session.role === 'CONTENT_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!can(session, 'coverage', 'view')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const { id } = await params;
   return phpProxy(phpUrl(id), { headers: { Authorization: `Bearer ${session.adminToken ?? ''}` } });
 }
@@ -19,7 +20,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (session.role === 'CONTENT_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!can(session, 'coverage', 'manage')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const { id } = await params;
   return phpProxy(phpUrl(id), {
     method: 'PUT',
@@ -31,7 +32,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (session.role === 'CONTENT_ADMIN') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!can(session, 'coverage', 'delete')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const { id } = await params;
   return phpProxy(phpUrl(id), {
     method: 'DELETE',

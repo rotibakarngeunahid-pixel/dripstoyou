@@ -5,12 +5,9 @@ require_once __DIR__ . '/../helpers.php';
 require_once __DIR__ . '/../offline-translate.php';
 handleCors();
 
-$admin = requireAuth();
+$admin  = requireAuth();
 $method = getMethod();
-// Menulis konten hanya untuk SUPER_ADMIN dan CONTENT_ADMIN.
-if ($method !== 'GET') {
-    requireRole($admin, 'SUPER_ADMIN', 'CONTENT_ADMIN');
-}
+requireAdminModule($admin, 'faq', $method === 'GET' ? 'view' : ($method === 'DELETE' ? 'delete' : 'manage'));
 $id = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
 $db = getDb();
 try {

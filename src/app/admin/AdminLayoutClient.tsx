@@ -26,6 +26,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import type { AdminModuleKey, AdminModulePermissions } from '@/lib/session';
 
 /* ─── Admin Language Context ─── */
 type AdminLang = 'id' | 'en';
@@ -34,9 +35,10 @@ interface AdminLangCtx {
   lang: AdminLang;
   setLang: (l: AdminLang) => void;
   adminRole: string | null;
+  adminPermissions: AdminModulePermissions | null;
 }
 
-const AdminLangContext = createContext<AdminLangCtx>({ lang: 'id', setLang: () => {}, adminRole: null });
+const AdminLangContext = createContext<AdminLangCtx>({ lang: 'id', setLang: () => {}, adminRole: null, adminPermissions: null });
 
 export function useAdminLang() {
   return useContext(AdminLangContext);
@@ -84,60 +86,63 @@ type AdminUser = {
   email: string;
   role: string;
   name: string;
+  permissions: AdminModulePermissions;
 };
 
-function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang], role?: string | null): NavGroup[] {
-  // Booking, Jadwal, Area Layanan, dan Pengaturan Umum adalah ranah
-  // operasional — CONTENT_ADMIN diblok dari semuanya di backend (403), jadi
-  // menu-nya pun tidak ditampilkan. WhatsApp Template SENGAJA dikecualikan:
-  // CONTENT_ADMIN memang punya akses tulis ke situ (lihat wa-template.php).
+// Modul admin panel: benar-benar ditegakkan di backend (Next.js proxy DAN
+// PHP — lihat requireAdminModule() di php-api/helpers.php), bukan cuma
+// dekorasi. `permissions` adalah override per-admin dari Kelola Izin; kalau
+// kosong, fallback ke default role (mirrors adminEffectivePermissions()).
+// SUPER_ADMIN selalu lolos tanpa perlu cek modul.
+function hasView(role: string | null | undefined, permissions: AdminModulePermissions | undefined, module: AdminModuleKey): boolean {
+  if (role === 'SUPER_ADMIN') return true;
+  return permissions?.[module]?.view ?? false;
+}
+
+function buildNavGroups(
+  lbl: typeof ADMIN_LABELS[AdminLang],
+  role?: string | null,
+  permissions?: AdminModulePermissions,
+): NavGroup[] {
+  const has = (module: AdminModuleKey) => hasView(role, permissions, module);
+
   const mainItems: NavItem[] = [
     { href: '/admin/dashboard', label: lbl.dashboard, icon: LayoutDashboard },
-    ...(role !== 'CONTENT_ADMIN'
-      ? [{ href: '/admin/bookings', label: lbl.booking, icon: ClipboardList }]
-      : []),
+    ...(has('booking') ? [{ href: '/admin/bookings', label: lbl.booking, icon: ClipboardList }] : []),
   ];
   const settingsItems: NavItem[] = [
-    ...(role !== 'CONTENT_ADMIN'
-      ? [{ href: '/admin/settings', label: lbl.generalSettings, icon: Settings }]
-      : []),
-    { href: '/admin/settings/wa-template', label: lbl.waTemplate, icon: MessageCircle },
+    ...(has('settings') ? [{ href: '/admin/settings', label: lbl.generalSettings, icon: Settings }] : []),
+    ...(has('wa_template') ? [{ href: '/admin/settings/wa-template', label: lbl.waTemplate, icon: MessageCircle }] : []),
   ];
   if (role === 'SUPER_ADMIN') {
     settingsItems.push({ href: '/admin/users', label: lbl.adminUsers, icon: Users });
     settingsItems.push({ href: '/admin/settings/reset-data', label: lbl.resetData, icon: Trash2 });
   }
-  return [
+  const groups: NavGroup[] = [
     {
       label: lbl.mainMenu,
       items: mainItems,
     },
-    // CRM Internal (nurse/finance/patient management etc.) — not for CONTENT_ADMIN.
+    // CRM Internal tetap berbasis ROLE (SSO bridge ke portal CRM terpisah,
+    // punya sistem RBAC sendiri — lihat crmRoleForAdmin() di crm/_crm.php),
+    // bukan bagian dari modul admin panel ini.
     ...(role !== 'CONTENT_ADMIN'
       ? [{ label: lbl.crmGroup, items: [{ href: '/crm/dashboard', label: lbl.crmInternal, icon: Stethoscope }] }]
       : []),
     {
       label: lbl.services,
       items: [
-        { href: '/admin/products', label: lbl.treatment, icon: PackagePlus },
-        ...(role !== 'CONTENT_ADMIN'
-          ? [
-              { href: '/admin/schedule', label: lbl.schedule, icon: CalendarDays },
-              { href: '/admin/coverage', label: lbl.coverage, icon: MapPinned },
-            ]
-          : []),
+        ...(has('treatment') ? [{ href: '/admin/products', label: lbl.treatment, icon: PackagePlus }] : []),
+        ...(has('schedule') ? [{ href: '/admin/schedule', label: lbl.schedule, icon: CalendarDays }] : []),
+        ...(has('coverage') ? [{ href: '/admin/coverage', label: lbl.coverage, icon: MapPinned }] : []),
       ],
     },
     {
       label: lbl.content,
       items: [
-        // Blog memakai permission content:* — ADMIN_OPERASIONAL tidak punya akses
-        // (proxy & PHP menolak 403), jadi menunya pun tidak ditampilkan.
-        ...(role !== 'ADMIN_OPERASIONAL'
-          ? [{ href: '/admin/blog', label: lbl.blog, icon: Newspaper }]
-          : []),
-        { href: '/admin/faqs', label: lbl.faq, icon: CircleHelp },
-        { href: '/admin/social-links', label: lbl.socialLinks, icon: Share2 },
+        ...(has('blog') ? [{ href: '/admin/blog', label: lbl.blog, icon: Newspaper }] : []),
+        ...(has('faq') ? [{ href: '/admin/faqs', label: lbl.faq, icon: CircleHelp }] : []),
+        ...(has('social_links') ? [{ href: '/admin/social-links', label: lbl.socialLinks, icon: Share2 }] : []),
       ],
     },
     {
@@ -151,6 +156,9 @@ function buildNavGroups(lbl: typeof ADMIN_LABELS[AdminLang], role?: string | nul
       ],
     },
   ];
+  // Grup yang seluruh isinya tersaring (mis. admin blog-only tanpa akses
+  // treatment/jadwal/area) tidak boleh tampil sebagai header kosong.
+  return groups.filter((g) => g.items.length > 0);
 }
 
 function getActiveLabel(pathname: string, groups: NavGroup[]) {
@@ -191,7 +199,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   }, []);
 
   const lbl = ADMIN_LABELS[adminLang];
-  const navGroups = buildNavGroups(lbl, admin?.role);
+  const navGroups = buildNavGroups(lbl, admin?.role, admin?.permissions);
 
   useEffect(() => {
     if (pathname === '/admin/login') {
@@ -290,7 +298,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
   const name = admin?.name ?? 'Admin';
 
   return (
-    <AdminLangContext.Provider value={{ lang: adminLang, setLang: setAdminLang, adminRole: admin?.role ?? null }}>
+    <AdminLangContext.Provider value={{ lang: adminLang, setLang: setAdminLang, adminRole: admin?.role ?? null, adminPermissions: admin?.permissions ?? null }}>
       <div className="admin-layout">
         {sidebarOpen && (
           <button

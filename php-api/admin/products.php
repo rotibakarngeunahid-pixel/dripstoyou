@@ -10,11 +10,7 @@ handleCors();
 
 $admin  = requireAuth();
 $method = getMethod();
-// Semua role boleh membaca produk; menulis hanya SUPER_ADMIN dan CONTENT_ADMIN
-// (ADMIN_OPERASIONAL hanya punya products:read sesuai matriks role).
-if ($method !== 'GET') {
-    requireRole($admin, 'SUPER_ADMIN', 'CONTENT_ADMIN');
-}
+requireAdminModule($admin, 'treatment', $method === 'GET' ? 'view' : ($method === 'DELETE' ? 'delete' : 'manage'));
 $id     = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
 $db     = getDb();
 ensureCurrencySchema($db);

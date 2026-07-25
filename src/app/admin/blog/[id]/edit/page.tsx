@@ -37,7 +37,7 @@ async function getCategories(token: string): Promise<AdminBlogCategory[]> {
 export default async function EditBlogPostPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
-  if (!can(session.role, 'content:write')) redirect('/admin/dashboard');
+  if (!can(session, 'blog', 'manage')) redirect('/admin/dashboard');
 
   const { id } = await params;
   const [post, categories] = await Promise.all([

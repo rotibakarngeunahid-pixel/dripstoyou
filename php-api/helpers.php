@@ -117,7 +117,7 @@ function requireAuth(): array {
 
     $db   = getDb();
     $stmt = $db->prepare(
-        'SELECT s.id AS session_id, a.id AS admin_id, a.name, a.email, a.role
+        'SELECT s.id AS session_id, a.id AS admin_id, a.name, a.email, a.role, a.permissions_json
          FROM   admin_sessions s
          JOIN   admins a ON a.id = s.admin_id
          WHERE  s.session_token_hash = ?
@@ -141,6 +141,80 @@ function requireAuth(): array {
 // karena API ini bisa dipanggil langsung tanpa melewati proxy Vercel.
 function requireRole(array $admin, string ...$roles): void {
     if (!in_array($admin['role'] ?? '', $roles, true)) {
+        jsonError('Forbidden', 403);
+    }
+}
+
+// ── RBAC — modul admin panel (mirrors crmPermissions()/crmCan() di crm/_crm.php) ─
+//
+// Setiap modul punya izin {view, manage, delete}. `admins.permissions_json`
+// (kolom sudah ada, dulu cuma tersimpan tanpa pernah dibaca — lihat memory
+// admin-permissions-matrix-not-enforced) sekarang jadi OVERRIDE: kalau admin
+// punya custom permissions non-kosong, itu yang dipakai persis apa adanya
+// (bukan digabung dengan default role). Kalau kosong/null, fallback ke
+// default role di bawah. SUPER_ADMIN selalu akses penuh, tidak pernah lewat
+// permissions_json.
+
+function adminAllModules(): array {
+    return ['booking', 'treatment', 'schedule', 'coverage', 'blog', 'faq', 'social_links', 'settings', 'wa_template'];
+}
+
+function adminPermissions(): array {
+    $full     = ['view' => true,  'manage' => true,  'delete' => true];
+    $viewOnly = ['view' => true,  'manage' => false, 'delete' => false];
+    $noDelete = ['view' => true,  'manage' => true,  'delete' => false];
+    $none     = ['view' => false, 'manage' => false, 'delete' => false];
+    return [
+        'SUPER_ADMIN' => array_fill_keys(adminAllModules(), $full),
+        // Ranah operasional: booking/schedule/coverage/settings. Baca-saja untuk
+        // treatment/faq/social_links/wa_template (konten bukan tanggung jawabnya).
+        'ADMIN_OPERASIONAL' => [
+            'booking'      => $noDelete,
+            'treatment'    => $viewOnly,
+            'schedule'     => $full,
+            'coverage'     => $full,
+            'blog'         => $none,
+            'faq'          => $viewOnly,
+            'social_links' => $viewOnly,
+            'settings'     => $full,
+            'wa_template'  => $viewOnly,
+        ],
+        // Ranah konten: treatment/blog/faq/social_links/wa_template. Tidak ada
+        // akses booking/schedule/coverage/settings sama sekali.
+        'CONTENT_ADMIN' => [
+            'booking'      => $none,
+            'treatment'    => $full,
+            'schedule'     => $none,
+            'coverage'     => $none,
+            'blog'         => $full,
+            'faq'          => $full,
+            'social_links' => $full,
+            'settings'     => $none,
+            'wa_template'  => $full,
+        ],
+    ];
+}
+
+function adminEffectivePermissions(array $admin): array {
+    if (($admin['role'] ?? '') === 'SUPER_ADMIN') return adminPermissions()['SUPER_ADMIN'];
+    if (!empty($admin['permissions_json'])) {
+        $decoded = json_decode((string)$admin['permissions_json'], true);
+        if (is_array($decoded) && count($decoded) > 0) return $decoded;
+    }
+    return adminPermissions()[$admin['role'] ?? ''] ?? [];
+}
+
+function adminCan(array $admin, string $module, string $action = 'view'): bool {
+    if (($admin['role'] ?? '') === 'SUPER_ADMIN') return true;
+    $perms = adminEffectivePermissions($admin);
+    return (bool)($perms[$module][$action] ?? false);
+}
+
+// Module-level permission gate. PHP is the final trust boundary — checking
+// the role/permission in Next.js is not enough because this API can be
+// called directly (mirrors requireCRMPermission() in crm/_crm.php).
+function requireAdminModule(array $admin, string $module, string $action = 'view'): void {
+    if (!adminCan($admin, $module, $action)) {
         jsonError('Forbidden', 403);
     }
 }

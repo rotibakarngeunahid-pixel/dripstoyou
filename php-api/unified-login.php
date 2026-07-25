@@ -36,7 +36,7 @@ $db  = getDb();
 $now = date('Y-m-d H:i:s');
 
 // ── Website admin identity ─────────────────────────────────────────────────────
-$aStmt = $db->prepare('SELECT id, name, email, password_hash, role, is_active FROM admins WHERE email = ? LIMIT 1');
+$aStmt = $db->prepare('SELECT id, name, email, password_hash, role, is_active, permissions_json FROM admins WHERE email = ? LIMIT 1');
 $aStmt->execute([$email]);
 $admin   = $aStmt->fetch();
 $adminOk = $admin && (bool)$admin['is_active'] && verifyPassword($password, $admin['password_hash']);
@@ -96,7 +96,10 @@ if ($adminOk) {
     auditLog('LOGIN_SUCCESS', $admin['id']);
     $data['admin'] = [
         'token' => $rawToken,
-        'admin' => ['id' => $admin['id'], 'name' => $admin['name'], 'email' => $admin['email'], 'role' => $admin['role']],
+        'admin' => [
+            'id' => $admin['id'], 'name' => $admin['name'], 'email' => $admin['email'], 'role' => $admin['role'],
+            'permissions' => adminEffectivePermissions($admin),
+        ],
     ];
 }
 

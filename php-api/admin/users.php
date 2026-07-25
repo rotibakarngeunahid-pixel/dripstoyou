@@ -22,6 +22,35 @@ function parsePermissions($json): ?array {
     return is_array($decoded) ? $decoded : null;
 }
 
+// Saring hanya modul yang dikenal (adminAllModules()) & paksa field jadi
+// boolean — payload aneh gagal-aman lewat adminCan() (baca null-safe), tapi
+// ini menjaga apa yang tersimpan di DB tetap bersih. Null berarti "tidak ada
+// modul valid", dipakai pemanggil untuk fallback ke default role.
+function sanitizeAdminPermissions($raw): ?array {
+    if (!is_array($raw)) return null;
+    $clean = [];
+    foreach (adminAllModules() as $module) {
+        if (!isset($raw[$module]) || !is_array($raw[$module])) continue;
+        $clean[$module] = [
+            'view'   => (bool)($raw[$module]['view']   ?? false),
+            'manage' => (bool)($raw[$module]['manage'] ?? false),
+            'delete' => (bool)($raw[$module]['delete'] ?? false),
+        ];
+    }
+    return count($clean) > 0 ? $clean : null;
+}
+
+// permissions tidak dikirim → jangan diubah. null / {} → kembali ke default
+// role (permissions_json = NULL). Object valid → sanitasi lalu simpan.
+function resolvePermissionsJson($body, ?string $fallback) {
+    if (!array_key_exists('permissions', $body)) return $fallback;
+    if ($body['permissions'] === null || (is_array($body['permissions']) && count($body['permissions']) === 0)) {
+        return null;
+    }
+    $sanitized = sanitizeAdminPermissions($body['permissions']);
+    return $sanitized !== null ? json_encode($sanitized) : $fallback;
+}
+
 // ── GET — list all admins ──────────────────────────────────────────────────────
 if ($method === 'GET') {
     $stmt = $db->prepare(
@@ -58,8 +87,7 @@ if ($method === 'POST') {
     $password = (string)($body['password'] ?? '');
     $role     = str_clean($body['role'], 32);
     $isActive = isset($body['isActive']) ? (bool)$body['isActive'] : true;
-    $permJson = isset($body['permissions']) && is_array($body['permissions'])
-                ? json_encode($body['permissions']) : null;
+    $permJson = resolvePermissionsJson($body, null);
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) jsonError('Email tidak valid', 422);
     if (!in_array($role, $VALID_ROLES, true)) jsonError('Role tidak valid', 422);
@@ -123,8 +151,7 @@ if ($method === 'PUT') {
     $email    = isset($body['email'])    ? strtolower(trim(str_clean($body['email'], 191))) : $target['email'];
     $role     = isset($body['role'])     ? str_clean($body['role'], 32)      : $target['role'];
     $isActive = isset($body['isActive']) ? (bool)$body['isActive']           : (bool)$target['is_active'];
-    $permJson = isset($body['permissions']) && is_array($body['permissions'])
-                ? json_encode($body['permissions']) : $target['permissions_json'];
+    $permJson = resolvePermissionsJson($body, $target['permissions_json']);
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) jsonError('Email tidak valid', 422);
     if (!in_array($role, $VALID_ROLES, true)) jsonError('Role tidak valid', 422);

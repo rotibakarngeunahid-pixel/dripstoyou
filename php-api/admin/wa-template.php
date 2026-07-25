@@ -4,12 +4,9 @@
 require_once __DIR__ . '/../helpers.php';
 handleCors();
 
-$admin = requireAuth();
+$admin  = requireAuth();
 $method = getMethod();
-// Menulis template hanya untuk SUPER_ADMIN dan CONTENT_ADMIN.
-if ($method !== 'GET') {
-    requireRole($admin, 'SUPER_ADMIN', 'CONTENT_ADMIN');
-}
+requireAdminModule($admin, 'wa_template', $method === 'GET' ? 'view' : 'manage');
 $key = 'whatsapp_booking_template';
 $allowed = [
     'customer_name',

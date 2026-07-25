@@ -5,9 +5,6 @@ require_once __DIR__ . '/../helpers.php';
 handleCors();
 
 $admin = requireAuth();
-// Upload foto produk = products:write — hanya SUPER_ADMIN dan CONTENT_ADMIN
-// (konsisten dengan permission 'products:write' di route Next.js).
-requireRole($admin, 'SUPER_ADMIN', 'CONTENT_ADMIN');
 
 if (getMethod() !== 'POST') jsonError('Method not allowed', 405);
 
@@ -21,6 +18,9 @@ $type = strtolower(str_clean($_GET['type'] ?? ($_POST['type'] ?? 'products'), 20
 if (!in_array($type, ['products', 'blog'], true)) {
     jsonError('Tipe upload tidak valid', 422);
 }
+
+// Upload foto produk = treatment:manage, upload cover/gambar blog = blog:manage.
+requireAdminModule($admin, $type === 'blog' ? 'blog' : 'treatment', 'manage');
 
 $phpApiDir = realpath(__DIR__ . '/..') ?: dirname(__DIR__);
 $uploadDir = $phpApiDir . '/uploads/' . $type;

@@ -12,10 +12,11 @@ export async function GET() {
     return NextResponse.json({
       success: true,
       admin: {
-        id:    session.adminId,
-        email: session.email,
-        role:  session.role,
-        name:  session.name,
+        id:          session.adminId,
+        email:       session.email,
+        role:        session.role,
+        name:        session.name,
+        permissions: session.permissions ?? {},
       },
     });
   } catch (error) {

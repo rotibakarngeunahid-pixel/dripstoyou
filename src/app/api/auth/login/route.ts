@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, AdminRole } from '@/lib/session';
+import { getSession, AdminRole, AdminModulePermissions } from '@/lib/session';
 import { getCRMSession, CRMRole } from '@/lib/crm-session';
 import { crmHomePath } from '@/lib/crm-permissions';
 
@@ -16,7 +16,10 @@ import { crmHomePath } from '@/lib/crm-permissions';
 // real users out after ~3 typos. The legacy two-call flow is kept only as a
 // fallback while unified-login.php has not been uploaded to the PHP host yet.
 
-type AdminPayload = { token: string; admin: { id: string; name: string; email: string; role: string } };
+type AdminPayload = {
+  token: string;
+  admin: { id: string; name: string; email: string; role: string; permissions?: AdminModulePermissions };
+};
 type CRMPayload = {
   token: string;
   staff: { id: string; name: string; email: string; role: string };
@@ -27,6 +30,7 @@ async function saveAdminSession(p: AdminPayload): Promise<void> {
   const s = await getSession();
   s.adminId = p.admin.id; s.email = p.admin.email; s.role = p.admin.role as AdminRole;
   s.name = p.admin.name; s.adminToken = p.token;
+  s.permissions = p.admin.permissions ?? {};
   await s.save();
 }
 

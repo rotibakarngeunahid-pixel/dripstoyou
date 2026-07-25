@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/session';
+import { getSession, AdminModulePermissions } from '@/lib/session';
 
 export async function POST(req: NextRequest) {
   let body: { email?: unknown; password?: unknown };
@@ -75,15 +75,16 @@ export async function POST(req: NextRequest) {
 
     const { token, admin } = phpData.data as {
       token: string;
-      admin: { id: string; name: string; email: string; role: string };
+      admin: { id: string; name: string; email: string; role: string; permissions?: AdminModulePermissions };
     };
 
-    const session      = await getSession();
-    session.adminId    = admin.id;
-    session.email      = admin.email;
-    session.role       = admin.role as 'SUPER_ADMIN' | 'ADMIN_OPERASIONAL' | 'CONTENT_ADMIN';
-    session.name       = admin.name;
-    session.adminToken = token;
+    const session       = await getSession();
+    session.adminId     = admin.id;
+    session.email       = admin.email;
+    session.role        = admin.role as 'SUPER_ADMIN' | 'ADMIN_OPERASIONAL' | 'CONTENT_ADMIN';
+    session.name        = admin.name;
+    session.adminToken  = token;
+    session.permissions = admin.permissions ?? {};
     await session.save();
 
     return NextResponse.json({

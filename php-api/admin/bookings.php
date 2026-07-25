@@ -9,9 +9,6 @@ require_once __DIR__ . '/../crm/_crm.php'; // for crmEnsurePatientForBooking()
 handleCors();
 
 $admin  = requireAuth();
-// Data booking berisi PII pelanggan — CONTENT_ADMIN tidak punya akses
-// (konsisten dengan pemeriksaan di route Next.js).
-requireRole($admin, 'SUPER_ADMIN', 'ADMIN_OPERASIONAL');
 // Support X-HTTP-Method-Override header AND ?_method query param so hosts
 // that strip DELETE (shared hosting / some proxies) can still call this endpoint.
 $method = strtoupper(
@@ -19,6 +16,7 @@ $method = strtoupper(
     ?? (isset($_GET['_method']) ? str_clean($_GET['_method'], 10) : null)
     ?? getMethod()
 );
+requireAdminModule($admin, 'booking', $method === 'GET' ? 'view' : ($method === 'DELETE' ? 'delete' : 'manage'));
 $id     = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
 $db     = getDb();
 

@@ -25,7 +25,7 @@ checkLoginRateLimit($ipHash, $emailHash);
 $db = getDb();
 
 // Look up admin by email
-$stmt = $db->prepare('SELECT id, name, email, password_hash, role, is_active FROM admins WHERE email = ? LIMIT 1');
+$stmt = $db->prepare('SELECT id, name, email, password_hash, role, is_active, permissions_json FROM admins WHERE email = ? LIMIT 1');
 $stmt->execute([$email]);
 $admin = $stmt->fetch();
 
@@ -71,9 +71,10 @@ auditLog('LOGIN_SUCCESS', $admin['id']);
 jsonSuccess([
     'token' => $rawToken,
     'admin' => [
-        'id'    => $admin['id'],
-        'name'  => $admin['name'],
-        'email' => $admin['email'],
-        'role'  => $admin['role'],
+        'id'          => $admin['id'],
+        'name'        => $admin['name'],
+        'email'       => $admin['email'],
+        'role'        => $admin['role'],
+        'permissions' => adminEffectivePermissions($admin),
     ],
 ]);

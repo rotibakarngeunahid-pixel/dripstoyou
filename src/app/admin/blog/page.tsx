@@ -38,7 +38,7 @@ export default async function AdminBlogPage() {
   const session = await getSession();
   if (!session.adminId) redirect('/admin/login');
   // Blog = permission konten. ADMIN_OPERASIONAL tidak punya content:* sama sekali.
-  if (!can(session.role, 'content:read')) redirect('/admin/dashboard');
+  if (!can(session, 'blog', 'view')) redirect('/admin/dashboard');
 
   const [posts, categories] = await Promise.all([
     getPosts(session.adminToken),

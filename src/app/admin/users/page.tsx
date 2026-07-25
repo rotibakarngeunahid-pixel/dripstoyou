@@ -5,7 +5,12 @@ import { useAdminLang } from '@/app/admin/AdminLayoutClient';
 import { ADMIN_T } from '@/lib/admin-i18n';
 
 type AdminRole = 'SUPER_ADMIN' | 'ADMIN_OPERASIONAL' | 'CONTENT_ADMIN';
-type PermKey = 'booking' | 'treatment' | 'jadwal' | 'areaLayanan' | 'faqKonten' | 'blog' | 'pengaturan' | 'exportData' | 'adminUsers';
+// Mirrors adminAllModules() in php-api/helpers.php — this matrix is now
+// ENFORCED (requireAdminModule() on every admin endpoint), not decorative.
+// adminUsers/export stay hard-locked to SUPER_ADMIN in the backend and are
+// deliberately NOT here — showing them as togglable would recreate the exact
+// "checkbox does nothing" bug this system just got fixed for.
+type PermKey = 'booking' | 'treatment' | 'schedule' | 'coverage' | 'blog' | 'faq' | 'social_links' | 'settings' | 'wa_template';
 type PermEntry = { view: boolean; manage: boolean; delete: boolean };
 type PermissionMatrix = Record<PermKey, PermEntry>;
 
@@ -35,15 +40,15 @@ const ROLE_COLORS: Record<AdminRole, { bg: string; color: string }> = {
 };
 
 const PERM_MODULES: { key: PermKey; label: string }[] = [
-  { key: 'booking',     label: 'Booking' },
-  { key: 'treatment',   label: 'Treatment' },
-  { key: 'jadwal',      label: 'Jadwal' },
-  { key: 'areaLayanan', label: 'Area Layanan' },
-  { key: 'faqKonten',   label: 'FAQ & Konten' },
-  { key: 'blog',        label: 'Blog' },
-  { key: 'pengaturan',  label: 'Pengaturan' },
-  { key: 'exportData',  label: 'Export Data' },
-  { key: 'adminUsers',  label: 'Admin Users' },
+  { key: 'booking',      label: 'Booking' },
+  { key: 'treatment',    label: 'Treatment' },
+  { key: 'schedule',     label: 'Jadwal' },
+  { key: 'coverage',     label: 'Area Layanan' },
+  { key: 'blog',         label: 'Blog' },
+  { key: 'faq',          label: 'FAQ' },
+  { key: 'social_links', label: 'Social Links' },
+  { key: 'settings',     label: 'Pengaturan' },
+  { key: 'wa_template',  label: 'WhatsApp Template' },
 ];
 
 // Admin lama bisa punya `permissions_json` custom tersimpan dari sebelum modul
@@ -51,41 +56,54 @@ const PERM_MODULES: { key: PermKey; label: string }[] = [
 // baca `undefined.view` saat modul itu belum ada di JSON tersimpannya.
 const EMPTY_PERM_ENTRY: PermEntry = { view: false, manage: false, delete: false };
 
+// Mirrors adminPermissions() in php-api/helpers.php EXACTLY — this is what
+// an admin actually gets today when permissions_json is null. Keep the two
+// in sync; this is the single source of truth on the display side.
 const DEFAULT_PERMS: Record<AdminRole, PermissionMatrix> = {
   SUPER_ADMIN: {
-    booking:     { view: true,  manage: true,  delete: true  },
-    treatment:   { view: true,  manage: true,  delete: true  },
-    jadwal:      { view: true,  manage: true,  delete: false },
-    areaLayanan: { view: true,  manage: true,  delete: true  },
-    faqKonten:   { view: true,  manage: true,  delete: true  },
-    blog:        { view: true,  manage: true,  delete: true  },
-    pengaturan:  { view: true,  manage: true,  delete: false },
-    exportData:  { view: true,  manage: true,  delete: false },
-    adminUsers:  { view: true,  manage: true,  delete: true  },
+    booking:      { view: true,  manage: true,  delete: true  },
+    treatment:    { view: true,  manage: true,  delete: true  },
+    schedule:     { view: true,  manage: true,  delete: true  },
+    coverage:     { view: true,  manage: true,  delete: true  },
+    blog:         { view: true,  manage: true,  delete: true  },
+    faq:          { view: true,  manage: true,  delete: true  },
+    social_links: { view: true,  manage: true,  delete: true  },
+    settings:     { view: true,  manage: true,  delete: true  },
+    wa_template:  { view: true,  manage: true,  delete: true  },
   },
   ADMIN_OPERASIONAL: {
-    booking:     { view: true,  manage: true,  delete: false },
-    treatment:   { view: true,  manage: false, delete: false },
-    jadwal:      { view: true,  manage: true,  delete: false },
-    areaLayanan: { view: true,  manage: true,  delete: false },
-    faqKonten:   { view: false, manage: false, delete: false },
-    blog:        { view: false, manage: false, delete: false },
-    pengaturan:  { view: false, manage: false, delete: false },
-    exportData:  { view: false, manage: false, delete: false },
-    adminUsers:  { view: false, manage: false, delete: false },
+    booking:      { view: true,  manage: true,  delete: false },
+    treatment:    { view: true,  manage: false, delete: false },
+    schedule:     { view: true,  manage: true,  delete: true  },
+    coverage:     { view: true,  manage: true,  delete: true  },
+    blog:         { view: false, manage: false, delete: false },
+    faq:          { view: true,  manage: false, delete: false },
+    social_links: { view: true,  manage: false, delete: false },
+    settings:     { view: true,  manage: true,  delete: true  },
+    wa_template:  { view: true,  manage: false, delete: false },
   },
   CONTENT_ADMIN: {
-    booking:     { view: false, manage: false, delete: false },
-    treatment:   { view: true,  manage: true,  delete: true  },
-    jadwal:      { view: false, manage: false, delete: false },
-    areaLayanan: { view: false, manage: false, delete: false },
-    faqKonten:   { view: true,  manage: true,  delete: true  },
-    blog:        { view: true,  manage: true,  delete: true  },
-    pengaturan:  { view: false, manage: false, delete: false },
-    exportData:  { view: false, manage: false, delete: false },
-    adminUsers:  { view: false, manage: false, delete: false },
+    booking:      { view: false, manage: false, delete: false },
+    treatment:    { view: true,  manage: true,  delete: true  },
+    schedule:     { view: false, manage: false, delete: false },
+    coverage:     { view: false, manage: false, delete: false },
+    blog:         { view: true,  manage: true,  delete: true  },
+    faq:          { view: true,  manage: true,  delete: true  },
+    social_links: { view: true,  manage: true,  delete: true  },
+    settings:     { view: false, manage: false, delete: false },
+    wa_template:  { view: true,  manage: true,  delete: true  },
   },
 };
+
+// Untuk perbandingan "apakah form.permissions masih = default role" (dipakai
+// saat submit — lihat handleSave) — key-order aman, cuma baca field yang ada.
+function permissionsEqual(a: PermissionMatrix, b: PermissionMatrix): boolean {
+  return PERM_MODULES.every(({ key }) => {
+    const pa = a[key];
+    const pb = b[key];
+    return pa?.view === pb?.view && pa?.manage === pb?.manage && pa?.delete === pb?.delete;
+  });
+}
 
 function formatDateTime(val: string | null) {
   if (!val) return null;
@@ -341,12 +359,15 @@ export default function AdminUsersPage() {
     setSaving(true);
     setFormErr('');
     try {
+      // Kalau matrix-nya persis sama dengan default role, kirim null (bukan
+      // matrix-nya) supaya admin ini otomatis ikut kalau default role berubah
+      // nanti, bukan "terkunci" ke salinan lama.
       const body: Record<string, unknown> = {
         name: form.name,
         email: form.email,
         role: form.role,
         isActive: form.isActive,
-        permissions: form.permissions,
+        permissions: permissionsEqual(form.permissions, DEFAULT_PERMS[form.role]) ? null : form.permissions,
       };
       if (form.password.trim()) body.password = form.password;
       const url    = editId ? `/api/admin/users/${editId}` : '/api/admin/users';

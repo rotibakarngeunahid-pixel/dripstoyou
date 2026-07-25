@@ -10,10 +10,10 @@
 require_once __DIR__ . '/../helpers.php';
 handleCors();
 
-$admin = requireAuth();
-requireRole($admin, 'SUPER_ADMIN', 'CONTENT_ADMIN');
-
+$admin  = requireAuth();
 $method = getMethod();
+requireAdminModule($admin, 'blog', $method === 'GET' ? 'view' : ($method === 'DELETE' ? 'delete' : 'manage'));
+
 $id     = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
 $db     = getDb();
 

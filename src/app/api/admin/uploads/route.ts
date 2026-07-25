@@ -30,7 +30,7 @@ async function toWebP(file: File): Promise<{ buffer: Buffer; filename: string }>
 }
 
 // Permission dicek di dalam handler karena tergantung `type`: upload cover blog
-// butuh content:write, upload foto produk butuh products:write.
+// butuh modul blog:manage, upload foto produk butuh treatment:manage.
 export const POST = adminApiHandler(null, async (req: NextRequest, session: SessionData) => {
   let formData: FormData;
   try {
@@ -40,8 +40,7 @@ export const POST = adminApiHandler(null, async (req: NextRequest, session: Sess
   }
 
   const uploadType = resolveUploadType(formData.get('type'));
-  const permission = uploadType === 'blog' ? 'content:write' : 'products:write';
-  if (!can(session.role, permission)) {
+  if (!can(session, uploadType === 'blog' ? 'blog' : 'treatment', 'manage')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
