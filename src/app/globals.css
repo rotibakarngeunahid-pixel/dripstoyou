@@ -9104,3 +9104,214 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
     padding: 6px 9px;
   }
 }
+
+/* ─── Blog Analytics ──────────────────────────────────────────────────────── */
+
+.admin-analytics-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.admin-analytics-custom-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-left: 4px;
+}
+
+.admin-analytics-custom-range label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.admin-analytics-subrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 4px;
+  margin-bottom: 22px;
+  color: var(--text-muted);
+  font-size: .86rem;
+}
+
+.admin-analytics-subrow strong {
+  color: var(--teal);
+}
+
+.admin-analytics-panel {
+  margin-top: 22px;
+  padding: 20px;
+}
+
+.admin-analytics-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admin-analytics-granularity {
+  display: flex;
+  gap: 6px;
+}
+
+.admin-analytics-granularity .button {
+  padding: 6px 12px;
+  font-size: .78rem;
+}
+
+.admin-analytics-top-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.admin-analytics-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.admin-analytics-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 22px;
+}
+
+.admin-analytics-breakdown h3 {
+  font-size: .84rem;
+  font-weight: 800;
+  color: var(--teal);
+  margin-bottom: 10px;
+}
+
+.admin-analytics-breakdown-list {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-analytics-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: .82rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.admin-analytics-breakdown-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--pale-aqua);
+  overflow: hidden;
+}
+
+.admin-analytics-breakdown-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ocean);
+}
+
+/* Chart — hand-rolled SVG, no charting dependency (see dataviz skill: no
+   library existed in this codebase, hand-rolled bars are the precedent). */
+
+.blog-chart {
+  display: grid;
+  gap: 12px;
+}
+
+.blog-chart-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  font-size: .82rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.blog-chart-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.blog-chart-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.blog-chart-table-toggle {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: var(--ocean);
+  font-weight: 800;
+  font-size: .8rem;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.blog-chart-table-toggle:hover {
+  text-decoration: underline;
+}
+
+.blog-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.blog-chart-tooltip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--off-white);
+  font-size: .82rem;
+  min-height: 20px;
+}
+
+.blog-chart-tooltip strong {
+  color: var(--teal);
+}
+
+.blog-chart-tooltip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+}
+
+.blog-chart-tooltip-hint {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+@media (max-width: 767px) {
+  .admin-analytics-panel {
+    padding: 16px;
+  }
+
+  .admin-analytics-top-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -192,6 +192,9 @@ export default function BlogListClient({
                 <Link href={`/admin/blog/${post.id}/edit`} className="button button-secondary">
                   {t.edit}
                 </Link>
+                <Link href={`/admin/blog/${post.id}/analytics`} className="button button-secondary">
+                  {t.lihatAnalytics}
+                </Link>
               </div>
             </article>
           );

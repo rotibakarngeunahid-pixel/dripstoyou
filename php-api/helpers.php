@@ -762,6 +762,89 @@ function getCurrencySettings(PDO $db): array {
     return $rows;
 }
 
+// ── Blog Analytics Helpers ────────────────────────────────────────────────────
+// Lightweight, dependency-free classification for first-party blog analytics
+// (php-api/blog-track.php, php-api/admin/blog-analytics.php). Only broad
+// categories are ever persisted — the raw User-Agent string and the
+// referrer's path/query are never stored (privacy: don't keep more visitor
+// data than the dashboard actually needs).
+
+function botLikeUserAgent(string $ua): bool {
+    if ($ua === '') return true; // no UA at all — never a real browser visit
+    $needles = [
+        'bot', 'spider', 'crawl', 'slurp', 'facebookexternalhit', 'whatsapp',
+        'telegrambot', 'discordbot', 'skypeuripreview', 'preview',
+        'curl/', 'wget/', 'python-requests', 'python-urllib', 'go-http-client',
+        'okhttp', 'axios/', 'node-fetch', 'headlesschrome', 'phantomjs',
+        'ahrefsbot', 'semrushbot', 'mj12bot', 'dotbot', 'petalbot', 'yandexbot',
+        'bingpreview', 'pingdom', 'uptimerobot',
+    ];
+    $lower = strtolower($ua);
+    foreach ($needles as $needle) {
+        if (str_contains($lower, $needle)) return true;
+    }
+    return false;
+}
+
+function classifyDeviceUa(string $ua): array {
+    $lower = strtolower($ua);
+
+    if ($lower === '') {
+        $device = 'other';
+    } elseif (str_contains($lower, 'ipad') || (str_contains($lower, 'android') && !str_contains($lower, 'mobile'))) {
+        $device = 'tablet';
+    } elseif (str_contains($lower, 'mobi') || str_contains($lower, 'iphone') || str_contains($lower, 'android')) {
+        $device = 'mobile';
+    } else {
+        $device = 'desktop';
+    }
+
+    $browser = 'other';
+    if (str_contains($lower, 'edg/')) $browser = 'edge';
+    elseif (str_contains($lower, 'opr/') || str_contains($lower, 'opera')) $browser = 'opera';
+    elseif (str_contains($lower, 'samsungbrowser')) $browser = 'samsung internet';
+    elseif (str_contains($lower, 'firefox') || str_contains($lower, 'fxios')) $browser = 'firefox';
+    elseif (str_contains($lower, 'crios') || str_contains($lower, 'chrome')) $browser = 'chrome';
+    elseif (str_contains($lower, 'safari') && !str_contains($lower, 'chrome')) $browser = 'safari';
+
+    $os = 'other';
+    if (str_contains($lower, 'windows')) $os = 'windows';
+    elseif (str_contains($lower, 'iphone') || str_contains($lower, 'ipad') || str_contains($lower, ' ios')) $os = 'ios';
+    elseif (str_contains($lower, 'mac os') || str_contains($lower, 'macintosh')) $os = 'macos';
+    elseif (str_contains($lower, 'android')) $os = 'android';
+    elseif (str_contains($lower, 'linux')) $os = 'linux';
+
+    return ['device' => $device, 'browser' => $browser, 'os' => $os];
+}
+
+// $referrerUrl comes from the client's `document.referrer` (sent in the
+// tracking payload) — NOT the HTTP Referer header of the tracking request
+// itself, which would just be the article page calling the beacon.
+function classifyReferrer(?string $referrerUrl, string $selfHost): array {
+    $referrerUrl = trim((string)$referrerUrl);
+    if ($referrerUrl === '') return ['host' => null, 'source' => 'direct'];
+
+    $host = parse_url($referrerUrl, PHP_URL_HOST);
+    if (!$host) return ['host' => null, 'source' => 'direct'];
+    $host = strtolower((string)preg_replace('/^www\./', '', $host));
+    $selfHostNorm = strtolower((string)preg_replace('/^www\./', '', $selfHost));
+
+    if ($host === $selfHostNorm) return ['host' => $host, 'source' => 'internal'];
+
+    $map = [
+        'google.' => 'google', 'bing.com' => 'bing', 'yahoo.' => 'yahoo', 'duckduckgo.com' => 'duckduckgo',
+        'instagram.com' => 'instagram', 'facebook.com' => 'facebook', 'fb.com' => 'facebook', 'l.facebook.com' => 'facebook',
+        'twitter.com' => 'twitter', 'x.com' => 'twitter', 't.co' => 'twitter',
+        'whatsapp.com' => 'whatsapp', 'wa.me' => 'whatsapp',
+        'tiktok.com' => 'tiktok', 'youtube.com' => 'youtube', 'pinterest.' => 'pinterest', 'linkedin.com' => 'linkedin',
+    ];
+    foreach ($map as $needle => $source) {
+        if (str_contains($host, $needle)) return ['host' => $host, 'source' => $source];
+    }
+
+    return ['host' => $host, 'source' => 'referral'];
+}
+
 // Site settings helpers
 
 function getSiteSetting(string $key, ?string $default = null): ?string {

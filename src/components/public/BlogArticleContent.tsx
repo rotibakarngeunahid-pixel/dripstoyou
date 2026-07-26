@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react';
 import { useLanguage } from '@/contexts/language';
 import type { MarkdownHeading } from '@/lib/markdown';
 import { blogAuthorName, formatBlogDate, toIsoOrNull, type BlogPost, type BlogPostCard } from '@/lib/blog';
+import { trackBlogEvent } from '@/lib/blog-analytics-client';
 
 interface Props {
   post: BlogPost;
@@ -42,12 +43,15 @@ type AnalyticsWindow = Window & {
 
 // Event GA4 `blog_cta_click` (§2 / §8.10). No-op selama GA/GTM belum dipasang —
 // begitu tag terpasang, event langsung terkirim tanpa perubahan kode.
-function trackCtaClick(slug: string, target: string) {
+// Berjalan berdampingan dengan trackBlogEvent() (first-party, dipakai dashboard
+// Blog Analytics) — dua sistem terpisah, sama-sama fire-and-forget.
+function trackCtaClick(postId: string, slug: string, target: string) {
   if (typeof window === 'undefined') return;
   const w = window as AnalyticsWindow;
   const params = { article_slug: slug, cta_target: target };
   w.gtag?.('event', 'blog_cta_click', params);
   w.dataLayer?.push({ event: 'blog_cta_click', ...params });
+  trackBlogEvent(postId, 'cta_click', { target });
 }
 
 // Indikator progres baca. Di ponsel tidak ada scrollbar, jadi pembaca tidak
@@ -108,6 +112,36 @@ export default function BlogArticleContent({ post, contentHtml, headings, relate
 
   const toc = headings.filter((heading) => heading.level <= 3);
   const showToc = toc.length >= TOC_MIN_HEADINGS;
+
+  const proseRef = useRef<HTMLDivElement>(null);
+  const viewTrackedRef = useRef(false);
+
+  // Satu event `view` per mount, dijaga ref (bukan window state) supaya
+  // aman dari React StrictMode / rerender ganda tanpa perlu dedup di server.
+  useEffect(() => {
+    if (viewTrackedRef.current) return;
+    viewTrackedRef.current = true;
+    trackBlogEvent(post.id, 'view');
+  }, [post.id]);
+
+  // Klik link di dalam body artikel (Markdown yang dirender) — event delegation
+  // karena isinya dangerouslySetInnerHTML, bukan elemen React biasa.
+  useEffect(() => {
+    const el = proseRef.current;
+    if (!el) return;
+
+    function onClick(e: MouseEvent) {
+      const anchor = (e.target as HTMLElement | null)?.closest('a');
+      const href = anchor?.getAttribute('href');
+      if (!href) return;
+      const isInternal = href.startsWith('/') || href.startsWith('#')
+        || (typeof window !== 'undefined' && href.startsWith(window.location.origin));
+      trackBlogEvent(post.id, 'link_click', { target: href, kind: isInternal ? 'internal' : 'external' });
+    }
+
+    el.addEventListener('click', onClick);
+    return () => el.removeEventListener('click', onClick);
+  }, [post.id]);
 
   return (
     <main className="page-shell blog-article-shell">
@@ -189,7 +223,7 @@ export default function BlogArticleContent({ post, contentHtml, headings, relate
           </nav>
         )}
 
-        <div className="blog-prose" dangerouslySetInnerHTML={{ __html: contentHtml }} />
+        <div className="blog-prose" ref={proseRef} dangerouslySetInnerHTML={{ __html: contentHtml }} />
 
         <p className="blog-disclaimer">{b.disclaimer}</p>
 
@@ -201,7 +235,7 @@ export default function BlogArticleContent({ post, contentHtml, headings, relate
             <Link
               href="/booking"
               className="button button-gold"
-              onClick={() => trackCtaClick(post.slug, 'booking')}
+              onClick={() => trackCtaClick(post.id, post.slug, 'booking')}
             >
               {b.ctaBook}
               {ARROW_SVG}
@@ -209,7 +243,7 @@ export default function BlogArticleContent({ post, contentHtml, headings, relate
             <Link
               href="/treatments"
               className="button button-secondary"
-              onClick={() => trackCtaClick(post.slug, 'treatments')}
+              onClick={() => trackCtaClick(post.id, post.slug, 'treatments')}
             >
               {b.ctaTreatments}
             </Link>

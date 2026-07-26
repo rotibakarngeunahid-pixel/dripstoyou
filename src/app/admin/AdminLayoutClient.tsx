@@ -47,7 +47,7 @@ export function useAdminLang() {
 const ADMIN_LABELS: Record<AdminLang, {
   mainMenu: string; dashboard: string; booking: string;
   services: string; treatment: string; schedule: string; coverage: string;
-  content: string; faq: string; socialLinks: string; blog: string;
+  content: string; faq: string; socialLinks: string; blog: string; blogAnalytics: string;
   settings: string; generalSettings: string; waTemplate: string;
   help: string; adminGuide: string; adminUsers: string; resetData: string;
   crmGroup: string; crmInternal: string;
@@ -58,7 +58,7 @@ const ADMIN_LABELS: Record<AdminLang, {
   id: {
     mainMenu: 'Menu Utama', dashboard: 'Dashboard', booking: 'Booking',
     services: 'Layanan', treatment: 'Treatment', schedule: 'Jadwal', coverage: 'Area Layanan',
-    content: 'Konten Website', faq: 'FAQ', socialLinks: 'Social Links', blog: 'Blog',
+    content: 'Konten Website', faq: 'FAQ', socialLinks: 'Social Links', blog: 'Blog', blogAnalytics: 'Analytics',
     settings: 'Pengaturan', generalSettings: 'Pengaturan Umum', waTemplate: 'WhatsApp Template',
     help: 'Bantuan', adminGuide: 'Panduan Admin', adminUsers: 'Manajemen Admin', resetData: 'Reset Data',
     crmGroup: 'CRM Internal', crmInternal: 'Buka CRM',
@@ -69,7 +69,7 @@ const ADMIN_LABELS: Record<AdminLang, {
   en: {
     mainMenu: 'Main Menu', dashboard: 'Dashboard', booking: 'Bookings',
     services: 'Services', treatment: 'Treatments', schedule: 'Schedule', coverage: 'Service Areas',
-    content: 'Website Content', faq: 'FAQ', socialLinks: 'Social Links', blog: 'Blog',
+    content: 'Website Content', faq: 'FAQ', socialLinks: 'Social Links', blog: 'Blog', blogAnalytics: 'Analytics',
     settings: 'Settings', generalSettings: 'General Settings', waTemplate: 'WhatsApp Template',
     help: 'Help', adminGuide: 'Admin Guide', adminUsers: 'Admin Management', resetData: 'Reset Data',
     crmGroup: 'CRM Internal', crmInternal: 'Open CRM',
@@ -166,6 +166,7 @@ function buildNavGroups(
       label: lbl.content,
       items: [
         ...(has('blog') ? [{ href: '/admin/blog', label: lbl.blog, icon: Newspaper }] : []),
+        ...(has('blog') ? [{ href: '/admin/blog/analytics', label: lbl.blogAnalytics, icon: BarChart3 }] : []),
         ...(has('faq') ? [{ href: '/admin/faqs', label: lbl.faq, icon: CircleHelp }] : []),
         ...(has('social_links') ? [{ href: '/admin/social-links', label: lbl.socialLinks, icon: Share2 }] : []),
       ],
