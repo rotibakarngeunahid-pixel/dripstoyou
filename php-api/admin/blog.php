@@ -116,7 +116,6 @@ if ($method === 'POST') {
     $authorName     = str_clean($body['authorName'] ?? '', 120);
     $categoryId     = isset($body['categoryId']) ? str_clean($body['categoryId'], 191) : null;
     $status         = str_clean($body['status'] ?? 'draft', 20);
-    $publishedAtRaw = isset($body['publishedAt']) ? str_clean($body['publishedAt'], 25) : null;
 
     if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
         jsonError('Slug hanya boleh huruf kecil, angka, dan tanda hubung', 422);
@@ -131,9 +130,9 @@ if ($method === 'POST') {
     $chk->execute([$slug]);
     if ($chk->fetch()) jsonError('Slug sudah dipakai', 409);
 
-    $publishedAt = normalizeBlogDateTime($publishedAtRaw);
     $now         = date('Y-m-d H:i:s');
-    if ($status === 'published' && !$publishedAt) $publishedAt = $now;
+    // Tidak ada input manual — tayang selalu "sekarang" (jam server, WITA).
+    $publishedAt = $status === 'published' ? $now : null;
 
     $readingMinutes = isset($body['readingMinutes'])
         ? max(1, (int)$body['readingMinutes'])
@@ -261,15 +260,10 @@ if ($method === 'PATCH') {
     }
 
     // ── Transisi status & waktu tayang ────────────────────────────────────────
-    // `published_at` yang sudah terisi TIDAK PERNAH dikosongkan lewat PATCH:
-    // form admin selalu mengirim field ini (kadang kosong), dan menge-null-kan
-    // kolomnya akan (a) membuat artikel published hilang dari publik dan
-    // (b) membuka kunci slug artikel yang pernah tayang. Nilai kosong = "jangan
-    // ubah", bukan "hapus".
-    $requestedPublishedAt = array_key_exists('publishedAt', $body)
-        ? normalizeBlogDateTime(str_clean($body['publishedAt'] ?? '', 25))
-        : null;
-
+    // `published_at` tidak pernah diterima dari client — dikelola otomatis: diisi
+    // sekali saat artikel PERTAMA KALI tayang (draft/archived → published), lalu
+    // tidak pernah diubah lagi (termasuk saat unpublish/republish), supaya tanggal
+    // publikasi asli tetap tercatat dan slug tetap terkunci (§8.1).
     $auditAction = 'UPDATE_BLOG_POST';
     $newStatus   = null;
     if (array_key_exists('status', $body)) {
@@ -281,18 +275,13 @@ if ($method === 'PATCH') {
 
         if ($newStatus === 'published' && $current['status'] !== 'published') {
             $auditAction = 'PUBLISH_BLOG_POST';
-            // Tayang tanpa tanggal eksplisit → tayang sekarang.
-            if (!$requestedPublishedAt && empty($current['published_at'])) {
-                $requestedPublishedAt = $now;
+            if (empty($current['published_at'])) {
+                $updates[] = '`published_at` = ?';
+                $params[]  = $now;
             }
         } elseif ($current['status'] === 'published' && $newStatus !== 'published') {
             $auditAction = 'UNPUBLISH_BLOG_POST';
         }
-    }
-
-    if ($requestedPublishedAt) {
-        $updates[] = '`published_at` = ?';
-        $params[]  = $requestedPublishedAt;
     }
 
     if (empty($updates)) jsonSuccess(null, 'Tidak ada perubahan');
@@ -339,15 +328,6 @@ function assertBlogCategoryExists(PDO $db, string $categoryId): void {
     $stmt = $db->prepare('SELECT id FROM blog_categories WHERE id = ? LIMIT 1');
     $stmt->execute([$categoryId]);
     if (!$stmt->fetch()) jsonError('Kategori tidak ditemukan', 422);
-}
-
-// Terima "2026-07-24T09:00" / "2026-07-24 09:00:00" / "" → 'Y-m-d H:i:s' atau null.
-function normalizeBlogDateTime(?string $raw): ?string {
-    if ($raw === null || trim($raw) === '') return null;
-    $value = str_replace('T', ' ', trim($raw));
-    $ts    = strtotime($value);
-    if ($ts === false) jsonError('Format tanggal tayang tidak valid', 422);
-    return date('Y-m-d H:i:s', $ts);
 }
 
 // ±200 kata per menit; dihitung dari sumber Markdown (fallback: HTML di-strip).

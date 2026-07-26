@@ -29,18 +29,6 @@ const optionalUrl = (max: number) =>
     .optional()
     .nullable();
 
-// "2026-07-24T09:00" (input datetime-local) atau "2026-07-24 09:00:00".
-const optionalDateTime = z
-  .string()
-  .max(25)
-  .transform((v) => v.trim())
-  .refine(
-    (v) => v === '' || !Number.isNaN(new Date(v.replace(' ', 'T')).getTime()),
-    'Tanggal tayang tidak valid',
-  )
-  .optional()
-  .nullable();
-
 const baseFields = {
   title: z.string().transform((v) => v.trim()).pipe(z.string().min(3, 'Judul minimal 3 karakter').max(200)),
   slug: z
@@ -61,7 +49,6 @@ const baseFields = {
   ogImageUrl: optionalUrl(500),
   authorName: optionalText(120),
   status: z.enum(BLOG_STATUSES).default('draft'),
-  publishedAt: optionalDateTime,
 };
 
 type BlogInput = {

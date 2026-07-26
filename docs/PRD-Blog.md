@@ -147,7 +147,7 @@ Konvensi mengikuti tabel `products`: PK `CHAR(36)` (UUID via `generateId()`), ti
 | `author_name` | VARCHAR(120) | ✅ | NULL | Kosong → `SITE_NAME` ("Drips To You - Bali") |
 | `author_admin_id` | CHAR(36) | ✅ | NULL | Jejak penulis internal (tidak ditampilkan publik di v1) |
 | `status` | ENUM('draft','published','archived') | ❌ | 'draft' | Lifecycle (§7.3) |
-| `published_at` | DATETIME | ✅ | NULL | Diisi saat publish; bisa di-override manual (backdating/urutan) |
+| `published_at` | DATETIME | ✅ | NULL | Diisi otomatis oleh PHP saat pertama kali `published` (§7.4); tidak ada input manual |
 | `reading_minutes` | INT | ✅ | NULL | Estimasi baca (dihitung dari `content` saat simpan) |
 | `view_count` | INT | ❌ | 0 | Opsional (increment di v1 bersifat opsional) |
 | `created_at` | DATETIME | ❌ | — | |
@@ -253,7 +253,7 @@ Komponen mirror pola treatments: `Header`, `SiteFooter`, `ScrollRevealInit`, `<J
 | `/admin/blog/new` | `new/page.tsx` + `BlogForm.tsx` | Editor buat baru (draft) |
 | `/admin/blog/[id]/edit` | `[id]/edit/page.tsx` + `BlogForm.tsx` | Editor edit + tombol Publish/Unpublish/Archive |
 
-**Editor (`BlogForm.tsx`) memuat:** judul, slug (auto-generate dari judul, editable saat draft), kategori, excerpt, body (editor konten — §10.1), upload cover + **field alt text wajib**, panel SEO (meta_title/description dengan **penghitung karakter live** 60/160, canonical opsional, og image opsional), status/publish, preview.
+**Editor (`BlogForm.tsx`) memuat:** judul, slug (auto-generate dari judul, editable saat draft), kategori, excerpt, body (editor konten — §10.1), upload cover + **field alt text wajib**, panel SEO (meta_title/description dengan **penghitung karakter live** 60/160, canonical opsional, og image opsional), status/publish, preview. Tidak ada field tanggal/jam tayang — `published_at` sepenuhnya otomatis (§7.4).
 
 ### 7.3 Flow Status
 ```
@@ -275,9 +275,16 @@ Komponen mirror pola treatments: `Header`, `SiteFooter`, `ScrollRevealInit`, `<J
 
 ### 7.4 Riwayat: Scheduled Publish (DIHAPUS)
 Fitur "tayang berjadwal" (status `scheduled` + field tanggal & jam tayang sebagai
-gate) telah dihapus dari kode maupun UI admin. Field `published_at` tetap ada
-sebagai override opsional untuk tanggal tampil/urutan artikel `published`
-(mis. backdating), tapi tidak lagi punya arti "jadwalkan tayang di masa depan".
+gate) telah dihapus dari kode maupun UI admin.
+
+**Update 2026-07-26:** field "Tanggal & Jam Tayang" yang tadinya masih tersisa di
+`BlogForm.tsx` sebagai override manual opsional (backdating/urutan) **turut
+dihapus sepenuhnya**. `published_at` sekarang murni dikelola PHP: diisi otomatis
+dengan jam server saat status berubah **menjadi** `published` untuk pertama
+kalinya (draft/archived → published), lalu tidak pernah diubah lagi lewat PATCH
+apa pun — termasuk saat unpublish lalu publish ulang, nilainya tetap tanggal
+tayang pertama. Admin tidak punya jalan untuk memilih tanggal tayang, apalagi
+tanggal di masa depan — publish selalu instan begitu status disimpan.
 
 ---
 

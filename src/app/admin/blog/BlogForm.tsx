@@ -55,12 +55,6 @@ function slugify(value: string) {
     .slice(0, 200);
 }
 
-// "2026-07-24 09:00:00" (dari PHP) ↔ "2026-07-24T09:00" (input datetime-local)
-function toLocalInput(value: string | null): string {
-  if (!value) return '';
-  return value.replace(' ', 'T').slice(0, 16);
-}
-
 function Toast({ msg, type }: { msg: string; type: 'success' | 'error' }) {
   return (
     <div role="status" aria-live="polite" className={`admin-toast ${type === 'success' ? 'admin-toast--success' : 'admin-toast--error'}`}>
@@ -203,7 +197,6 @@ export default function BlogForm({
   const [ogImage, setOgImage] = useState(post?.og_image_url ?? '');
   const [authorName, setAuthorName] = useState(post?.author_name ?? '');
   const [status, setStatus] = useState<BlogStatus>(post?.status ?? 'draft');
-  const [publishedAt, setPublishedAt] = useState(toLocalInput(post?.published_at ?? null));
 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -288,7 +281,6 @@ export default function BlogForm({
       ogImageUrl: ogImage,
       authorName,
       status,
-      publishedAt,
     };
     // Slug hanya dikirim saat masih boleh diubah — server juga menolak perubahan
     // setelah artikel pernah tayang.
@@ -506,27 +498,14 @@ export default function BlogForm({
         </div>
 
         {/* Status */}
-        <div className="admin-form-grid">
-          <label className="admin-field">
-            <span className="admin-field-label">{t.statusLabel}</span>
-            <select className="control" value={status} onChange={(e) => setStatus(e.target.value as BlogStatus)}>
-              {BLOG_STATUSES.map((s) => (
-                <option key={s} value={s}>{statusLabels[s]}</option>
-              ))}
-            </select>
-          </label>
-
-          <label className="admin-field">
-            <span className="admin-field-label">{t.publishedAtLabel}</span>
-            <input
-              className="control"
-              type="datetime-local"
-              value={publishedAt}
-              onChange={(e) => setPublishedAt(e.target.value)}
-            />
-            <span className="admin-help">{t.publishedAtHelp}</span>
-          </label>
-        </div>
+        <label className="admin-field">
+          <span className="admin-field-label">{t.statusLabel}</span>
+          <select className="control" value={status} onChange={(e) => setStatus(e.target.value as BlogStatus)}>
+            {BLOG_STATUSES.map((s) => (
+              <option key={s} value={s}>{statusLabels[s]}</option>
+            ))}
+          </select>
+        </label>
 
         {error && <div className="alert alert-error">{error}</div>}
 
