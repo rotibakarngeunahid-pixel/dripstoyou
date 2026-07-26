@@ -60,7 +60,7 @@ const ADMIN_LABELS: Record<AdminLang, {
     services: 'Layanan', treatment: 'Treatment', schedule: 'Jadwal', coverage: 'Area Layanan',
     content: 'Konten Website', faq: 'FAQ', socialLinks: 'Social Links', blog: 'Blog', blogAnalytics: 'Analytics',
     settings: 'Pengaturan', generalSettings: 'Pengaturan Umum', waTemplate: 'WhatsApp Template',
-    help: 'Bantuan', adminGuide: 'Panduan Admin', adminUsers: 'Manajemen Admin', resetData: 'Reset Data',
+    help: 'Bantuan', adminGuide: 'Panduan Admin Blog', adminUsers: 'Manajemen Admin', resetData: 'Reset Data',
     crmGroup: 'CRM Internal', crmInternal: 'Buka CRM',
     verifying: 'Memverifikasi sesi admin...', livePanelLabel: 'Live panel',
     langToggle: 'EN', logout: 'Logout', loggingOut: 'Keluar...',
@@ -71,7 +71,7 @@ const ADMIN_LABELS: Record<AdminLang, {
     services: 'Services', treatment: 'Treatments', schedule: 'Schedule', coverage: 'Service Areas',
     content: 'Website Content', faq: 'FAQ', socialLinks: 'Social Links', blog: 'Blog', blogAnalytics: 'Analytics',
     settings: 'Settings', generalSettings: 'General Settings', waTemplate: 'WhatsApp Template',
-    help: 'Help', adminGuide: 'Admin Guide', adminUsers: 'Admin Management', resetData: 'Reset Data',
+    help: 'Help', adminGuide: 'Blog Admin Guide', adminUsers: 'Admin Management', resetData: 'Reset Data',
     crmGroup: 'CRM Internal', crmInternal: 'Open CRM',
     verifying: 'Verifying admin session...', livePanelLabel: 'Live panel',
     langToggle: 'ID', logout: 'Logout', loggingOut: 'Logging out...',
@@ -165,8 +165,8 @@ function buildNavGroups(
     {
       label: lbl.content,
       items: [
-        ...(has('blog') ? [{ href: '/admin/blog', label: lbl.blog, icon: Newspaper }] : []),
         ...(has('blog') ? [{ href: '/admin/blog/analytics', label: lbl.blogAnalytics, icon: BarChart3 }] : []),
+        ...(has('blog') ? [{ href: '/admin/blog', label: lbl.blog, icon: Newspaper }] : []),
         ...(has('faq') ? [{ href: '/admin/faqs', label: lbl.faq, icon: CircleHelp }] : []),
         ...(has('social_links') ? [{ href: '/admin/social-links', label: lbl.socialLinks, icon: Share2 }] : []),
       ],
@@ -187,14 +187,20 @@ function buildNavGroups(
   return groups.filter((g) => g.items.length > 0);
 }
 
-function getActiveLabel(pathname: string, groups: NavGroup[]) {
-  let activeLabel = 'Admin';
+// Beberapa route bersarang di bawah route lain (mis. /admin/blog/analytics di
+// bawah /admin/blog, /admin/settings/wa-template di bawah /admin/settings).
+// `startsWith` polos membuat KEDUANYA cocok sekaligus — bug active state ganda
+// di sidebar. Perbaikan: satu pathname hanya boleh punya SATU item aktif,
+// yaitu yang hrefnya paling SPESIFIK (paling panjang) di antara yang cocok.
+function findActiveNavItem(pathname: string, groups: NavGroup[]): NavItem | null {
+  let best: NavItem | null = null;
   for (const group of groups) {
     for (const item of group.items) {
-      if (pathname.startsWith(item.href)) activeLabel = item.label;
+      const isMatch = pathname === item.href || pathname.startsWith(`${item.href}/`);
+      if (isMatch && (!best || item.href.length > best.href.length)) best = item;
     }
   }
-  return activeLabel;
+  return best;
 }
 
 function adminInitial(name?: string) {
@@ -320,7 +326,8 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
     }
   }
 
-  const activeLabel = getActiveLabel(pathname, navGroups);
+  const activeNavItem = findActiveNavItem(pathname, navGroups);
+  const activeLabel = activeNavItem?.label ?? 'Admin';
   const name = admin?.name ?? 'Admin';
 
   return (
@@ -363,7 +370,7 @@ export default function AdminLayoutClient({ children }: { children: React.ReactN
               <div key={group.label} className="admin-nav-group">
                 <div className="admin-nav-group-label">{group.label}</div>
                 {group.items.map((item) => {
-                  const active = pathname.startsWith(item.href);
+                  const active = item.href === activeNavItem?.href;
                   const Icon = item.icon;
                   return (
                     <Link

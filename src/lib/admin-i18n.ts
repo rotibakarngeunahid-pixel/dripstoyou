@@ -414,8 +414,8 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
     baNeverViewed: 'Belum pernah dilihat',
 
     // Guide
-    guideTitle: 'Panduan Admin',
-    guideSubtitle: 'Panduan penggunaan CMS untuk tim non-teknis Drips To You - Bali.',
+    guideTitle: 'Panduan Admin Blog',
+    guideSubtitle: 'Panduan visual penggunaan Admin Blog untuk tim non-teknis Drips To You - Bali.',
     tipsTitle: 'Tips Penting',
 
     // Booking hard-delete (SUPER_ADMIN only)
@@ -943,8 +943,8 @@ export const ADMIN_T: Record<AdminLang, Record<string, string>> = {
     baNeverViewed: 'Never viewed',
 
     // Guide
-    guideTitle: 'Admin Guide',
-    guideSubtitle: 'CMS usage guide for the Drips To You - Bali team.',
+    guideTitle: 'Blog Admin Guide',
+    guideSubtitle: 'Visual guide for using Admin Blog, for the Drips To You - Bali team.',
     tipsTitle: 'Important Tips',
 
     // Booking hard-delete (SUPER_ADMIN only)
