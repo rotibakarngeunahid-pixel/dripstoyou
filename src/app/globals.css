@@ -8905,7 +8905,12 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   border: 1px solid var(--grey);
   border-radius: var(--r-btn);
   background: white;
-  overflow: hidden;
+  /* TIDAK overflow:hidden di sini: itu menjadikan .rte sendiri sebagai
+     "nearest scrolling ancestor" untuk .rte-toolbar (position:sticky di
+     bawah), sehingga sticky-nya terpaku 68px dari atas KOTAK INI (bukan
+     viewport halaman) sejak render pertama — muncul sebagai celah kosong
+     permanen di atas toolbar. Sudut membulat dijaga lewat border-radius
+     langsung di toolbar (atas) & editor/source (bawah) di bawah ini. */
 }
 
 .rte--disabled {
@@ -8921,6 +8926,8 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   padding: 8px 10px;
   border-bottom: 1px solid var(--grey);
   background: var(--off-white);
+  border-top-left-radius: var(--r-btn);
+  border-top-right-radius: var(--r-btn);
   /* Toolbar ikut menempel saat menulis artikel panjang. 68px = tinggi
      .admin-topbar yang juga sticky, jadi keduanya tidak saling menutupi. */
   position: sticky;
@@ -8998,12 +9005,26 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   border-color: var(--ocean);
 }
 
+.rte-fullscreen-btn {
+  margin-left: auto;
+}
+
+/* Toolbar sudah punya satu margin-left:auto (mode-toggle) yang mendorong
+   dirinya + elemen sesudahnya ke kanan; saat tombol fullscreen tampil
+   duluan, dialah yang perlu auto-margin itu supaya keduanya tetap
+   sama-sama rapat di kanan toolbar. */
+.rte-fullscreen-btn + .rte-mode-toggle {
+  margin-left: 0;
+}
+
 .rte-editor {
   min-height: 320px;
   max-height: 70vh;
   overflow-y: auto;
   padding: 20px 22px;
   outline: none;
+  border-bottom-left-radius: var(--r-btn);
+  border-bottom-right-radius: var(--r-btn);
 }
 
 .rte-editor:focus-visible {
@@ -9043,6 +9064,8 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   line-height: 1.7;
   resize: vertical;
   outline: none;
+  border-bottom-left-radius: var(--r-btn);
+  border-bottom-right-radius: var(--r-btn);
 }
 
 /* ── Dialog tautan & gambar ── */
@@ -9103,6 +9126,33 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
     font-size: .68rem;
     padding: 6px 9px;
   }
+}
+
+/* ── Mode fullscreen: editor menutupi seluruh layar (sidebar, topbar, dan
+   field lain di form tertutup di baliknya), fokus cuma di toolbar + area
+   tulis. Selector 2-kelas ini otomatis menang atas aturan mobile di atas
+   walau muncul lebih dulu di file, karena spesifisitasnya lebih tinggi. ── */
+.rte--fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+}
+
+.rte--fullscreen .rte-toolbar {
+  top: 0;
+  border-radius: 0;
+}
+
+.rte--fullscreen .rte-editor,
+.rte--fullscreen .rte-source {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  border-radius: 0;
 }
 
 /* ─── Blog Analytics ──────────────────────────────────────────────────────── */

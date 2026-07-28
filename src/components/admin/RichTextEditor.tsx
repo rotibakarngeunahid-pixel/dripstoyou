@@ -27,6 +27,8 @@ import {
   Link2,
   List,
   ListOrdered,
+  Maximize2,
+  Minimize2,
   Minus,
   Quote,
   Redo2,
@@ -66,6 +68,8 @@ const TXT = {
     modeRich: 'Mode teks',
     modeMarkdown: 'Mode Markdown',
     modeHelp: 'Beralih ke sumber Markdown mentah',
+    fullscreenEnter: 'Layar penuh (Esc untuk keluar)',
+    fullscreenExit: 'Keluar layar penuh (Esc)',
     placeholder: 'Mulai tulis artikel di sini…',
     linkTitle: 'Sisipkan tautan',
     linkUrl: 'Alamat tautan',
@@ -110,6 +114,8 @@ const TXT = {
     modeRich: 'Visual mode',
     modeMarkdown: 'Markdown mode',
     modeHelp: 'Switch to raw Markdown source',
+    fullscreenEnter: 'Fullscreen (Esc to exit)',
+    fullscreenExit: 'Exit fullscreen (Esc)',
     placeholder: 'Start writing your article here…',
     linkTitle: 'Insert link',
     linkUrl: 'Link address',
@@ -259,6 +265,7 @@ export default function RichTextEditor({
   const savedRange = useRef<Range | null>(null);
 
   const [mode, setMode] = useState<'rich' | 'markdown'>('rich');
+  const [fullscreen, setFullscreen] = useState(false);
   const [blockTag, setBlockTag] = useState<BlockTag>('p');
   const [active, setActive] = useState({
     bold: false, italic: false, ul: false, ol: false, quote: false,
@@ -346,6 +353,22 @@ export default function RichTextEditor({
     document.addEventListener('selectionchange', refreshState);
     return () => document.removeEventListener('selectionchange', refreshState);
   }, [mode, refreshState]);
+
+  // Mode fullscreen: Esc keluar, dan scroll halaman di belakangnya dikunci
+  // supaya tidak ikut bergeser saat pengguna scroll di dalam editor.
+  useEffect(() => {
+    if (!fullscreen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') setFullscreen(false);
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [fullscreen]);
 
   // Select & dialog mencuri fokus dari contentEditable, jadi rentang terakhir
   // dipasang ulang sebelum perintah dijalankan.
@@ -552,7 +575,7 @@ export default function RichTextEditor({
   };
 
   return (
-    <div className={`rte${disabled ? ' rte--disabled' : ''}`}>
+    <div className={`rte${disabled ? ' rte--disabled' : ''}${fullscreen ? ' rte--fullscreen' : ''}`}>
       <div className="rte-toolbar" role="toolbar" aria-label={ariaLabel ?? t.modeRich}>
         {mode === 'rich' && (
           <>
@@ -593,6 +616,18 @@ export default function RichTextEditor({
             })}
           </>
         )}
+
+        <button
+          type="button"
+          className={`rte-btn rte-fullscreen-btn${fullscreen ? ' is-active' : ''}`}
+          title={fullscreen ? t.fullscreenExit : t.fullscreenEnter}
+          aria-label={fullscreen ? t.fullscreenExit : t.fullscreenEnter}
+          aria-pressed={fullscreen}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setFullscreen((f) => !f)}
+        >
+          {fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+        </button>
 
         <button
           type="button"
