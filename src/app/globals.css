@@ -9005,15 +9005,43 @@ details[open] .legal-toc-chevron { transform: rotate(180deg); }
   border-color: var(--ocean);
 }
 
-.rte-fullscreen-btn {
+/* Tombol fullscreen sengaja pakai ikon + label teks (bukan ikon polos
+   seperti .rte-btn lain) — ikon expand/collapse saja gampang tenggelam di
+   antara belasan ikon toolbar lain; label "Layar Penuh" bikin fungsinya
+   jelas tanpa perlu hover dulu. */
+.rte-fullscreen-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-left: auto;
+  padding: 7px 12px;
+  border: 1px solid var(--grey);
+  border-radius: 8px;
+  background: white;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: .74rem;
+  font-weight: 700;
+  letter-spacing: .4px;
+  cursor: pointer;
+}
+
+.rte-fullscreen-toggle:hover {
+  color: var(--teal);
+  border-color: var(--ocean);
+}
+
+.rte-fullscreen-toggle.is-active {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: white;
 }
 
 /* Toolbar sudah punya satu margin-left:auto (mode-toggle) yang mendorong
    dirinya + elemen sesudahnya ke kanan; saat tombol fullscreen tampil
    duluan, dialah yang perlu auto-margin itu supaya keduanya tetap
    sama-sama rapat di kanan toolbar. */
-.rte-fullscreen-btn + .rte-mode-toggle {
+.rte-fullscreen-toggle + .rte-mode-toggle {
   margin-left: 0;
 }
 

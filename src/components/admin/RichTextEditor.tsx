@@ -70,6 +70,8 @@ const TXT = {
     modeHelp: 'Beralih ke sumber Markdown mentah',
     fullscreenEnter: 'Layar penuh (Esc untuk keluar)',
     fullscreenExit: 'Keluar layar penuh (Esc)',
+    fullscreenEnterLabel: 'Layar Penuh',
+    fullscreenExitLabel: 'Keluar Layar Penuh',
     placeholder: 'Mulai tulis artikel di sini…',
     linkTitle: 'Sisipkan tautan',
     linkUrl: 'Alamat tautan',
@@ -116,6 +118,8 @@ const TXT = {
     modeHelp: 'Switch to raw Markdown source',
     fullscreenEnter: 'Fullscreen (Esc to exit)',
     fullscreenExit: 'Exit fullscreen (Esc)',
+    fullscreenEnterLabel: 'Fullscreen',
+    fullscreenExitLabel: 'Exit Fullscreen',
     placeholder: 'Start writing your article here…',
     linkTitle: 'Insert link',
     linkUrl: 'Link address',
@@ -619,14 +623,15 @@ export default function RichTextEditor({
 
         <button
           type="button"
-          className={`rte-btn rte-fullscreen-btn${fullscreen ? ' is-active' : ''}`}
+          className={`rte-fullscreen-toggle${fullscreen ? ' is-active' : ''}`}
           title={fullscreen ? t.fullscreenExit : t.fullscreenEnter}
           aria-label={fullscreen ? t.fullscreenExit : t.fullscreenEnter}
           aria-pressed={fullscreen}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setFullscreen((f) => !f)}
         >
-          {fullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+          {fullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+          <span>{fullscreen ? t.fullscreenExitLabel : t.fullscreenEnterLabel}</span>
         </button>
 
         <button
