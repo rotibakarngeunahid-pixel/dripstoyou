@@ -6,6 +6,7 @@ import { crmGet, crmSend } from '@/lib/crm-client';
 import { formatDate, formatDateTimeWITA } from '@/lib/crm-format';
 import StatCard from '@/components/crm/StatCard';
 import Modal from '@/components/crm/Modal';
+import ConfirmModal from '@/components/crm/ConfirmModal';
 import { LoadingBlock, ErrorBlock, EmptyState } from '@/components/crm/states';
 
 type Item = {
@@ -61,6 +62,10 @@ export default function InventoryPage() {
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [editItem, setEditItem] = useState<Item | null>(null);
   const [moveItem, setMoveItem] = useState<Item | null>(null);
+  const [deleteItem, setDeleteItem] = useState<Item | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState('');
+  const [toast, setToast] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true); setError('');
@@ -76,7 +81,25 @@ export default function InventoryPage() {
 
   useEffect(() => { const t = setTimeout(() => { void load(); }, 0); return () => clearTimeout(t); }, [load]);
 
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(''), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   const activeItems = items.filter((it) => it.is_active);
+
+  async function confirmDeleteItem() {
+    if (!deleteItem) return;
+    setDeleting(true); setDeleteErr('');
+    try {
+      await crmSend(`/api/crm/inventory?id=${encodeURIComponent(deleteItem.id)}`, 'DELETE');
+      setToast(`Item "${deleteItem.name}" berhasil dihapus.`);
+      setDeleteItem(null);
+      void load();
+    } catch (e) { setDeleteErr(e instanceof Error ? e.message : 'Gagal menghapus'); }
+    finally { setDeleting(false); }
+  }
 
   return (
     <div className="crm-page">
@@ -147,7 +170,10 @@ export default function InventoryPage() {
                         <td className="px-4 py-3">{it.expired_date ? formatDate(it.expired_date) : '—'}</td>
                         <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-xs font-medium ${st.cls}`}>{st.label}</span></td>
                         <td className="px-4 py-3">
-                          <button onClick={() => setMoveItem(it)} className="inline-flex items-center gap-1 rounded-lg border border-[#DBDAD7] px-2 py-1 text-xs text-[#205251]"><ArrowLeftRight size={14} /> Stok</button>
+                          <div className="flex items-center gap-1.5">
+                            <button onClick={() => setMoveItem(it)} className="inline-flex items-center gap-1 rounded-lg border border-[#DBDAD7] px-2 py-1 text-xs text-[#205251]"><ArrowLeftRight size={14} /> Stok</button>
+                            <button onClick={() => setDeleteItem(it)} aria-label={`Hapus ${it.name}`} className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#DBDAD7] text-red-600 hover:bg-red-50"><Trash2 size={14} /></button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -186,12 +212,21 @@ export default function InventoryPage() {
                       )}
                     </div>
 
-                    <button
-                      onClick={() => setMoveItem(it)}
-                      className="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-[#DBDAD7] px-3 py-1.5 text-xs font-medium text-[#205251] transition hover:bg-[#D6EAEA]"
-                    >
-                      <ArrowLeftRight size={14} /> Update Stok
-                    </button>
+                    <div className="mt-3 flex items-center gap-2">
+                      <button
+                        onClick={() => setMoveItem(it)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-[#DBDAD7] px-3 py-1.5 text-xs font-medium text-[#205251] transition hover:bg-[#D6EAEA]"
+                      >
+                        <ArrowLeftRight size={14} /> Update Stok
+                      </button>
+                      <button
+                        onClick={() => setDeleteItem(it)}
+                        aria-label={`Hapus ${it.name}`}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-[#DBDAD7] px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-50"
+                      >
+                        <Trash2 size={14} /> Hapus
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -207,6 +242,20 @@ export default function InventoryPage() {
       {moveItem && <MovementModal item={moveItem} onClose={() => setMoveItem(null)} onSaved={() => { setMoveItem(null); load(); }} />}
       {addStockOpen && <QuickAddStockModal items={activeItems} onClose={() => setAddStockOpen(false)} onSaved={() => { setAddStockOpen(false); load(); }} />}
       {categoryOpen && <CategoryManagerModal categories={categories} onClose={() => setCategoryOpen(false)} onChanged={load} />}
+
+      {deleteItem && (
+        <ConfirmModal
+          open
+          title={`Hapus Item — ${deleteItem.name}`}
+          message={`Item "${deleteItem.name}" akan dihapus permanen dari database beserta seluruh datanya. Tindakan ini tidak bisa dibatalkan.`}
+          error={deleteErr}
+          confirmLabel="Hapus Permanen"
+          loading={deleting}
+          onConfirm={confirmDeleteItem}
+          onCancel={() => { setDeleteItem(null); setDeleteErr(''); }}
+        />
+      )}
+      {toast && <div role="status" aria-live="polite" className="admin-toast admin-toast--success">{toast}</div>}
     </div>
   );
 }

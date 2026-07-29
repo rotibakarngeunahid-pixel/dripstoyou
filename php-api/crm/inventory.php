@@ -1,13 +1,14 @@
 <?php
 // CRM Inventory endpoint
-//   GET  /php-api/crm/inventory.php                     — list items + stats
-//   GET  /php-api/crm/inventory.php?id=xxx              — single item + recent movements
-//   GET  /php-api/crm/inventory.php?view=log&...        — global stock movement ledger (filterable)
-//   GET  /php-api/crm/inventory.php?view=opname         — list past stock-opname sessions
-//   GET  /php-api/crm/inventory.php?view=opname&id=xxx  — single opname session + item detail
-//   POST /php-api/crm/inventory.php                     — create/update item (id optional, category_id required)
-//   POST /php-api/crm/inventory.php  {action:'movement', inventory_item_id, type, quantity, notes}
-//   POST /php-api/crm/inventory.php  {action:'opname', opname_date, notes, counts:[{inventory_item_id, counted_qty}]}
+//   GET    /php-api/crm/inventory.php                     — list items + stats
+//   GET    /php-api/crm/inventory.php?id=xxx              — single item + recent movements
+//   GET    /php-api/crm/inventory.php?view=log&...        — global stock movement ledger (filterable)
+//   GET    /php-api/crm/inventory.php?view=opname         — list past stock-opname sessions
+//   GET    /php-api/crm/inventory.php?view=opname&id=xxx  — single opname session + item detail
+//   POST   /php-api/crm/inventory.php                     — create/update item (id optional, category_id required)
+//   POST   /php-api/crm/inventory.php  {action:'movement', inventory_item_id, type, quantity, notes}
+//   POST   /php-api/crm/inventory.php  {action:'opname', opname_date, notes, counts:[{inventory_item_id, counted_qty}]}
+//   DELETE /php-api/crm/inventory.php?id=xxx               — permanently delete an item (hard delete)
 //
 // Categories are managed separately — see inventory-category.php.
 
@@ -121,6 +122,39 @@ if ($method === 'GET') {
         'expiring'    => (int)$db->query('SELECT COUNT(*) FROM inventory_items WHERE is_active = 1 AND expired_date IS NOT NULL AND expired_date <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)')->fetchColumn(),
     ];
     jsonSuccess(['items' => $items, 'stats' => $stats]);
+}
+
+// ── Delete item (hard delete — blocked if stock history would be lost) ─────────
+if ($method === 'DELETE') {
+    if (!$id) jsonError('ID wajib diisi', 400);
+
+    $chk = $db->prepare('SELECT name FROM inventory_items WHERE id = ? LIMIT 1');
+    $chk->execute([$id]);
+    $item = $chk->fetch();
+    if (!$item) jsonError('Item tidak ditemukan', 404);
+
+    // stock_movements has ON DELETE CASCADE on inventory_item_id — deleting the
+    // item would silently wipe its entire stock ledger/audit trail. Every path
+    // that changes stock_current (create with initial stock, manual movement,
+    // stock opname) always inserts a movement row first, so a zero count here
+    // reliably means the item was never actually stocked/moved.
+    $moveCountStmt = $db->prepare('SELECT COUNT(*) FROM stock_movements WHERE inventory_item_id = ?');
+    $moveCountStmt->execute([$id]);
+    $moveCount = (int)$moveCountStmt->fetchColumn();
+    if ($moveCount > 0) {
+        jsonError(
+            "Item ini tidak bisa dihapus permanen karena masih memiliki $moveCount riwayat pergerakan stok " .
+            "(transaksi masuk/keluar/penyesuaian). Menghapusnya akan menghilangkan jejak riwayat/audit stok tersebut secara permanen.",
+            422
+        );
+    }
+
+    // purchase_order_items / stock_opname_items reference this item with
+    // ON DELETE SET NULL and keep a denormalized item_name snapshot, so those
+    // stay intact (no orphan rows) even after the item row is gone.
+    $db->prepare('DELETE FROM inventory_items WHERE id = ?')->execute([$id]);
+    crmAuditLog($staff, 'INVENTORY', 'DELETE', $id, "Hapus item permanen {$item['name']}");
+    jsonSuccess(['id' => $id], 'Item dihapus permanen');
 }
 
 if ($method === 'POST') {
