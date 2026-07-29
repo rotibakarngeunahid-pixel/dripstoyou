@@ -172,6 +172,7 @@ export default function InventoryPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5">
                             <button onClick={() => setMoveItem(it)} className="inline-flex items-center gap-1 rounded-lg border border-[#DBDAD7] px-2 py-1 text-xs text-[#205251]"><ArrowLeftRight size={14} /> Stok</button>
+                            <button onClick={() => setEditItem(it)} aria-label={`Edit ${it.name}`} className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#DBDAD7] text-[#205251] hover:bg-[#D6EAEA]"><Pencil size={14} /></button>
                             <button onClick={() => setDeleteItem(it)} aria-label={`Hapus ${it.name}`} className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-[#DBDAD7] text-red-600 hover:bg-red-50"><Trash2 size={14} /></button>
                           </div>
                         </td>
@@ -218,6 +219,12 @@ export default function InventoryPage() {
                         className="inline-flex items-center gap-1.5 rounded-xl border border-[#DBDAD7] px-3 py-1.5 text-xs font-medium text-[#205251] transition hover:bg-[#D6EAEA]"
                       >
                         <ArrowLeftRight size={14} /> Update Stok
+                      </button>
+                      <button
+                        onClick={() => setEditItem(it)}
+                        className="inline-flex items-center gap-1.5 rounded-xl border border-[#DBDAD7] px-3 py-1.5 text-xs font-medium text-[#205251] transition hover:bg-[#D6EAEA]"
+                      >
+                        <Pencil size={14} /> Edit
                       </button>
                       <button
                         onClick={() => setDeleteItem(it)}
