@@ -35,6 +35,13 @@ export function formatDate(input: string | Date | null | undefined): string {
   return `${d.getDate()} ${MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`;
 }
 
+/** "15 Agustus 1998" — full month name, used for DOB display. */
+export function formatDateLong(input: string | Date | null | undefined): string {
+  const d = parseDate(input);
+  if (!d) return '-';
+  return `${d.getDate()} ${MONTHS_ID_FULL[d.getMonth()]} ${d.getFullYear()}`;
+}
+
 /** "26 Jun 2026 · 10:00 WITA" */
 export function formatDateTimeWITA(input: string | Date | null | undefined): string {
   const d = parseDate(input);

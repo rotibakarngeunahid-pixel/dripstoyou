@@ -6,6 +6,7 @@ import Header from '@/components/public/Header';
 import SiteFooter from '@/components/public/SiteFooter';
 import { useLanguage } from '@/contexts/language';
 import { formatPrice as formatCurrencyPrice, getCurrencyOption } from '@/lib/currency';
+import { calculateAge, isFutureDate } from '@/lib/dob';
 
 /* ─── Types ─── */
 type ApiResponse<T> = { success?: boolean; message?: string; data?: T; error?: string };
@@ -37,6 +38,7 @@ type FormState = {
   address: string;
   name: string;
   phone: string;
+  dob: string;
   notes: string;
 };
 
@@ -55,6 +57,7 @@ interface BK {
   step3Title: string; step3Sub: string;
   nameLabel: string; namePlaceholder: string;
   phoneLabel: string; phonePlaceholder: string;
+  dobLabel: string; ageDetected: (n: number) => string;
   notesLabel: string; notesPlaceholder: string;
   termsLabel: string; privacyLabel: string;
   agree: (terms: React.ReactNode, privacy: React.ReactNode) => React.ReactNode;
@@ -74,7 +77,7 @@ interface BK {
   detailLabels: string[];
   currencyLabel: string;
   errDate: string; errTime: string; errArea: string; errAddress: string; errAddressShort: string;
-  errName: string; errPhone: string; errAgree: string;
+  errName: string; errPhone: string; errAgree: string; errDob: string; errDobFuture: string;
   toastIncomplete: string; agreeShort: string;
   gpsBtn: string; gpsDetecting: string; gpsSuccess: string;
   gpsDenied: string; gpsUnavailable: string; gpsTimeout: string; gpsFailed: string;
@@ -116,6 +119,8 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     namePlaceholder: 'Your name',
     phoneLabel: 'WhatsApp Number *',
     phonePlaceholder: '+62 812 3456 7890',
+    dobLabel: 'Date of Birth *',
+    ageDetected: (n: number) => `Age: ${n} ${n === 1 ? 'year' : 'years'}`,
     notesLabel: 'Additional Notes',
     notesPlaceholder: 'Special conditions, allergies, or other info…',
     termsLabel: 'Terms & Conditions',
@@ -170,6 +175,8 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     errName: 'Please enter your full name.',
     errPhone: 'Please enter a valid WhatsApp number.',
     errAgree: 'Please tick the agreement box to continue.',
+    errDob: 'Please select your date of birth.',
+    errDobFuture: 'Date of birth cannot be later than today.',
     toastIncomplete: 'Please complete the following:',
     agreeShort: 'Terms & Privacy agreement',
     gpsBtn: '📍 Use my current location',
@@ -215,6 +222,8 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     namePlaceholder: 'Nama Anda',
     phoneLabel: 'No. WhatsApp *',
     phonePlaceholder: '+62 812 3456 7890',
+    dobLabel: 'Tanggal Lahir *',
+    ageDetected: (n: number) => `Umur: ${n} tahun`,
     notesLabel: 'Catatan Tambahan',
     notesPlaceholder: 'Kondisi khusus, alergi, atau info lainnya…',
     termsLabel: 'Syarat & Ketentuan',
@@ -269,6 +278,8 @@ const BK_TEXT: Record<'en' | 'id', BK> = {
     errName: 'Masukkan nama lengkap Anda.',
     errPhone: 'Masukkan nomor WhatsApp yang valid.',
     errAgree: 'Centang kotak persetujuan untuk melanjutkan.',
+    errDob: 'Pilih tanggal lahir Anda.',
+    errDobFuture: 'Tanggal lahir tidak boleh melebihi hari ini.',
     toastIncomplete: 'Lengkapi data berikut:',
     agreeShort: 'Persetujuan Syarat & Ketentuan',
     gpsBtn: '📍 Gunakan lokasi saya',
@@ -312,7 +323,7 @@ function getEffectiveCurrency(p: Product, currency: string): string {
   return (p.prices && currency && p.prices[currency] !== undefined) ? currency : (p.currency ?? 'IDR');
 }
 function initForm(): FormState {
-  return { date: '', time: '', people: 1, locType: 'VILLA', areaId: '', address: '', name: '', phone: '', notes: '' };
+  return { date: '', time: '', people: 1, locType: 'VILLA', areaId: '', address: '', name: '', phone: '', dob: '', notes: '' };
 }
 function defaultCurrencyForProduct(p: Product): string {
   if (p.prices) {
@@ -1079,27 +1090,35 @@ function Step3({
   const closeToast = useCallback(() => setToast(null), []);
   const nameRef  = useRef<HTMLLabelElement>(null);
   const phoneRef = useRef<HTMLLabelElement>(null);
+  const dobRef   = useRef<HTMLLabelElement>(null);
   const agreeRef = useRef<HTMLDivElement>(null);
 
   const unitPrice    = product ? getPriceForCurrency(product, bookingCurrency) : 0;
   const dispCurrency = product ? getEffectiveCurrency(product, bookingCurrency) : 'IDR';
+  const maxDob = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }, []);
+  const age = useMemo(() => calculateAge(form.dob), [form.dob]);
 
   function handleSubmit(e: React.FormEvent) {
     const errs: Record<string, string> = {};
     if (form.name.trim().length < 2)  errs.name  = bk.errName;
     if (form.phone.trim().length < 7) errs.phone = bk.errPhone;
+    if (!form.dob)                    errs.dob   = bk.errDob;
+    else if (isFutureDate(form.dob))  errs.dob   = bk.errDobFuture;
     if (!agreed)                      errs.agree = bk.errAgree;
     setFieldErrors(errs);
     if (Object.keys(errs).length > 0) {
       e.preventDefault();
       const labels: Record<string, string> = {
-        name: bk.nameLabel, phone: bk.phoneLabel, agree: bk.agreeShort,
+        name: bk.nameLabel, phone: bk.phoneLabel, dob: bk.dobLabel, agree: bk.agreeShort,
       };
-      const items = ['name', 'phone', 'agree']
+      const items = ['name', 'phone', 'dob', 'agree']
         .filter(k => errs[k])
         .map(k => stripReq(labels[k]));
       setToast(t => ({ key: (t?.key ?? 0) + 1, items }));
-      const first = errs.name ? nameRef.current : errs.phone ? phoneRef.current : agreeRef.current;
+      const first = errs.name ? nameRef.current : errs.phone ? phoneRef.current : errs.dob ? dobRef.current : agreeRef.current;
       first?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
@@ -1141,6 +1160,22 @@ function Step3({
               }}
             />
             {fieldErrors.phone && <span className="bk-field-error">{fieldErrors.phone}</span>}
+          </label>
+          <label className="bk-field" ref={dobRef}>
+            <span className="bk-field-label">{bk.dobLabel}</span>
+            <input
+              type="date"
+              className={`control${fieldErrors.dob ? ' bk-input-err' : ''}`}
+              value={form.dob}
+              max={maxDob}
+              onChange={e => {
+                setForm(f => ({ ...f, dob: e.target.value }));
+                if (e.target.value && !isFutureDate(e.target.value)) setFieldErrors(p => { const n = { ...p }; delete n.dob; return n; });
+              }}
+            />
+            {fieldErrors.dob
+              ? <span className="bk-field-error">{fieldErrors.dob}</span>
+              : (age !== null && <span className="field-help">{bk.ageDetected(age)}</span>)}
           </label>
           <label className="bk-field bk-field-full">
             <span className="bk-field-label">{bk.notesLabel}</span>
@@ -1403,6 +1438,7 @@ export default function BookingPage() {
           productId,
           customerName:  form.name,
           customerPhone: form.phone,
+          dob:           form.dob,
           bookingDate:   form.date,
           bookingTime:   form.time,
           peopleCount:   form.people,

@@ -102,6 +102,15 @@ if ($method === 'GET' && $id) {
     // Remove raw encrypted fields from response
     unset($booking['customer_phone_encrypted'], $booking['address_encrypted'], $booking['notes_encrypted']);
 
+    // Legacy bookings placed before the DOB field existed have no dob of
+    // their own — fall back to the linked patient's dob (CRM may have
+    // filled it in later) instead of showing nothing.
+    if (empty($booking['dob']) && !empty($booking['patient_id'])) {
+        $pStmt = $db->prepare('SELECT dob FROM patients WHERE id = ? LIMIT 1');
+        $pStmt->execute([$booking['patient_id']]);
+        $booking['dob'] = $pStmt->fetchColumn() ?: null;
+    }
+
     // Status history
     $h = $db->prepare(
         'SELECT sh.old_status, sh.new_status, sh.note, sh.created_at, a.name AS changed_by_name

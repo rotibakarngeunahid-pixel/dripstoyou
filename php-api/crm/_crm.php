@@ -324,7 +324,7 @@ function crmEnsurePatientForBooking(PDO $db, string $bookingId): void {
 
     $stmt = $db->prepare(
         'SELECT patient_id, crm_status, customer_name, customer_phone_encrypted,
-                customer_phone_last4, address_encrypted, service_area_id
+                customer_phone_last4, dob, address_encrypted, service_area_id
          FROM   bookings WHERE id = ? LIMIT 1'
     );
     $stmt->execute([$bookingId]);
@@ -357,12 +357,17 @@ function crmEnsurePatientForBooking(PDO $db, string $bookingId): void {
     if (!$patientId) {
         $patientId = generateId();
         $db->prepare(
-            'INSERT INTO patients (id, name, phone_encrypted, phone_last4, address_encrypted, area_id, booking_count, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)'
+            'INSERT INTO patients (id, name, phone_encrypted, phone_last4, dob, address_encrypted, area_id, booking_count, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)'
         )->execute([
             $patientId, $b['customer_name'], $b['customer_phone_encrypted'], $b['customer_phone_last4'],
-            $b['address_encrypted'], $b['service_area_id'], $now, $now,
+            $b['dob'], $b['address_encrypted'], $b['service_area_id'], $now, $now,
         ]);
+    } elseif (!empty($b['dob'])) {
+        // Existing patient matched by phone — fill in dob only if it wasn't
+        // already recorded (never overwrite a value CRM staff may have edited).
+        $db->prepare('UPDATE patients SET dob = ?, updated_at = ? WHERE id = ? AND dob IS NULL')
+           ->execute([$b['dob'], $now, $patientId]);
     }
 
     $db->prepare('UPDATE bookings SET patient_id = ?, updated_at = ? WHERE id = ?')

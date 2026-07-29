@@ -26,7 +26,7 @@ if ($method === 'GET' && ($id || $code)) {
     $sql = 'SELECT b.*, p.name AS product_name, p.price_label, p.price_amount,
                    sa.name AS service_area_name,
                    pt.id AS patient_id_join, pt.name AS patient_name, pt.is_repeat AS patient_is_repeat,
-                   pt.booking_count AS patient_booking_count,
+                   pt.booking_count AS patient_booking_count, pt.dob AS patient_dob,
                    n.id AS nurse_id_join, n.name AS nurse_name
             FROM   bookings b
             JOIN   products p ON p.id = b.product_id
@@ -44,6 +44,12 @@ if ($method === 'GET' && ($id || $code)) {
     if (!$b) jsonError('Booking tidak ditemukan', 404);
 
     $bookingId = $b['id'];
+
+    // Legacy bookings placed before the DOB field existed have no dob of
+    // their own — fall back to the linked patient's dob (may have been
+    // filled in later via the Pasien edit form) instead of showing "-".
+    if (empty($b['dob']) && !empty($b['patient_dob'])) $b['dob'] = $b['patient_dob'];
+    unset($b['patient_dob']);
 
     $b['phone']   = crmTryDecrypt($b['customer_phone_encrypted'] ?? null, '···' . ($b['customer_phone_last4'] ?? ''));
     $b['address'] = crmTryDecrypt($b['address_encrypted'] ?? null, null);
@@ -175,6 +181,14 @@ if ($method === 'POST') {
     $people  = max(1, (int)($body['people_count'] ?? 1));
     $locType = str_clean($body['location_type'], 20);
 
+    $dob = null;
+    if (!empty($body['dob'])) {
+        $dobStr = str_clean($body['dob'], 10);
+        if (parseDateYmdStrict($dobStr) === null) jsonError('Format tanggal lahir tidak valid (YYYY-MM-DD)', 422);
+        if ($dobStr > date('Y-m-d')) jsonError('Tanggal lahir tidak boleh melebihi hari ini', 422);
+        $dob = $dobStr;
+    }
+
     // Resolve / create patient
     $patientId = !empty($body['patient_id']) ? str_clean($body['patient_id'], 191) : null;
     if ($patientId) {
@@ -186,9 +200,12 @@ if ($method === 'POST') {
     if (!$patientId) {
         $patientId = generateId();
         $db->prepare(
-            'INSERT INTO patients (id, name, phone_encrypted, phone_last4, address_encrypted, area_id, booking_count, created_at, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)'
-        )->execute([$patientId, $name, encryptField($phone), $last4, encryptField($address), $areaId, $now, $now]);
+            'INSERT INTO patients (id, name, phone_encrypted, phone_last4, dob, address_encrypted, area_id, booking_count, created_at, updated_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)'
+        )->execute([$patientId, $name, encryptField($phone), $last4, $dob, encryptField($address), $areaId, $now, $now]);
+    } elseif ($dob !== null) {
+        $db->prepare('UPDATE patients SET dob = ?, updated_at = ? WHERE id = ? AND dob IS NULL')
+           ->execute([$dob, $now, $patientId]);
     }
 
     $bookingId   = generateId();
@@ -197,12 +214,12 @@ if ($method === 'POST') {
 
     $db->prepare(
         'INSERT INTO bookings
-         (id, booking_code, booking_code_display, product_id, customer_name, customer_phone_encrypted, customer_phone_last4,
+         (id, booking_code, booking_code_display, product_id, customer_name, customer_phone_encrypted, customer_phone_last4, dob,
           booking_date, booking_time, people_count, location_type, service_area_id, address_encrypted, notes_encrypted,
           status, crm_status, source, patient_id, service_fee, visit_fee, total_fee, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )->execute([
-        $bookingId, $bookingCode, $displayCode, $productId, $name, encryptField($phone), $last4,
+        $bookingId, $bookingCode, $displayCode, $productId, $name, encryptField($phone), $last4, $dob,
         str_clean($body['booking_date'], 10), str_clean($body['booking_time'], 5), $people, $locType, $areaId,
         encryptField($address), $notes !== null ? encryptField($notes) : null,
         'BARU', 'PENDING', 'MANUAL_ADMIN', $patientId, $serviceFee, $visitFee, $totalFee, $now, $now,

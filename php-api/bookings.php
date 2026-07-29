@@ -13,6 +13,7 @@ requireFields($body, [
     'productId',
     'customerName',
     'customerPhone',
+    'dob',
     'bookingDate',
     'bookingTime',
     'locationType',
@@ -23,6 +24,7 @@ requireFields($body, [
 $productId = str_clean($body['productId'], 191);
 $customerName = str_clean($body['customerName'], 100);
 $customerPhone = preg_replace('/\D/', '', (string)($body['customerPhone'] ?? ''));
+$dob = str_clean($body['dob'] ?? '', 10);
 $bookingDate = str_clean($body['bookingDate'] ?? '', 10);
 $bookingTime = str_clean($body['bookingTime'] ?? '', 5);
 $peopleCount = max(1, min(10, (int)($body['peopleCount'] ?? 1)));
@@ -33,6 +35,10 @@ $notes = isset($body['notes']) ? str_clean($body['notes'], 1000) : null;
 
 if (strlen($customerName) < 2) jsonError('Nama pelanggan terlalu pendek', 422);
 if (!preg_match('/^\d{8,15}$/', $customerPhone)) jsonError('Nomor HP tidak valid', 422);
+$dobParts = parseDateYmdStrict($dob);
+if ($dobParts === null) jsonError('Format tanggal lahir tidak valid (YYYY-MM-DD)', 422);
+if ($dob > date('Y-m-d')) jsonError('Tanggal lahir tidak boleh melebihi hari ini', 422);
+if ($dobParts[0] < 1900) jsonError('Tanggal lahir tidak valid', 422);
 if (parseDateYmdStrict($bookingDate) === null) jsonError('Format tanggal tidak valid (YYYY-MM-DD)', 422);
 if (timeToMinutesStrict($bookingTime) === null) jsonError('Format waktu tidak valid (HH:MM)', 422);
 if (!in_array($locationType, ['VILLA', 'HOTEL', 'RUMAH', 'AIRBNB', 'LAINNYA'], true)) {
@@ -110,10 +116,10 @@ try {
     $stmt = $db->prepare(
         'INSERT INTO bookings
          (id, booking_code, product_id, customer_name, customer_phone_encrypted,
-          customer_phone_last4, booking_date, booking_time, people_count,
+          customer_phone_last4, dob, booking_date, booking_time, people_count,
           location_type, service_area_id, address_encrypted, notes_encrypted,
           status, source, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "BARU", "WEBSITE", ?, ?)'
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "BARU", "WEBSITE", ?, ?)'
     );
     $stmt->execute([
         $bookingId,
@@ -122,6 +128,7 @@ try {
         $customerName,
         $phoneEncrypted,
         $phoneLast4,
+        $dob,
         $bookingDate,
         $bookingTime,
         $peopleCount,

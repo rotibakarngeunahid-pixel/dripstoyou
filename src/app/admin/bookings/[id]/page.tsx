@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ConfirmModal } from '@/components/admin/ConfirmModal';
 import { useAdminLang } from '@/app/admin/AdminLayoutClient';
 import { ADMIN_T } from '@/lib/admin-i18n';
+import { calculateAge } from '@/lib/dob';
 import {
   ArrowLeft,
   ArrowRight,
@@ -54,6 +55,7 @@ type Booking = {
   booking_code: string;
   customer_name: string;
   phone: string;
+  dob: string | null;
   address: string;
   notes: string | null;
   booking_date: string;
@@ -194,6 +196,11 @@ export default function BookingDetailPage() {
   const shortDate = new Date(booking.booking_date).toLocaleDateString(locale, {
     day: '2-digit', month: 'long', year: 'numeric',
   });
+  const dobLong = booking.dob
+    ? new Date(`${booking.dob}T00:00:00`).toLocaleDateString(locale, { day: '2-digit', month: 'long', year: 'numeric' })
+    : t.belumTersedia;
+  const age = calculateAge(booking.dob);
+  const ageLabel = age !== null ? `${age} ${t.umurSuffix}` : t.belumTersedia;
 
   const confirmMsg = lang === 'id'
     ? `Status booking ${booking.booking_code} akan diubah dari "${sLabel(booking.status)}" menjadi "${sLabel(newStatus)}".`
@@ -268,8 +275,10 @@ export default function BookingDetailPage() {
             <div className="bd-card-icon"><User size={17} /></div>
             <div className="bd-card-title">{t.infoPelanggan}</div>
           </div>
-          <InfoRow icon={User}      label={t.namaLabel}   value={booking.customer_name} />
-          <InfoRow icon={Phone}     label={t.hpLabel}     value={booking.phone} />
+          <InfoRow icon={User}        label={t.namaLabel}     value={booking.customer_name} />
+          <InfoRow icon={Phone}       label={t.hpLabel}       value={booking.phone} />
+          <InfoRow icon={CalendarDays} label={t.tglLahirLabel} value={dobLong} />
+          <InfoRow icon={Hash}       label={t.umurLabel}     value={ageLabel} />
           <InfoRow icon={Map}       label={t.alamatLabel} value={booking.address} />
           {booking.notes && <InfoRow icon={StickyNote} label={t.catatanLabel} value={booking.notes} />}
         </div>

@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, MessageCircle, RefreshCw, Stethoscope, UserPlus, ClipboardCheck, FileSignature, Syringe, Star } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
-import { formatRupiah, formatDateTimeWITA } from '@/lib/crm-format';
+import { formatRupiah, formatDateTimeWITA, formatDateLong } from '@/lib/crm-format';
+import { calculateAge } from '@/lib/dob';
 import { STATUS_LABEL, STATUS_RANK, TIMELINE_STEPS, nextStatuses, type CRMBookingStatus } from '@/lib/crm-status';
 import { generateWALink } from '@/lib/crm-whatsapp';
 import StatusBadge from '@/components/crm/StatusBadge';
@@ -18,6 +19,7 @@ type Detail = {
   booking_code_display: string | null;
   customer_name: string;
   phone: string;
+  dob: string | null;
   address: string | null;
   notes: string | null;
   booking_date: string;
@@ -145,6 +147,10 @@ export default function BookingDetailPage() {
                 <p className="text-sm text-[#4d6060]">{b.phone}</p>
               </div>
               {b.patient?.is_repeat && <span className="rounded-full bg-[#C9944C] px-2.5 py-1 text-xs font-medium text-white">REPEAT · {b.patient.booking_count}x</span>}
+            </div>
+            <div className="mt-2 border-t border-[#F3F0E7] pt-2">
+              <Row label="Tgl Lahir" value={b.dob ? formatDateLong(b.dob) : 'Belum tersedia'} />
+              <Row label="Umur" value={b.dob && calculateAge(b.dob) !== null ? `${calculateAge(b.dob)} tahun` : 'Belum tersedia'} />
             </div>
             {b.patient && <Link href={`/crm/pasien/${b.patient.id}`} className="mt-2 inline-block text-sm text-[#29808B] hover:underline">Lihat profil pasien →</Link>}
           </Card>

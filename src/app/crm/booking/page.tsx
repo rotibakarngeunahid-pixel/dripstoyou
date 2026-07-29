@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronRight, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { formatRupiah, formatDayTime } from '@/lib/crm-format';
+import { calculateAge } from '@/lib/dob';
 import { STATUS_LABEL, type CRMBookingStatus } from '@/lib/crm-status';
 import StatusBadge from '@/components/crm/StatusBadge';
 import Modal from '@/components/crm/Modal';
@@ -292,7 +293,7 @@ function AddBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState('');
   const [form, setForm] = useState({
-    customer_name: '', customer_phone: '', address: '', product_id: '', service_area_id: '',
+    customer_name: '', customer_phone: '', dob: '', address: '', product_id: '', service_area_id: '',
     booking_date: '', booking_time: '', location_type: 'VILLA', people_count: 1, notes: '',
   });
 
@@ -359,6 +360,19 @@ function AddBookingModal({ onClose, onCreated }: { onClose: () => void; onCreate
             <input className={`mt-1 ${inputCls}`} value={form.customer_phone} onChange={(e) => set('customer_phone', e.target.value)} placeholder="08…" />
           </label>
         </div>
+        <label className="block text-xs font-bold text-[#64748b]">
+          Tanggal Lahir
+          <input
+            type="date"
+            className={`mt-1 ${inputCls}`}
+            value={form.dob}
+            max={new Date().toISOString().slice(0, 10)}
+            onChange={(e) => set('dob', e.target.value)}
+          />
+          {form.dob && calculateAge(form.dob) !== null && (
+            <span className="mt-1 block text-[11px] font-normal text-[#8EBFBF]">Umur: {calculateAge(form.dob)} tahun</span>
+          )}
+        </label>
         <label className="block text-xs font-bold text-[#64748b]">
           Alamat *
           <textarea className={`mt-1 min-h-[64px] w-full rounded-xl border border-[#e2e8f0] bg-[#f8fafc] p-3 text-sm text-[#0f172a] outline-none focus:border-[#205251] focus:bg-white`} value={form.address} onChange={(e) => set('address', e.target.value)} />

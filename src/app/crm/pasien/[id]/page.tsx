@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { crmGet } from '@/lib/crm-client';
-import { formatRupiah, formatDate, initials } from '@/lib/crm-format';
+import { formatRupiah, formatDate, formatDateLong, initials } from '@/lib/crm-format';
+import { calculateAge } from '@/lib/dob';
 import StatusBadge from '@/components/crm/StatusBadge';
 import { LoadingBlock, ErrorBlock, EmptyState } from '@/components/crm/states';
 import { PatientModal } from '../page';
@@ -78,7 +79,8 @@ export default function PatientDetailPage() {
           <Card title="Kontak & Alamat">
             <Row label="Telepon" value={p.phone} />
             <Row label="Email" value={p.email ?? '—'} />
-            <Row label="Tgl Lahir" value={p.dob ? formatDate(p.dob) : '—'} />
+            <Row label="Tgl Lahir" value={p.dob ? formatDateLong(p.dob) : '—'} />
+            <Row label="Umur" value={p.dob && calculateAge(p.dob) !== null ? `${calculateAge(p.dob)} tahun` : '—'} />
             <Row label="Kewarganegaraan" value={p.nationality ?? '—'} />
             <Row label="Alamat" value={p.address ?? '—'} />
           </Card>
