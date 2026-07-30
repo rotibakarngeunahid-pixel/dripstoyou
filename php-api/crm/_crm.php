@@ -249,39 +249,6 @@ function crmNurseIdForStaff(PDO $db, string $staffId): ?string {
     return $v !== false ? (string)$v : null;
 }
 
-// Deduct medical stock for items used in a treatment. Creates stock_movement OUT
-// rows and decrements inventory_items.stock_current. Throws RuntimeException if any
-// item has insufficient stock (caller should report a 422 and NOT complete).
-// Items without an inventory_item_id (free-text) are ignored.
-function crmDeductInventory(PDO $db, array $itemsUsed, string $treatmentId, ?string $staffId): void {
-    foreach ($itemsUsed as $item) {
-        $invId = isset($item['inventory_item_id']) ? (string)$item['inventory_item_id'] : '';
-        $qty   = (int)($item['qty'] ?? $item['quantity'] ?? 0);
-        if ($invId === '' || $qty <= 0) continue;
-
-        $s = $db->prepare('SELECT stock_current, name FROM inventory_items WHERE id = ? LIMIT 1');
-        $s->execute([$invId]);
-        $inv = $s->fetch();
-        if (!$inv) continue;
-        if ((int)$inv['stock_current'] < $qty) {
-            throw new RuntimeException("Stok '{$inv['name']}' tidak cukup (tersisa {$inv['stock_current']}, butuh {$qty})");
-        }
-    }
-    // Second pass: apply (all checked OK)
-    foreach ($itemsUsed as $item) {
-        $invId = isset($item['inventory_item_id']) ? (string)$item['inventory_item_id'] : '';
-        $qty   = (int)($item['qty'] ?? $item['quantity'] ?? 0);
-        if ($invId === '' || $qty <= 0) continue;
-
-        $db->prepare('UPDATE inventory_items SET stock_current = stock_current - ?, updated_at = NOW() WHERE id = ?')
-           ->execute([$qty, $invId]);
-        $db->prepare(
-            'INSERT INTO stock_movements (id, inventory_item_id, type, quantity, reference_type, reference_id, notes, performed_by_staff_id, created_at)
-             VALUES (?, ?, "OUT", ?, "TREATMENT", ?, ?, ?, NOW(3))'
-        )->execute([generateId(), $invId, $qty, $treatmentId, 'Treatment usage', $staffId]);
-    }
-}
-
 // Lifecycle position of a crm_status (mirrors STATUS_RANK in src/lib/crm-status.ts).
 // Negative = terminal, unknown statuses rank 0.
 function crmStatusRank(string $status): int {

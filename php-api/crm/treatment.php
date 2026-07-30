@@ -1,7 +1,7 @@
 <?php
 // CRM Treatment endpoint
 //   GET  /php-api/crm/treatment.php?bookingId=xxx
-//   POST /php-api/crm/treatment.php   (upsert; complete:true → TREATMENT_COMPLETED + stock deduction)
+//   POST /php-api/crm/treatment.php   (upsert; complete:true → TREATMENT_COMPLETED)
 
 require_once __DIR__ . '/_crm.php';
 handleCors();
@@ -26,9 +26,8 @@ if ($method === 'GET') {
     $tr = $t->fetch();
     if ($tr) {
         $tr['checklist']   = $tr['checklist_json'] ? json_decode($tr['checklist_json'], true) : [];
-        $tr['items_used']  = $tr['items_used_json'] ? json_decode($tr['items_used_json'], true) : [];
         $tr['nurse_notes'] = crmTryDecrypt($tr['nurse_notes_encrypted'] ?? null, null);
-        unset($tr['checklist_json'], $tr['items_used_json'], $tr['nurse_notes_encrypted']);
+        unset($tr['checklist_json'], $tr['nurse_notes_encrypted']);
     }
 
     $c = $db->prepare('SELECT id, agreed_at FROM consents WHERE booking_id = ? LIMIT 1');
@@ -55,7 +54,6 @@ if ($method === 'POST') {
     }
 
     $checklist  = isset($body['checklist']) && is_array($body['checklist']) ? $body['checklist'] : [];
-    $itemsUsed  = isset($body['items_used']) && is_array($body['items_used']) ? $body['items_used'] : [];
     $nurseNotes = !empty($body['nurse_notes']) ? encryptField(str_clean($body['nurse_notes'], 2000)) : null;
     $condAfter  = !empty($body['patient_condition_after']) ? str_clean($body['patient_condition_after'], 500) : null;
     $followUp   = !empty($body['follow_up_recommendation']) ? str_clean($body['follow_up_recommendation'], 500) : null;
@@ -70,19 +68,18 @@ if ($method === 'POST') {
 
     $completedAt = $complete ? $now : null;
     $checklistJson = json_encode($checklist, JSON_UNESCAPED_UNICODE);
-    $itemsJson     = json_encode($itemsUsed, JSON_UNESCAPED_UNICODE);
 
     if ($row) {
         $tid = $row['id'];
-        $db->prepare('UPDATE treatments SET nurse_id=?, checklist_json=?, items_used_json=?, nurse_notes_encrypted=?,
+        $db->prepare('UPDATE treatments SET nurse_id=?, checklist_json=?, nurse_notes_encrypted=?,
             patient_condition_after=?, follow_up_recommendation=?, completed_at=COALESCE(?, completed_at), updated_at=? WHERE id=?')
-           ->execute([$nurseId, $checklistJson, $itemsJson, $nurseNotes, $condAfter, $followUp, $completedAt, $now, $tid]);
+           ->execute([$nurseId, $checklistJson, $nurseNotes, $condAfter, $followUp, $completedAt, $now, $tid]);
     } else {
         $tid = generateId();
-        $db->prepare('INSERT INTO treatments (id, booking_id, nurse_id, checklist_json, items_used_json, nurse_notes_encrypted,
+        $db->prepare('INSERT INTO treatments (id, booking_id, nurse_id, checklist_json, nurse_notes_encrypted,
             patient_condition_after, follow_up_recommendation, completed_at, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-           ->execute([$tid, $bookingId, $nurseId, $checklistJson, $itemsJson, $nurseNotes, $condAfter, $followUp, $completedAt, $now, $now]);
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+           ->execute([$tid, $bookingId, $nurseId, $checklistJson, $nurseNotes, $condAfter, $followUp, $completedAt, $now, $now]);
     }
 
     // A saved draft means the nurse is at the patient's side working — reflect
@@ -90,22 +87,8 @@ if ($method === 'POST') {
     if (!$complete) crmAdvanceBookingStatus($db, $bookingId, 'TREATMENT_IN_PROGRESS');
 
     if ($complete && !$alreadyCompleted) {
-        // Deduct inventory once, at completion. Roll back the completion on failure.
-        try {
-            $db->beginTransaction();
-            crmDeductInventory($db, $itemsUsed, $tid, $staff['staff_id']);
-            crmAdvanceBookingStatus($db, $bookingId, 'TREATMENT_COMPLETED');
-            $db->commit();
-        } catch (RuntimeException $e) {
-            if ($db->inTransaction()) $db->rollBack();
-            // Revert completed_at so the nurse can fix items and retry.
-            $db->prepare('UPDATE treatments SET completed_at = NULL WHERE id = ?')->execute([$tid]);
-            jsonError($e->getMessage(), 422);
-        } catch (Throwable $e) {
-            if ($db->inTransaction()) $db->rollBack();
-            jsonError('Gagal menyelesaikan treatment', 500);
-        }
-        crmAuditLog($staff, 'TREATMENT', 'COMPLETE', $bookingId, 'Treatment selesai, stok dikurangi');
+        crmAdvanceBookingStatus($db, $bookingId, 'TREATMENT_COMPLETED');
+        crmAuditLog($staff, 'TREATMENT', 'COMPLETE', $bookingId, 'Treatment selesai');
         jsonSuccess(['id' => $tid, 'completed' => true], 'Treatment selesai');
     }
 

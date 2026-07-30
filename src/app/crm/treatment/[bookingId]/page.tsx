@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, FileSignature, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, FileSignature } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { crmBookingHref } from '@/lib/crm-permissions';
 import StatusBadge from '@/components/crm/StatusBadge';
@@ -15,13 +15,11 @@ type Booking = {
   booking_date: string; booking_time: string;
 };
 type ChecklistItem = { step: string; done: boolean };
-type UsedItem = { inventory_item_id: string; name: string; qty: number };
 type Treatment = {
-  checklist: ChecklistItem[]; items_used: UsedItem[]; nurse_notes: string | null;
+  checklist: ChecklistItem[]; nurse_notes: string | null;
   patient_condition_after: string | null; follow_up_recommendation: string | null; completed_at: string | null;
 } | null;
 type ConsentInfo = { id: string; agreed_at: string | null } | null;
-type InvItem = { id: string; name: string; unit: string; stock_current: number };
 
 const DEFAULT_CHECKLIST: ChecklistItem[] = [
   { step: 'Verifikasi identitas & consent', done: false },
@@ -38,7 +36,6 @@ export default function TreatmentPage() {
   const staff = useCRMStaff();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [consent, setConsent] = useState<ConsentInfo>(null);
-  const [inventory, setInventory] = useState<InvItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState<'' | 'save' | 'complete'>('');
@@ -47,7 +44,6 @@ export default function TreatmentPage() {
   const [justCompleted, setJustCompleted] = useState(false);
 
   const [checklist, setChecklist] = useState<ChecklistItem[]>(DEFAULT_CHECKLIST);
-  const [items, setItems] = useState<UsedItem[]>([]);
   const [notes, setNotes] = useState('');
   const [condition, setCondition] = useState('');
   const [followups, setFollowups] = useState<string[]>([]);
@@ -56,17 +52,12 @@ export default function TreatmentPage() {
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const [d, opt] = await Promise.all([
-        crmGet<{ booking: Booking; treatment: Treatment; consent: ConsentInfo }>(`/api/crm/treatment/${bookingId}`),
-        crmGet<{ inventory: InvItem[] }>('/api/crm/options'),
-      ]);
+      const d = await crmGet<{ booking: Booking; treatment: Treatment; consent: ConsentInfo }>(`/api/crm/treatment/${bookingId}`);
       setBooking(d.booking);
       setConsent(d.consent ?? null);
-      setInventory(opt.inventory ?? []);
       const t = d.treatment;
       if (t) {
         if (t.checklist?.length) setChecklist(t.checklist);
-        if (t.items_used?.length) setItems(t.items_used);
         setNotes(t.nurse_notes ?? '');
         setCondition(t.patient_condition_after ?? '');
         if (t.follow_up_recommendation) setFollowups(t.follow_up_recommendation.split(' · ').filter(Boolean));
@@ -82,9 +73,6 @@ export default function TreatmentPage() {
   }, [load]);
 
   function toggleStep(i: number) { setChecklist((c) => c.map((it, idx) => idx === i ? { ...it, done: !it.done } : it)); }
-  function addItem() { setItems((x) => [...x, { inventory_item_id: '', name: '', qty: 1 }]); }
-  function removeItem(i: number) { setItems((x) => x.filter((_, idx) => idx !== i)); }
-  function setItem(i: number, patch: Partial<UsedItem>) { setItems((x) => x.map((it, idx) => idx === i ? { ...it, ...patch } : it)); }
   function toggleChip(c: string) { setFollowups((f) => f.includes(c) ? f.filter((x) => x !== c) : [...f, c]); }
 
   const backHref = crmBookingHref(staff, booking?.booking_code_display ?? bookingId);
@@ -98,7 +86,6 @@ export default function TreatmentPage() {
       await crmSend(`/api/crm/treatment/${bookingId}`, 'POST', {
         booking_id: bookingId,
         checklist,
-        items_used: items.filter((it) => it.inventory_item_id || it.name),
         nurse_notes: notes,
         patient_condition_after: condition,
         follow_up_recommendation: allFollowups.join(' · '),
@@ -172,7 +159,7 @@ export default function TreatmentPage() {
         <StatusBadge status={booking.crm_status} />
       </div>
 
-      {completed && <div className="mb-4 rounded-xl bg-[#D6EAEA] px-4 py-2 text-sm text-[#205251]">Treatment ini sudah ditandai selesai. Perubahan tetap bisa disimpan, namun stok hanya dikurangi sekali.</div>}
+      {completed && <div className="mb-4 rounded-xl bg-[#D6EAEA] px-4 py-2 text-sm text-[#205251]">Treatment ini sudah ditandai selesai. Perubahan tetap bisa disimpan.</div>}
       {completed && !consentSigned && <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">Booking ini belum memiliki informed consent, sehingga perubahan tidak dapat disimpan sebelum consent ditandatangani.</div>}
 
       <Section title="Checklist Treatment">
@@ -184,30 +171,6 @@ export default function TreatmentPage() {
             </button>
           ))}
         </div>
-      </Section>
-
-      <Section title="Item Medis Digunakan">
-        <div className="space-y-2">
-          {items.map((it, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <select
-                value={it.inventory_item_id}
-                onChange={(e) => {
-                  const inv = inventory.find((v) => v.id === e.target.value);
-                  setItem(i, { inventory_item_id: e.target.value, name: inv?.name ?? it.name });
-                }}
-                className="h-11 flex-1 rounded-xl border border-[#DBDAD7] px-2 text-sm outline-none focus:border-[#29808B]"
-              >
-                <option value="">Pilih item…</option>
-                {inventory.map((v) => <option key={v.id} value={v.id}>{v.name} (stok {v.stock_current})</option>)}
-              </select>
-              <input type="number" min={1} value={it.qty} onChange={(e) => setItem(i, { qty: Number(e.target.value) })} className="h-11 w-20 rounded-xl border border-[#DBDAD7] px-2 text-sm outline-none focus:border-[#29808B]" />
-              <button onClick={() => removeItem(i)} className="rounded-lg p-2 text-red-500 hover:bg-red-50"><Trash2 size={16} /></button>
-            </div>
-          ))}
-        </div>
-        <button onClick={addItem} className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-[#29808B]"><Plus size={16} /> Tambah Item</button>
-        <p className="mt-2 text-xs text-[#8EBFBF]">⚠ Stok otomatis berkurang saat treatment ditandai selesai.</p>
       </Section>
 
       <Section title="Catatan & Kondisi Pasien">
