@@ -5,7 +5,7 @@
 // rate-limited and the token is only ever compared by its SHA-256 hash (never
 // stored or logged in plaintext once issued).
 //   GET  /php-api/feedback-public.php?token=xxx   → booking + feedback status
-//   POST /php-api/feedback-public.php?token=xxx   → record feedback (rating + comment)
+//   POST /php-api/feedback-public.php?token=xxx   → record feedback (ratings, nurse aspects, choice answers, comment)
 
 require_once __DIR__ . '/crm/_crm.php';
 handleCors();
@@ -13,7 +13,7 @@ handleCors();
 $method = getMethod();
 $token  = str_clean($_GET['token'] ?? '', 32);
 if (!preg_match('/^[0-9A-Za-z]{8,32}$/', $token)) {
-    jsonError('Link tidak valid', 400);
+    jsonError('Invalid link', 400);
 }
 $tokenHash = hash('sha256', $token);
 $ipHash    = getIpHash();
@@ -28,7 +28,7 @@ if ($method === 'GET') {
     );
     $l->execute([$tokenHash]);
     $link = $l->fetch();
-    if (!$link) jsonError('Link tidak valid atau sudah kadaluarsa', 404);
+    if (!$link) jsonError('This link is invalid or has expired', 404);
 
     if (empty($link['viewed_at'])) {
         $db->prepare('UPDATE feedback_links SET viewed_at = NOW(3) WHERE id = ? AND viewed_at IS NULL')
@@ -43,7 +43,7 @@ if ($method === 'GET') {
     );
     $b->execute([$link['booking_id']]);
     $booking = $b->fetch();
-    if (!$booking) jsonError('Booking tidak ditemukan', 404);
+    if (!$booking) jsonError('Booking not found', 404);
 
     $f = $db->prepare('SELECT rating, submitted_at FROM feedbacks WHERE booking_id = ? LIMIT 1');
     $f->execute([$link['booking_id']]);
@@ -61,7 +61,7 @@ if ($method === 'POST') {
     );
     $l->execute([$tokenHash]);
     $link = $l->fetch();
-    if (!$link) jsonError('Link tidak valid atau sudah kadaluarsa', 404);
+    if (!$link) jsonError('This link is invalid or has expired', 404);
 
     $bookingId = $link['booking_id'];
 
@@ -70,30 +70,84 @@ if ($method === 'POST') {
     $exists = $db->prepare('SELECT id FROM feedbacks WHERE booking_id = ? LIMIT 1');
     $exists->execute([$bookingId]);
     if ($exists->fetch()) {
-        jsonError('Feedback untuk kunjungan ini sudah pernah diisi sebelumnya', 409);
+        jsonError('Feedback for this visit has already been submitted', 409);
     }
 
     $body = getBodyJson();
-    requireFields($body, ['rating']);
+    requireFields($body, [
+        'rating', 'nurse_rating', 'meets_expectation', 'punctuality',
+        'comfort_rating', 'referral_source', 'rebook_intent',
+    ]);
 
+    // Overall rating, nurse rating, and comfort rating are separate 1-5 star
+    // questions (see form spec) — each validated independently.
     $rating = (int)$body['rating'];
-    if ($rating < 1 || $rating > 5) jsonError('Rating harus antara 1 sampai 5', 422);
+    if ($rating < 1 || $rating > 5) jsonError('Overall rating must be between 1 and 5', 422);
 
-    $comment = !empty($body['comment']) ? str_clean($body['comment'], 2000) : null;
-    $commentEncrypted = $comment !== null ? encryptField($comment) : null;
+    $nurseRating = (int)$body['nurse_rating'];
+    if ($nurseRating < 1 || $nurseRating > 5) jsonError('Nurse rating must be between 1 and 5', 422);
+
+    $comfortRating = (int)$body['comfort_rating'];
+    if ($comfortRating < 1 || $comfortRating > 5) jsonError('Comfort rating must be between 1 and 5', 422);
+
+    // Nurse aspect checkboxes are optional (multi-select) — silently drop any
+    // value outside the whitelist instead of erroring, since this field is
+    // not required.
+    $nurseAspectWhitelist = ['PROFESSIONALISM', 'FRIENDLINESS', 'CLEAR_EXPLANATION', 'HYGIENE_CLEANLINESS', 'PUNCTUALITY'];
+    $nurseAspects = [];
+    if (!empty($body['nurse_aspects']) && is_array($body['nurse_aspects'])) {
+        $nurseAspects = array_values(array_intersect(array_unique($body['nurse_aspects']), $nurseAspectWhitelist));
+    }
 
     $meetsExpectation = $body['meets_expectation'] ?? null;
     if (!in_array($meetsExpectation, ['YA', 'TIDAK', 'SEBAGIAN'], true)) {
-        $meetsExpectation = null;
+        jsonError('Please select whether the treatment met your expectations', 422);
     }
+
+    $punctuality = $body['punctuality'] ?? null;
+    if (!in_array($punctuality, ['ON_TIME', 'SLIGHTLY_LATE', 'VERY_LATE'], true)) {
+        jsonError('Please select whether our team arrived on time', 422);
+    }
+
+    $referralSourceWhitelist = [
+        'INSTAGRAM', 'GOOGLE_SEARCH', 'TIKTOK', 'FACEBOOK', 'HOTEL', 'VILLA',
+        'FRIEND_FAMILY', 'DOCTOR_CLINIC', 'WHATSAPP', 'OTHER',
+    ];
+    $referralSource = $body['referral_source'] ?? null;
+    if (!in_array($referralSource, $referralSourceWhitelist, true)) {
+        jsonError('Please select how you heard about Drips to You', 422);
+    }
+    $referralSourceOther = null;
+    if ($referralSource === 'OTHER') {
+        if (empty($body['referral_source_other'])) {
+            jsonError('Please tell us how you heard about us', 422);
+        }
+        $referralSourceOther = str_clean($body['referral_source_other'], 191);
+    }
+
+    $rebookIntent = $body['rebook_intent'] ?? null;
+    if (!in_array($rebookIntent, ['DEFINITELY', 'MAYBE', 'NOT_SURE', 'NO'], true)) {
+        jsonError('Please select whether you would book with us again', 422);
+    }
+
+    $comment = !empty($body['comment']) ? str_clean($body['comment'], 2000) : null;
+    $commentEncrypted = $comment !== null ? encryptField($comment) : null;
 
     $now = date('Y-m-d H:i:s');
     $fid = generateId();
     $db->prepare(
         'INSERT INTO feedbacks
-         (id, booking_id, feedback_link_id, rating, comment_encrypted, meets_expectation, submitted_at, ip_address_hash, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-    )->execute([$fid, $bookingId, $link['id'], $rating, $commentEncrypted, $meetsExpectation, $now, $ipHash, $now]);
+         (id, booking_id, feedback_link_id, rating, nurse_rating, nurse_aspects_json,
+          comment_encrypted, meets_expectation, punctuality, comfort_rating,
+          referral_source, referral_source_other, rebook_intent,
+          submitted_at, ip_address_hash, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    )->execute([
+        $fid, $bookingId, $link['id'], $rating, $nurseRating, json_encode($nurseAspects, JSON_UNESCAPED_UNICODE),
+        $commentEncrypted, $meetsExpectation, $punctuality, $comfortRating,
+        $referralSource, $referralSourceOther, $rebookIntent,
+        $now, $ipHash, $now,
+    ]);
 
     $db->prepare('UPDATE feedback_links SET used_at = NOW(3) WHERE id = ?')->execute([$link['id']]);
 
@@ -102,7 +156,7 @@ if ($method === 'POST') {
     $lowRatingTag = $rating <= 2 ? ' [LOW]' : '';
     crmAuditLog(null, 'FEEDBACK', 'SUBMIT', $bookingId, "Rating: {$rating}/5{$lowRatingTag}");
 
-    jsonSuccess(['id' => $fid], 'Feedback tersimpan. Terima kasih!');
+    jsonSuccess(['id' => $fid], 'Feedback submitted. Thank you!');
 }
 
 jsonError('Method not allowed', 405);

@@ -20,7 +20,9 @@ $id = isset($_GET['id']) ? str_clean($_GET['id'], 191) : null;
 // ── Detail ──────────────────────────────────────────────────────────────────
 if ($id) {
     $stmt = $db->prepare(
-        'SELECT f.id, f.rating, f.comment_encrypted, f.meets_expectation, f.submitted_at,
+        'SELECT f.id, f.rating, f.nurse_rating, f.nurse_aspects_json,
+                f.comment_encrypted, f.meets_expectation, f.punctuality, f.comfort_rating,
+                f.referral_source, f.referral_source_other, f.rebook_intent, f.submitted_at,
                 b.id AS booking_id, b.booking_code_display, b.customer_name, b.booking_date,
                 p.name AS product_name,
                 fl.sent_at, fl.viewed_at, fl.used_at, fl.created_at AS link_created_at,
@@ -37,7 +39,8 @@ if ($id) {
     if (!$row) jsonError('Feedback tidak ditemukan', 404);
 
     $row['comment'] = crmTryDecrypt($row['comment_encrypted'] ?? null, null);
-    unset($row['comment_encrypted']);
+    $row['nurse_aspects'] = $row['nurse_aspects_json'] ? json_decode($row['nurse_aspects_json'], true) : [];
+    unset($row['comment_encrypted'], $row['nurse_aspects_json']);
 
     jsonSuccess($row);
 }

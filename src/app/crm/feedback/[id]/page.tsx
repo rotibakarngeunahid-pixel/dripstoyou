@@ -11,8 +11,15 @@ import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
 type FeedbackDetail = {
   id: string;
   rating: number;
+  nurse_rating: number | null;
+  nurse_aspects: string[];
   comment: string | null;
   meets_expectation: 'YA' | 'TIDAK' | 'SEBAGIAN' | null;
+  punctuality: 'ON_TIME' | 'SLIGHTLY_LATE' | 'VERY_LATE' | null;
+  comfort_rating: number | null;
+  referral_source: string | null;
+  referral_source_other: string | null;
+  rebook_intent: 'DEFINITELY' | 'MAYBE' | 'NOT_SURE' | 'NO' | null;
   submitted_at: string;
   booking_id: string;
   booking_code_display: string | null;
@@ -30,6 +37,40 @@ const EXPECTATION_LABEL: Record<string, string> = {
   YA: 'Ya, sesuai ekspektasi',
   TIDAK: 'Tidak sesuai ekspektasi',
   SEBAGIAN: 'Sebagian sesuai ekspektasi',
+};
+
+const PUNCTUALITY_LABEL: Record<string, string> = {
+  ON_TIME: 'Tepat waktu',
+  SLIGHTLY_LATE: 'Sedikit terlambat',
+  VERY_LATE: 'Terlambat lebih dari 15 menit',
+};
+
+const REFERRAL_LABEL: Record<string, string> = {
+  INSTAGRAM: 'Instagram',
+  GOOGLE_SEARCH: 'Google Search',
+  TIKTOK: 'TikTok',
+  FACEBOOK: 'Facebook',
+  HOTEL: 'Hotel',
+  VILLA: 'Villa',
+  FRIEND_FAMILY: 'Teman / Keluarga',
+  DOCTOR_CLINIC: 'Dokter / Klinik',
+  WHATSAPP: 'WhatsApp',
+  OTHER: 'Lainnya',
+};
+
+const REBOOK_LABEL: Record<string, string> = {
+  DEFINITELY: 'Pasti akan booking lagi',
+  MAYBE: 'Mungkin',
+  NOT_SURE: 'Belum yakin',
+  NO: 'Tidak',
+};
+
+const ASPECT_LABEL: Record<string, string> = {
+  PROFESSIONALISM: 'Profesionalisme',
+  FRIENDLINESS: 'Keramahan',
+  CLEAR_EXPLANATION: 'Penjelasan jelas',
+  HYGIENE_CLEANLINESS: 'Kebersihan & higienitas',
+  PUNCTUALITY: 'Ketepatan waktu',
 };
 
 export default function FeedbackDetailPage() {
@@ -69,18 +110,63 @@ export default function FeedbackDetailPage() {
             <p className="mt-0.5 text-lg font-semibold text-[#0f172a]">{data.customer_name}</p>
             <p className="text-sm text-[#4d6060]">{data.product_name} · {formatDate(data.booking_date)}</p>
           </div>
-          <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-bold ${low ? 'bg-red-100 text-red-700' : 'bg-[#D6EAEA] text-[#205251]'}`}>
-            <Star size={14} fill="currentColor" /> {data.rating}/5
-          </span>
+          <div className="flex flex-col items-end gap-1.5">
+            <span className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-bold ${low ? 'bg-red-100 text-red-700' : 'bg-[#D6EAEA] text-[#205251]'}`}>
+              <Star size={14} fill="currentColor" /> {data.rating}/5 Overall
+            </span>
+            {data.nurse_rating != null && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#F3F0E7] px-3 py-1 text-xs font-bold text-[#205251]">
+                <Star size={12} fill="currentColor" /> {data.nurse_rating}/5 Nurse
+              </span>
+            )}
+          </div>
         </div>
 
-        {data.meets_expectation && (
-          <div className="mb-4 rounded-xl bg-[#F3F0E7] px-4 py-2.5 text-sm text-[#4d6060]">
-            <strong className="text-[#205251]">Sesuai ekspektasi:</strong> {EXPECTATION_LABEL[data.meets_expectation] ?? data.meets_expectation}
+        {data.nurse_aspects.length > 0 && (
+          <div className="mb-4 flex flex-wrap gap-1.5">
+            {data.nurse_aspects.map((a) => (
+              <span key={a} className="rounded-full border border-[#D6EAEA] bg-[#F3F0E7] px-2.5 py-1 text-xs font-semibold text-[#205251]">
+                {ASPECT_LABEL[a] ?? a}
+              </span>
+            ))}
           </div>
         )}
 
-        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#8EBFBF]">Komentar</div>
+        <div className="mb-4 grid grid-cols-2 gap-2 text-sm">
+          {data.meets_expectation && (
+            <div className="rounded-xl bg-[#F3F0E7] px-3 py-2.5 text-[#4d6060]">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#8EBFBF]">Sesuai ekspektasi</p>
+              {EXPECTATION_LABEL[data.meets_expectation] ?? data.meets_expectation}
+            </div>
+          )}
+          {data.punctuality && (
+            <div className="rounded-xl bg-[#F3F0E7] px-3 py-2.5 text-[#4d6060]">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#8EBFBF]">Ketepatan waktu</p>
+              {PUNCTUALITY_LABEL[data.punctuality] ?? data.punctuality}
+            </div>
+          )}
+          {data.comfort_rating != null && (
+            <div className="rounded-xl bg-[#F3F0E7] px-3 py-2.5 text-[#4d6060]">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#8EBFBF]">Kenyamanan</p>
+              <span className="inline-flex items-center gap-1"><Star size={12} fill="currentColor" className="text-[#C9944C]" /> {data.comfort_rating}/5</span>
+            </div>
+          )}
+          {data.rebook_intent && (
+            <div className="rounded-xl bg-[#F3F0E7] px-3 py-2.5 text-[#4d6060]">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#8EBFBF]">Mau booking lagi?</p>
+              {REBOOK_LABEL[data.rebook_intent] ?? data.rebook_intent}
+            </div>
+          )}
+          {data.referral_source && (
+            <div className="col-span-2 rounded-xl bg-[#F3F0E7] px-3 py-2.5 text-[#4d6060]">
+              <p className="text-xs font-semibold uppercase tracking-wide text-[#8EBFBF]">Tahu Drips To You dari</p>
+              {REFERRAL_LABEL[data.referral_source] ?? data.referral_source}
+              {data.referral_source === 'OTHER' && data.referral_source_other ? ` — ${data.referral_source_other}` : ''}
+            </div>
+          )}
+        </div>
+
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-[#8EBFBF]">Komentar Tambahan</div>
         <p className="whitespace-pre-wrap rounded-xl border border-[#DBDAD7] bg-white p-4 text-sm text-[#111a1a]">
           {data.comment || <span className="text-[#8EBFBF]">Tidak ada komentar.</span>}
         </p>
