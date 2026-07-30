@@ -11,7 +11,7 @@ import { formatDateTimeWITA } from '@/lib/crm-format';
 import { crmBookingHref } from '@/lib/crm-permissions';
 import { STATUS_RANK, type CRMBookingStatus } from '@/lib/crm-status';
 import { CONSENT_COPY as COPY, type ConsentLang as Lang } from '@/lib/consent-copy';
-import { buildWhatsAppUrl } from '@/lib/whatsapp';
+import { safeWhatsAppUrl } from '@/lib/whatsapp';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
 import { useCRMStaff } from '../../CRMShell';
 
@@ -288,10 +288,10 @@ export default function ConsentPage() {
                   <Copy size={16} /> {copied ? 'Tersalin' : 'Salin'}
                 </button>
                 <a
-                  href={booking.phone ? buildWhatsAppUrl(booking.phone, waMessage) : '#'}
+                  href={(() => { const u = safeWhatsAppUrl(booking.phone, waMessage); return u ?? '#'; })()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl text-sm font-semibold text-white ${booking.phone ? 'bg-[#25D366]' : 'pointer-events-none bg-[#8EBFBF]'}`}
+                  className={`inline-flex h-10 flex-1 items-center justify-center gap-1 rounded-xl text-sm font-semibold text-white ${safeWhatsAppUrl(booking.phone, waMessage) ? 'bg-[#25D366]' : 'pointer-events-none bg-[#8EBFBF]'}`}
                 >
                   <ExternalLink size={16} /> Kirim WhatsApp
                 </a>

@@ -34,6 +34,20 @@ export function buildWhatsAppUrl(phone: string, message: string): string {
   return `https://wa.me/${canonical}?text=${encodeURIComponent(message)}`;
 }
 
+/**
+ * Safe variant — returns null instead of throwing when the phone number
+ * is not a valid Indonesian number. Use this in JSX render expressions
+ * so a bad phone number does not crash the component.
+ */
+export function safeWhatsAppUrl(phone: string | null | undefined, message: string): string | null {
+  if (!phone) return null;
+  try {
+    return buildWhatsAppUrl(phone, message);
+  } catch {
+    return null;
+  }
+}
+
 export function buildWhatsAppLink(rawNumber: string, message = ''): string {
   const canonical = normalizeWhatsAppNumber(rawNumber);
   if (message) {
