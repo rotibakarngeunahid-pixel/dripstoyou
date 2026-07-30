@@ -51,3 +51,7 @@ php-api/config.php
 php-api.zip
 php-api/crm.zip
 php-api-update.zip
+
+# Deploy scripts with hardcoded FTP/cPanel credentials — never commit
+deploy-ftp.ps1
+deploy-cpanel-api.ps1
