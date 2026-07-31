@@ -175,6 +175,19 @@ function crmBookingCodeDisplay(PDO $db): string {
     return 'DTY-' . str_pad((string)$n, 4, '0', STR_PAD_LEFT);
 }
 
+// DTY-YYYYMMDD-### invoice number — sequence naturally resets every day since
+// the count is scoped to today's prefix (mirrors crmBookingCodeDisplay()'s
+// simple COUNT(*)+1 style). Caller is responsible for retrying on a duplicate
+// invoice_number insert (see invoice.php), same pattern as the token retry in
+// feedback-link.php.
+function crmNextInvoiceNumber(PDO $db, string $ymd): string {
+    $prefix = "DTY-$ymd-";
+    $stmt = $db->prepare('SELECT COUNT(*) FROM invoices WHERE invoice_number LIKE ?');
+    $stmt->execute([$prefix . '%']);
+    $n = (int)$stmt->fetchColumn() + 1;
+    return $prefix . str_pad((string)$n, 3, '0', STR_PAD_LEFT);
+}
+
 // ── Booking status state machine (mirrors src/lib/crm-status-machine.ts) ───────
 
 function crmValidTransitions(): array {

@@ -59,6 +59,7 @@ if ($method === 'POST') {
     $nurseNotes = !empty($body['nurse_notes']) ? encryptField(str_clean($body['nurse_notes'], 2000)) : null;
     $condAfter  = !empty($body['patient_condition_after']) ? str_clean($body['patient_condition_after'], 500) : null;
     $followUp   = !empty($body['follow_up_recommendation']) ? str_clean($body['follow_up_recommendation'], 500) : null;
+    $doctorName = !empty($body['doctor_name']) ? str_clean($body['doctor_name'], 100) : null;
     $nurseId    = crmNurseIdForStaff($db, $staff['staff_id']);
     $now        = date('Y-m-d H:i:s');
 
@@ -73,14 +74,14 @@ if ($method === 'POST') {
     if ($row) {
         $tid = $row['id'];
         $db->prepare('UPDATE treatments SET nurse_id=?, checklist_json=?, nurse_notes_encrypted=?,
-            patient_condition_after=?, follow_up_recommendation=?, completed_at=COALESCE(?, completed_at), updated_at=? WHERE id=?')
-           ->execute([$nurseId, $checklistJson, $nurseNotes, $condAfter, $followUp, $completedAt, $now, $tid]);
+            patient_condition_after=?, follow_up_recommendation=?, doctor_name=?, completed_at=COALESCE(?, completed_at), updated_at=? WHERE id=?')
+           ->execute([$nurseId, $checklistJson, $nurseNotes, $condAfter, $followUp, $doctorName, $completedAt, $now, $tid]);
     } else {
         $tid = generateId();
         $db->prepare('INSERT INTO treatments (id, booking_id, nurse_id, checklist_json, nurse_notes_encrypted,
-            patient_condition_after, follow_up_recommendation, completed_at, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-           ->execute([$tid, $bookingId, $nurseId, $checklistJson, $nurseNotes, $condAfter, $followUp, $completedAt, $now, $now]);
+            patient_condition_after, follow_up_recommendation, doctor_name, completed_at, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+           ->execute([$tid, $bookingId, $nurseId, $checklistJson, $nurseNotes, $condAfter, $followUp, $doctorName, $completedAt, $now, $now]);
     }
 
     // A saved draft means the nurse is at the patient's side working — reflect

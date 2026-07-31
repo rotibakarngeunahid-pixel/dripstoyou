@@ -184,7 +184,7 @@ function PaymentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () =
           <label className="text-sm">Jumlah*<input type="number" className={inputCls} value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
           <label className="text-sm">Status<select className={inputCls} value={status} onChange={(e) => setStatus(e.target.value)}><option value="PAID">Lunas</option><option value="DP">DP</option></select></label>
         </div>
-        <label className="block text-sm">Metode<select className={inputCls} value={method} onChange={(e) => setMethod(e.target.value)}>{['CASH', 'TRANSFER', 'QRIS', 'DP_CASH', 'DP_TRANSFER', 'DP_QRIS'].map((m) => <option key={m} value={m}>{m.replaceAll('_', ' ')}</option>)}</select></label>
+        <label className="block text-sm">Metode<select className={inputCls} value={method} onChange={(e) => setMethod(e.target.value)}>{['CASH', 'TRANSFER', 'QRIS', 'CARD', 'DP_CASH', 'DP_TRANSFER', 'DP_QRIS', 'DP_CARD'].map((m) => <option key={m} value={m}>{m.replaceAll('_', ' ')}</option>)}</select></label>
         <label className="block text-sm">Catatan<input value={notes} onChange={(e) => setNotes(e.target.value)} className={inputCls} /></label>
       </div>
     </Modal>

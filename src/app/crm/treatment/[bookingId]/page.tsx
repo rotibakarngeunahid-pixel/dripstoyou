@@ -19,7 +19,8 @@ type Booking = {
 type ChecklistItem = { step: string; done: boolean };
 type Treatment = {
   checklist: ChecklistItem[]; nurse_notes: string | null;
-  patient_condition_after: string | null; follow_up_recommendation: string | null; completed_at: string | null;
+  patient_condition_after: string | null; follow_up_recommendation: string | null;
+  doctor_name: string | null; completed_at: string | null;
 } | null;
 type ConsentInfo = { id: string; agreed_at: string | null } | null;
 
@@ -49,6 +50,7 @@ export default function TreatmentPage() {
   const [checklist, setChecklist] = useState<ChecklistItem[]>(DEFAULT_CHECKLIST);
   const [notes, setNotes] = useState('');
   const [condition, setCondition] = useState('');
+  const [doctorName, setDoctorName] = useState('');
   const [followups, setFollowups] = useState<string[]>([]);
   const [customFollowup, setCustomFollowup] = useState('');
 
@@ -64,6 +66,7 @@ export default function TreatmentPage() {
         if (t.checklist?.length) setChecklist(t.checklist);
         setNotes(t.nurse_notes ?? '');
         setCondition(t.patient_condition_after ?? '');
+        setDoctorName(t.doctor_name ?? '');
         if (t.follow_up_recommendation) setFollowups(t.follow_up_recommendation.split(' · ').filter(Boolean));
         setCompleted(!!t.completed_at);
       }
@@ -92,6 +95,7 @@ export default function TreatmentPage() {
         checklist,
         nurse_notes: notes,
         patient_condition_after: condition,
+        doctor_name: doctorName,
         follow_up_recommendation: allFollowups.join(' · '),
         complete,
       });
@@ -185,7 +189,8 @@ export default function TreatmentPage() {
 
       <Section title="Catatan & Kondisi Pasien">
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Catatan klinis nurse" className="mb-3 min-h-[80px] w-full rounded-xl border border-[#DBDAD7] p-3 text-base outline-none focus:border-[#29808B]" />
-        <input value={condition} onChange={(e) => setCondition(e.target.value)} placeholder="Kondisi pasien setelah treatment" className="h-11 w-full rounded-xl border border-[#DBDAD7] px-3 text-base outline-none focus:border-[#29808B]" />
+        <input value={condition} onChange={(e) => setCondition(e.target.value)} placeholder="Kondisi pasien setelah treatment" className="mb-3 h-11 w-full rounded-xl border border-[#DBDAD7] px-3 text-base outline-none focus:border-[#29808B]" />
+        <input value={doctorName} onChange={(e) => setDoctorName(e.target.value)} placeholder="Dokter penanggung jawab (untuk invoice)" className="h-11 w-full rounded-xl border border-[#DBDAD7] px-3 text-base outline-none focus:border-[#29808B]" />
       </Section>
 
       <Section title="Rekomendasi Follow-up">

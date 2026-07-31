@@ -55,7 +55,7 @@ if ($method === 'POST') {
         $bookingId = str_clean($body['booking_id'], 191);
         $amount = (float)$body['amount'];
         if ($amount <= 0) jsonError('Jumlah harus lebih dari 0', 422);
-        $allowedMethods = ['CASH','TRANSFER','QRIS','DP_CASH','DP_TRANSFER','DP_QRIS'];
+        $allowedMethods = ['CASH','TRANSFER','QRIS','CARD','DP_CASH','DP_TRANSFER','DP_QRIS','DP_CARD'];
         $pmethod = in_array($body['method'], $allowedMethods, true) ? $body['method'] : null;
         if (!$pmethod) jsonError('Metode tidak valid', 422);
         $status = in_array($body['status'], ['PAID','DP','UNPAID'], true) ? $body['status'] : 'UNPAID';
