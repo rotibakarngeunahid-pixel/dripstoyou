@@ -23,7 +23,6 @@ type InvoiceResponse = {
   grand_total: number;
   payment_method: string | null;
   nurse: string | null;
-  doctor: string | null;
 };
 
 const PAYMENT_OPTIONS: { key: string; label: string }[] = [
@@ -55,7 +54,6 @@ function toInvoiceData(d: InvoiceResponse): InvoiceData {
     grandTotal: d.grand_total,
     paymentMethod: d.payment_method,
     nurseName: d.nurse,
-    doctorName: d.doctor,
   };
 }
 
@@ -134,7 +132,12 @@ export default function InvoicePage() {
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#F3F0E7] pb-6">
           <div className="flex items-center gap-3">
-            <Image src="/img/drips-to-you-bali-icon.webp" alt="Drips To You - Bali" width={48} height={48} />
+            <Image
+              src="https://res.cloudinary.com/hy5s7hdp/image/upload/v1785496909/Logo-DripsToYou-Transparant_zdqbgp.png"
+              alt="Drips To You - Bali"
+              width={64}
+              height={64}
+            />
             <div>
               <p className="font-display text-xl font-bold text-[#205251]">DRIPS TO YOU</p>
               <p className="text-sm text-[#4d6060]">Mobile IV Therapy</p>
@@ -170,16 +173,16 @@ export default function InvoicePage() {
               <thead>
                 <tr className="bg-[#D6EAEA] text-left text-xs font-semibold uppercase tracking-wide text-[#205251]">
                   <th className="px-4 py-2.5">Description</th>
-                  <th className="px-4 py-2.5 text-center">Qty</th>
-                  <th className="px-4 py-2.5 text-right">Price</th>
+                  <th className="px-4 py-2.5 text-left">Qty</th>
+                  <th className="px-4 py-2.5 text-left">Price</th>
                 </tr>
               </thead>
               <tbody>
                 {data.items.map((it, i) => (
                   <tr key={i} className="border-t border-[#F3F0E7]">
                     <td className="px-4 py-2.5 text-[#111a1a]">{it.description}</td>
-                    <td className="px-4 py-2.5 text-center text-[#4d6060]">{it.qty}</td>
-                    <td className="px-4 py-2.5 text-right text-[#111a1a]">{formatRupiah(it.price)}</td>
+                    <td className="px-4 py-2.5 text-left text-[#4d6060]">{it.qty}</td>
+                    <td className="px-4 py-2.5 text-left text-[#111a1a]">{formatRupiah(it.price)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -190,17 +193,17 @@ export default function InvoicePage() {
         {/* Payment summary */}
         <div className="flex justify-end pb-6">
           <div className="w-full max-w-xs space-y-1.5 text-sm">
-            <div className="flex justify-between text-[#4d6060]">
-              <span>Subtotal</span><span className="text-[#111a1a]">{formatRupiah(data.subtotal)}</span>
+            <div className="flex gap-4 text-[#4d6060]">
+              <span className="min-w-[140px]">Subtotal</span><span className="text-left text-[#111a1a]">{formatRupiah(data.subtotal)}</span>
             </div>
             {data.discount.type !== 'NONE' && (
-              <div className="flex justify-between text-[#4d6060]">
-                <span>Discount{data.discount.type === 'PERCENT' ? ` (${data.discount.value}%)` : ''}</span>
-                <span className="text-[#C9944C]">- {formatRupiah(data.discount.amount)}</span>
+              <div className="flex gap-4 text-[#4d6060]">
+                <span className="min-w-[140px]">Discount{data.discount.type === 'PERCENT' ? ` (${data.discount.value}%)` : ''}</span>
+                <span className="text-left text-[#C9944C]">- {formatRupiah(data.discount.amount)}</span>
               </div>
             )}
-            <div className="mt-2 flex justify-between rounded-xl bg-[#205251] px-4 py-3 text-base font-bold text-white">
-              <span>Total Payment</span><span>{formatRupiah(data.grand_total)}</span>
+            <div className="mt-2 flex gap-4 rounded-xl bg-[#205251] px-4 py-3 text-base font-bold text-white">
+              <span className="min-w-[140px]">Total Payment</span><span className="text-left">{formatRupiah(data.grand_total)}</span>
             </div>
           </div>
         </div>
@@ -221,9 +224,8 @@ export default function InvoicePage() {
         </div>
 
         {/* Medical info */}
-        <div className="grid gap-2 border-t border-[#F3F0E7] py-6 sm:grid-cols-2">
+        <div className="border-t border-[#F3F0E7] py-6">
           <InfoRow label="Nurse" value={data.nurse ?? '-'} />
-          <InfoRow label="Doctor" value={data.doctor ?? '-'} />
         </div>
 
         {/* Footer */}

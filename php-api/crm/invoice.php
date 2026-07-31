@@ -93,11 +93,7 @@ if ($method === 'GET') {
         }
     }
 
-    $tr = $db->prepare('SELECT doctor_name FROM treatments WHERE booking_id = ? LIMIT 1');
-    $tr->execute([$bookingId]);
-    $doctorName = $tr->fetchColumn() ?: null;
-
-    jsonSuccess(invoiceBuildPayload($booking, $invoice, $doctorName));
+    jsonSuccess(invoiceBuildPayload($booking, $invoice));
 }
 
 if ($method === 'POST') {
@@ -135,11 +131,8 @@ if ($method === 'POST') {
         $inv = $db->prepare('SELECT invoice_number, issued_date, issued_time, payment_method FROM invoices WHERE booking_id = ? LIMIT 1');
         $inv->execute([$bookingId]);
         $invoice = $inv->fetch() ?: null;
-        $tr = $db->prepare('SELECT doctor_name FROM treatments WHERE booking_id = ? LIMIT 1');
-        $tr->execute([$bookingId]);
-        $doctorName = $tr->fetchColumn() ?: null;
 
-        jsonSuccess($invoice ? invoiceBuildPayload($booking, $invoice, $doctorName) : null, 'Biaya diperbarui');
+        jsonSuccess($invoice ? invoiceBuildPayload($booking, $invoice) : null, 'Biaya diperbarui');
     }
 
     jsonError('Aksi tidak dikenal', 400);
@@ -148,7 +141,7 @@ if ($method === 'POST') {
 jsonError('Method not allowed', 405);
 
 // ── Payload assembly ────────────────────────────────────────────────────────
-function invoiceBuildPayload(array $b, array $invoice, ?string $doctorName): array {
+function invoiceBuildPayload(array $b, array $invoice): array {
     $serviceFee = (float)($b['service_fee'] ?? 0);
     $visitFee   = (float)($b['visit_fee'] ?? 0);
     $addonFee   = (float)($b['addon_fee'] ?? 0);
@@ -196,6 +189,5 @@ function invoiceBuildPayload(array $b, array $invoice, ?string $doctorName): arr
         'grand_total' => $grandTotal,
         'payment_method' => $invoice['payment_method'],
         'nurse'  => $b['nurse_name'] ?: null,
-        'doctor' => $doctorName ?: null,
     ];
 }

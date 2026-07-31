@@ -7,7 +7,7 @@
 import { jsPDF } from 'jspdf';
 import { formatRupiah } from './crm-format';
 
-const LOGO_URL = '/img/drips-to-you-bali-icon.webp';
+const LOGO_URL = 'https://res.cloudinary.com/hy5s7hdp/image/upload/v1785496909/Logo-DripsToYou-Transparant_zdqbgp.png';
 
 const TEAL: [number, number, number] = [32, 82, 81];
 const GOLD: [number, number, number] = [201, 148, 76];
@@ -49,7 +49,6 @@ export type InvoiceData = {
   grandTotal: number;
   paymentMethod: string | null; // raw enum e.g. 'DP_TRANSFER' | 'CASH' | null
   nurseName: string | null;
-  doctorName: string | null;
 };
 
 const PAYMENT_CHECKBOXES: { key: string; label: string }[] = [
@@ -98,17 +97,21 @@ function buildInvoiceDoc(doc: jsPDF, data: InvoiceData, logo: string | null) {
   }
 
   // ── Header ──────────────────────────────────────────────────────────────
+  // The emblem is a detailed circular seal (baked-in text/ring), not a small
+  // icon mark — it needs real size to stay legible, unlike the old flat icon.
+  const logoSize = 46;
   if (logo) {
-    try { doc.addImage(logo, 'WEBP', margin, y - 22, 28, 28); } catch { /* logo optional */ }
+    try { doc.addImage(logo, 'PNG', margin, y - 34, logoSize, logoSize); } catch { /* logo optional */ }
   }
+  const headerTextX = margin + (logo ? logoSize + 12 : 0);
   doc.setFont('times', 'bold');
   doc.setFontSize(17);
   doc.setTextColor(...TEAL);
-  doc.text('DRIPS TO YOU', margin + (logo ? 36 : 0), y);
+  doc.text('DRIPS TO YOU', headerTextX, y);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(...GREY_TEXT);
-  doc.text('Mobile IV Therapy', margin + (logo ? 36 : 0), y + 13);
+  doc.text('Mobile IV Therapy', headerTextX, y + 13);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
@@ -173,7 +176,7 @@ function buildInvoiceDoc(doc: jsPDF, data: InvoiceData, logo: string | null) {
   const colDescW = contentWidth * 0.58;
   const colQtyW = contentWidth * 0.14;
   const qtyX = margin + colDescW;
-  const priceRightX = pageWidth - margin;
+  const priceX = qtyX + colQtyW;
 
   doc.setFillColor(...PALE_AQUA);
   doc.rect(margin, y, contentWidth, 20, 'F');
@@ -181,8 +184,8 @@ function buildInvoiceDoc(doc: jsPDF, data: InvoiceData, logo: string | null) {
   doc.setFontSize(9);
   doc.setTextColor(...TEAL);
   doc.text('DESCRIPTION', margin + 8, y + 13.5);
-  doc.text('QTY', qtyX + colQtyW / 2, y + 13.5, { align: 'center' });
-  doc.text('PRICE', priceRightX - 8, y + 13.5, { align: 'right' });
+  doc.text('QTY', qtyX + 8, y + 13.5);
+  doc.text('PRICE', priceX + 8, y + 13.5);
   y += 20;
 
   doc.setFont('helvetica', 'normal');
@@ -191,8 +194,8 @@ function buildInvoiceDoc(doc: jsPDF, data: InvoiceData, logo: string | null) {
     ensureSpace(18);
     doc.setTextColor(...DARK_TEXT);
     doc.text(item.description, margin + 8, y + 13);
-    doc.text(String(item.qty), qtyX + colQtyW / 2, y + 13, { align: 'center' });
-    doc.text(formatRupiah(item.price), priceRightX - 8, y + 13, { align: 'right' });
+    doc.text(String(item.qty), qtyX + 8, y + 13);
+    doc.text(formatRupiah(item.price), priceX + 8, y + 13);
     doc.setDrawColor(...LINE_GREY);
     doc.line(margin, y + 18, pageWidth - margin, y + 18);
     y += 18;
@@ -203,12 +206,13 @@ function buildInvoiceDoc(doc: jsPDF, data: InvoiceData, logo: string | null) {
   ensureSpace(90);
   const summaryX = pageWidth - margin - 220;
   const summaryW = 220;
+  const summaryValueX = summaryX + 110;
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9.5);
   doc.setTextColor(...GREY_TEXT);
   doc.text('Subtotal', summaryX, y);
   doc.setTextColor(...DARK_TEXT);
-  doc.text(formatRupiah(data.subtotal), summaryX + summaryW, y, { align: 'right' });
+  doc.text(formatRupiah(data.subtotal), summaryValueX, y);
   y += 15;
 
   if (data.discountType !== 'NONE') {
@@ -216,7 +220,7 @@ function buildInvoiceDoc(doc: jsPDF, data: InvoiceData, logo: string | null) {
     doc.setTextColor(...GREY_TEXT);
     doc.text(label, summaryX, y);
     doc.setTextColor(...GOLD);
-    doc.text(`- ${formatRupiah(data.discountAmount)}`, summaryX + summaryW, y, { align: 'right' });
+    doc.text(`- ${formatRupiah(data.discountAmount)}`, summaryValueX, y);
     y += 15;
   }
 
@@ -227,7 +231,7 @@ function buildInvoiceDoc(doc: jsPDF, data: InvoiceData, logo: string | null) {
   doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
   doc.text('TOTAL PAYMENT', summaryX, y + 5);
-  doc.text(formatRupiah(data.grandTotal), summaryX + summaryW, y + 5, { align: 'right' });
+  doc.text(formatRupiah(data.grandTotal), summaryValueX, y + 5);
   y += 34;
 
   // ── Payment method checkboxes ─────────────────────────────────────────────
@@ -262,10 +266,6 @@ function buildInvoiceDoc(doc: jsPDF, data: InvoiceData, logo: string | null) {
   doc.text('Nurse', margin, y);
   doc.setTextColor(...DARK_TEXT);
   doc.text(data.nurseName || '-', margin + 70, y);
-  doc.setTextColor(...GREY_TEXT);
-  doc.text('Doctor', rightX, y);
-  doc.setTextColor(...DARK_TEXT);
-  doc.text(data.doctorName || '-', rightX + 62, y);
   y += 30;
 
   // ── Footer ───────────────────────────────────────────────────────────────

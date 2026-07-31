@@ -52,6 +52,7 @@ const nextConfig: NextConfig = {
       { protocol: 'http',  hostname: 'dripstoyou.com' },
       { protocol: 'https', hostname: 'ik.imagekit.io' },
       { protocol: 'https', hostname: 'i.pravatar.cc' },
+      { protocol: 'https', hostname: 'res.cloudinary.com' },
     ],
   },
 
