@@ -30,7 +30,7 @@ if ($method === 'GET') {
         $consent['signature_data'] = crmTryDecrypt($consent['signature_data_encrypted'] ?? null, null);
         unset($consent['signature_data_encrypted']);
     }
-    jsonSuccess(['booking' => $booking, 'consent' => $consent]);
+    jsonSuccess(['booking' => $booking, 'consent' => $consent, 'steps' => crmTreatmentStepStatus($db, $bookingId)]);
 }
 
 if ($method === 'POST') {
@@ -44,11 +44,10 @@ if ($method === 'POST') {
     $booking = $b->fetch();
     if (!$booking) jsonError('Booking tidak ditemukan', 404);
 
-    // Flow guard: screening → consent → treatment. Consent may only be taken
-    // after screening has been submitted (and never on a terminal booking).
-    if (crmStatusRank((string)$booking['crm_status']) < crmStatusRank('SCREENING_COMPLETED')) {
-        jsonError('Screening belum diselesaikan. Submit hasil screening terlebih dahulu sebelum mengambil consent.', 409);
-    }
+    // Non-linear workflow: consent no longer requires screening to be done
+    // first — only a terminal booking (cancelled/not eligible/no-show) is
+    // rejected outright.
+    crmRequireNonTerminalBooking((string)$booking['crm_status']);
 
     $nameSigned = str_clean($body['patient_name_signed'], 100);
     $sig        = !empty($body['signature_data']) ? encryptField((string)$body['signature_data']) : null;

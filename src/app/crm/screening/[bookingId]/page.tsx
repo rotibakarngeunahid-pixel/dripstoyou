@@ -9,6 +9,7 @@ import { crmBookingHref } from '@/lib/crm-permissions';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
 import { useCRMStaff } from '../../CRMShell';
 import { SCREENING_COPY as COPY, type ScreeningLang as Lang } from '@/lib/screening-copy';
+import ClinicalStepNav, { type TreatmentSteps } from '@/components/crm/ClinicalStepNav';
 
 type Booking = {
   id: string; booking_code_display: string | null; customer_name: string; product_name: string; crm_status: string;
@@ -28,6 +29,7 @@ export default function ScreeningPage() {
   const [lang, setLang] = useState<Lang>('id');
   const t = COPY[lang];
   const [booking, setBooking] = useState<Booking | null>(null);
+  const [steps, setSteps] = useState<TreatmentSteps | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState<'' | 'draft' | 'submit'>('');
@@ -43,8 +45,9 @@ export default function ScreeningPage() {
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const d = await crmGet<{ booking: Booking; screening: Screening | null }>(`/api/crm/screening/${bookingId}`);
+      const d = await crmGet<{ booking: Booking; screening: Screening | null; steps: TreatmentSteps }>(`/api/crm/screening/${bookingId}`);
       setBooking(d.booking);
+      setSteps(d.steps ?? null);
       if (d.screening) {
         const s = d.screening;
         const [bp1, bp2] = (s.blood_pressure ?? '').split('/');
@@ -108,6 +111,7 @@ export default function ScreeningPage() {
   return (
     <div className="crm-page mx-auto max-w-2xl">
       <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> {t.back}</Link>
+      <ClinicalStepNav bookingId={bookingId} active="screening" steps={steps} />
       <div className="flex items-start justify-between gap-3">
         <div>
           <h2 className="crm-page-title">Screening</h2>

@@ -14,6 +14,7 @@ import { CONSENT_COPY as COPY, type ConsentLang as Lang } from '@/lib/consent-co
 import { safeWhatsAppUrl } from '@/lib/whatsapp';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
 import { useCRMStaff } from '../../CRMShell';
+import ClinicalStepNav, { type TreatmentSteps } from '@/components/crm/ClinicalStepNav';
 
 type Booking = {
   id: string; booking_code_display: string | null; customer_name: string; phone: string | null;
@@ -32,6 +33,7 @@ export default function ConsentPage() {
   const staff = useCRMStaff();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [existing, setExisting] = useState<Consent>(null);
+  const [steps, setSteps] = useState<TreatmentSteps | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [lang, setLang] = useState<Lang>('en');
@@ -61,9 +63,10 @@ export default function ConsentPage() {
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const d = await crmGet<{ booking: Booking; consent: Consent }>(`/api/crm/consent/${bookingId}`);
+      const d = await crmGet<{ booking: Booking; consent: Consent; steps: TreatmentSteps }>(`/api/crm/consent/${bookingId}`);
       setBooking(d.booking);
       setExisting(d.consent ?? null);
+      setSteps(d.steps ?? null);
       setName(d.consent?.patient_name_signed ?? d.booking?.customer_name ?? '');
     } catch (e) { setError(e instanceof Error ? e.message : 'Gagal memuat'); }
     finally { setLoading(false); }
@@ -165,7 +168,7 @@ export default function ConsentPage() {
   if (error || !booking) return <ErrorBlock message={error || 'Tidak ditemukan'} onRetry={load} />;
 
   const backHref = crmBookingHref(staff, booking.booking_code_display ?? bookingId);
-  const screeningDone = (STATUS_RANK[booking.crm_status as CRMBookingStatus] ?? 0) >= STATUS_RANK.SCREENING_COMPLETED;
+  const isTerminal = (STATUS_RANK[booking.crm_status as CRMBookingStatus] ?? 0) < 0;
   const clientFinal = !!existing?.agreed_at && existing.filled_by === 'CLIENT';
   const waMessage = `Halo ${booking.customer_name} 👋\n\nSebelum treatment ${booking.product_name} dimulai, mohon isi formulir persetujuan tindakan medis (informed consent) melalui link berikut:\n${linkUrl}\n\nLink berlaku 48 jam. Terima kasih — Drips To You - Bali 🌿`;
 
@@ -175,6 +178,7 @@ export default function ConsentPage() {
     return (
       <div className="crm-page mx-auto max-w-xl">
         <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
+        <ClinicalStepNav bookingId={bookingId} active="consent" steps={steps} />
         <div className="crm-card p-6">
           <div className="mb-5 text-center">
             <Image
@@ -236,22 +240,24 @@ export default function ConsentPage() {
     );
   }
 
-  // Flow guard (mirrors consent.php): consent may only be taken after screening.
-  if (!screeningDone && !existing?.agreed_at) {
+  // Booking sudah berstatus final (dibatalkan/tidak memenuhi syarat/tidak hadir)
+  // — consent baru tidak lagi relevan untuk booking ini (mirrors consent.php).
+  if (isTerminal && !existing?.agreed_at) {
     const notEligible = booking.crm_status === 'NOT_ELIGIBLE';
     return (
       <div className="crm-page mx-auto max-w-xl">
         <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
+        <ClinicalStepNav bookingId={bookingId} active="consent" steps={steps} />
         <div className="crm-card p-6 text-center">
           <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3F0E7] text-[#C9944C]"><Stethoscope size={24} /></span>
-          <h2 className="crm-section-title mb-1">{notEligible ? 'Pasien Tidak Memenuhi Syarat' : 'Screening Belum Selesai'}</h2>
+          <h2 className="crm-section-title mb-1">{notEligible ? 'Pasien Tidak Memenuhi Syarat' : 'Booking Berstatus Final'}</h2>
           <p className="mx-auto mb-4 max-w-sm text-sm text-[#4d6060]">
             {notEligible
               ? 'Hasil screening menyatakan treatment tidak disarankan, sehingga informed consent tidak dapat diambil untuk booking ini.'
-              : 'Informed consent hanya bisa diambil setelah screening pasien disubmit. Selesaikan screening terlebih dahulu.'}
+              : 'Booking ini sudah berstatus final sehingga informed consent tidak dapat diambil.'}
           </p>
           <Link href={`/crm/screening/${bookingId}`} className="inline-flex h-12 items-center justify-center rounded-xl bg-[#205251] px-6 text-sm font-semibold text-white">
-            {notEligible ? 'Lihat Hasil Screening' : 'Buka Screening →'}
+            Lihat Hasil Screening →
           </Link>
         </div>
       </div>
@@ -261,6 +267,7 @@ export default function ConsentPage() {
   return (
     <div className="crm-page mx-auto max-w-xl">
       <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
+      <ClinicalStepNav bookingId={bookingId} active="consent" steps={steps} />
 
       {!existing?.agreed_at && (
         <div className="crm-card mb-4 p-5">

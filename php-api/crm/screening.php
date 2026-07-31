@@ -31,13 +31,20 @@ if ($method === 'GET') {
         $sc['nurse_notes']      = crmTryDecrypt($sc['nurse_notes_encrypted'] ?? null, null);
         unset($sc['allergy_notes_encrypted'], $sc['illness_notes_encrypted'], $sc['medication_notes_encrypted'], $sc['nurse_notes_encrypted']);
     }
-    jsonSuccess(['booking' => $booking, 'screening' => $sc ?: null]);
+    jsonSuccess(['booking' => $booking, 'screening' => $sc ?: null, 'steps' => crmTreatmentStepStatus($db, $bookingId)]);
 }
 
 if ($method === 'POST') {
     $body = getBodyJson();
     $bookingId = str_clean($body['booking_id'] ?? $bookingId ?? '', 191);
     if (!$bookingId) jsonError('booking_id wajib diisi', 400);
+
+    $bk = $db->prepare('SELECT crm_status FROM bookings WHERE id = ? LIMIT 1');
+    $bk->execute([$bookingId]);
+    $bookingRow = $bk->fetch();
+    if (!$bookingRow) jsonError('Booking tidak ditemukan', 404);
+    $currentStatus = (string)$bookingRow['crm_status'];
+    crmRequireNonTerminalBooking($currentStatus);
 
     $bp   = !empty($body['blood_pressure']) ? str_clean($body['blood_pressure'], 20) : null;
     if ($bp !== null && !preg_match('/^\d{2,3}\/\d{2,3}$/', $bp)) jsonError('Format tekanan darah tidak valid (contoh: 120/80)', 422);
@@ -95,12 +102,22 @@ if ($method === 'POST') {
     if ($submit) {
         $target = $conclusion === 'NOT_RECOMMENDED' ? 'NOT_ELIGIBLE' : 'SCREENING_COMPLETED';
         if ($target === 'NOT_ELIGIBLE') {
-            $db->prepare('UPDATE bookings SET crm_status=?, status=?, updated_at=? WHERE id=?')
-               ->execute(['NOT_ELIGIBLE', crmStatusToLegacy('NOT_ELIGIBLE'), $now, $bookingId]);
+            // Non-linear filling means a nurse could submit this AFTER consent was
+            // already signed or treatment already progressed/completed — don't force
+            // the whole booking backward to a terminal status in that case; just
+            // record the conclusion and flag it for admin review instead.
+            if (crmStatusRank($currentStatus) < crmStatusRank('CONSENT_SIGNED')) {
+                $db->prepare('UPDATE bookings SET crm_status=?, status=?, updated_at=? WHERE id=?')
+                   ->execute(['NOT_ELIGIBLE', crmStatusToLegacy('NOT_ELIGIBLE'), $now, $bookingId]);
+                crmAuditLog($staff, 'SCREENING', 'SUBMIT', $bookingId, "Screening submit: NOT_RECOMMENDED (booking -> NOT_ELIGIBLE)");
+            } else {
+                crmAuditLog($staff, 'SCREENING', 'CONFLICT', $bookingId,
+                    "Screening NOT_RECOMMENDED disubmit tapi booking sudah $currentStatus - status booking TIDAK diturunkan otomatis, perlu review admin");
+            }
         } else {
             crmAdvanceBookingStatus($db, $bookingId, 'SCREENING_COMPLETED');
+            crmAuditLog($staff, 'SCREENING', 'SUBMIT', $bookingId, "Screening submit: $conclusion");
         }
-        crmAuditLog($staff, 'SCREENING', 'SUBMIT', $bookingId, "Screening submit: $conclusion");
     } else {
         // A saved draft means screening has begun — reflect it on the timeline.
         crmAdvanceBookingStatus($db, $bookingId, 'SCREENING_STARTED');

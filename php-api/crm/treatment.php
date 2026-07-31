@@ -32,7 +32,7 @@ if ($method === 'GET') {
 
     $c = $db->prepare('SELECT id, agreed_at FROM consents WHERE booking_id = ? LIMIT 1');
     $c->execute([$bookingId]);
-    jsonSuccess(['booking' => $booking, 'treatment' => $tr ?: null, 'consent' => $c->fetch() ?: null]);
+    jsonSuccess(['booking' => $booking, 'treatment' => $tr ?: null, 'consent' => $c->fetch() ?: null, 'steps' => crmTreatmentStepStatus($db, $bookingId)]);
 }
 
 if ($method === 'POST') {
@@ -40,24 +40,25 @@ if ($method === 'POST') {
     $bookingId = str_clean($body['booking_id'] ?? $bookingId ?? '', 191);
     if (!$bookingId) jsonError('booking_id wajib diisi', 400);
 
-    $b = $db->prepare('SELECT id FROM bookings WHERE id = ? LIMIT 1');
+    $b = $db->prepare('SELECT id, crm_status FROM bookings WHERE id = ? LIMIT 1');
     $b->execute([$bookingId]);
-    if (!$b->fetch()) jsonError('Booking tidak ditemukan', 404);
+    $bookingRow = $b->fetch();
+    if (!$bookingRow) jsonError('Booking tidak ditemukan', 404);
+    crmRequireNonTerminalBooking((string)$bookingRow['crm_status']);
 
-    // Flow guard: informed consent must be signed before any treatment record
-    // is created or updated (screening → consent → treatment).
-    $c = $db->prepare('SELECT agreed_at FROM consents WHERE booking_id = ? LIMIT 1');
-    $c->execute([$bookingId]);
-    $consent = $c->fetch();
-    if (!$consent || empty($consent['agreed_at'])) {
-        jsonError('Informed consent belum ditandatangani. Lengkapi consent pasien terlebih dahulu sebelum treatment.', 409);
+    // Non-linear workflow: treatment can be drafted in any order relative to
+    // screening/consent. The hard prerequisite check now only applies when
+    // actually marking the treatment as complete (below).
+    $complete = !empty($body['complete']);
+    $steps = crmTreatmentStepStatus($db, $bookingId);
+    if ($complete && !$steps['ready_to_complete']) {
+        jsonError('Treatment belum bisa ditandai selesai: ' . implode('; ', $steps['blockers']) . '.', 409);
     }
 
     $checklist  = isset($body['checklist']) && is_array($body['checklist']) ? $body['checklist'] : [];
     $nurseNotes = !empty($body['nurse_notes']) ? encryptField(str_clean($body['nurse_notes'], 2000)) : null;
     $condAfter  = !empty($body['patient_condition_after']) ? str_clean($body['patient_condition_after'], 500) : null;
     $followUp   = !empty($body['follow_up_recommendation']) ? str_clean($body['follow_up_recommendation'], 500) : null;
-    $complete   = !empty($body['complete']);
     $nurseId    = crmNurseIdForStaff($db, $staff['staff_id']);
     $now        = date('Y-m-d H:i:s');
 

@@ -280,6 +280,60 @@ function crmAdvanceBookingStatus(PDO $db, string $bookingId, string $target): vo
     crmEnsurePatientForBooking($db, $bookingId);
 }
 
+// Reject screening/consent/treatment writes against a booking that has already
+// reached a terminal status (CANCELLED/NOT_ELIGIBLE/NO_SHOW). Previously this was
+// only an incidental side-effect of the strict screening→consent→treatment order
+// guard; now that steps can be filled in any order, each endpoint checks this
+// explicitly so a dead booking can never gain new clinical records.
+function crmRequireNonTerminalBooking(string $crmStatus): void {
+    if (crmStatusRank($crmStatus) < 0) {
+        jsonError('Booking ini sudah berstatus final dan tidak dapat menerima entri screening/consent/treatment baru.', 409);
+    }
+}
+
+// Non-linear clinical workflow: screening/consent/treatment can now be filled in
+// any order, so each one's completion is tracked from its OWN table instead of
+// being inferred from bookings.crm_status (which no longer reflects a strict
+// sequence). Returns per-step status (NOT_STARTED/IN_PROGRESS/COMPLETED) plus
+// whether the booking is ready for the "Complete Treatment" action.
+function crmTreatmentStepStatus(PDO $db, string $bookingId): array {
+    $s = $db->prepare('SELECT conclusion, submitted_at FROM screenings WHERE booking_id = ? LIMIT 1');
+    $s->execute([$bookingId]);
+    $screening = $s->fetch();
+
+    $c = $db->prepare('SELECT agreed_at FROM consents WHERE booking_id = ? LIMIT 1');
+    $c->execute([$bookingId]);
+    $consent = $c->fetch();
+
+    $t = $db->prepare('SELECT completed_at FROM treatments WHERE booking_id = ? LIMIT 1');
+    $t->execute([$bookingId]);
+    $treatment = $t->fetch();
+
+    $screeningStatus = !$screening ? 'NOT_STARTED' : (empty($screening['submitted_at']) ? 'IN_PROGRESS' : 'COMPLETED');
+    $screeningEligible = !$screening || $screening['conclusion'] !== 'NOT_RECOMMENDED';
+    // Consent has no draft state today (a row only ever exists once agreed_at is set).
+    $consentStatus = (!$consent || empty($consent['agreed_at'])) ? 'NOT_STARTED' : 'COMPLETED';
+    $treatmentStatus = !$treatment ? 'NOT_STARTED' : (empty($treatment['completed_at']) ? 'IN_PROGRESS' : 'COMPLETED');
+
+    $blockers = [];
+    if ($screeningStatus !== 'COMPLETED') {
+        $blockers[] = 'Screening belum disubmit';
+    } elseif (!$screeningEligible) {
+        $blockers[] = 'Hasil screening menyatakan pasien tidak direkomendasikan untuk treatment';
+    }
+    if ($consentStatus !== 'COMPLETED') {
+        $blockers[] = 'Informed consent belum ditandatangani';
+    }
+
+    return [
+        'screening' => ['status' => $screeningStatus, 'conclusion' => $screening['conclusion'] ?? null, 'eligible' => $screeningEligible],
+        'consent'   => ['status' => $consentStatus],
+        'treatment' => ['status' => $treatmentStatus],
+        'ready_to_complete' => count($blockers) === 0,
+        'blockers'  => $blockers,
+    ];
+}
+
 // Bookings placed from the public website never set `patient_id` (only CRM's
 // own "create booking" form resolves/creates a patient). Once a booking has
 // been confirmed, auto-link it to a patient record so it shows up under

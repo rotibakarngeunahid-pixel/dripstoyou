@@ -6,9 +6,11 @@ import Link from 'next/link';
 import { ArrowLeft, CheckCircle2, FileSignature } from 'lucide-react';
 import { crmGet, crmSend } from '@/lib/crm-client';
 import { crmBookingHref } from '@/lib/crm-permissions';
+import { STATUS_RANK, type CRMBookingStatus } from '@/lib/crm-status';
 import StatusBadge from '@/components/crm/StatusBadge';
 import { LoadingBlock, ErrorBlock } from '@/components/crm/states';
 import { useCRMStaff } from '../../CRMShell';
+import ClinicalStepNav, { type TreatmentSteps } from '@/components/crm/ClinicalStepNav';
 
 type Booking = {
   id: string; booking_code_display: string | null; customer_name: string; product_name: string; crm_status: string;
@@ -36,6 +38,7 @@ export default function TreatmentPage() {
   const staff = useCRMStaff();
   const [booking, setBooking] = useState<Booking | null>(null);
   const [consent, setConsent] = useState<ConsentInfo>(null);
+  const [steps, setSteps] = useState<TreatmentSteps | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState<'' | 'save' | 'complete'>('');
@@ -52,9 +55,10 @@ export default function TreatmentPage() {
   const load = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const d = await crmGet<{ booking: Booking; treatment: Treatment; consent: ConsentInfo }>(`/api/crm/treatment/${bookingId}`);
+      const d = await crmGet<{ booking: Booking; treatment: Treatment; consent: ConsentInfo; steps: TreatmentSteps }>(`/api/crm/treatment/${bookingId}`);
       setBooking(d.booking);
       setConsent(d.consent ?? null);
+      setSteps(d.steps ?? null);
       const t = d.treatment;
       if (t) {
         if (t.checklist?.length) setChecklist(t.checklist);
@@ -122,8 +126,9 @@ export default function TreatmentPage() {
     );
   }
 
-  // Flow guard (mirrors treatment.php): no treatment before informed consent.
-  if (!consentSigned && !completed) {
+  // Booking sudah berstatus final — treatment baru tidak lagi relevan (mirrors treatment.php).
+  const isTerminal = (STATUS_RANK[booking.crm_status as CRMBookingStatus] ?? 0) < 0;
+  if (isTerminal && !completed) {
     return (
       <div className="crm-page mx-auto max-w-2xl">
         <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
@@ -136,21 +141,21 @@ export default function TreatmentPage() {
         </div>
         <div className="crm-card p-6 text-center">
           <span className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F3F0E7] text-[#C9944C]"><FileSignature size={24} /></span>
-          <h3 className="crm-section-title mb-1">Informed Consent Belum Ditandatangani</h3>
+          <h3 className="crm-section-title mb-1">Booking Berstatus Final</h3>
           <p className="mx-auto mb-4 max-w-sm text-sm text-[#4d6060]">
-            Sesuai prosedur, pasien wajib menandatangani informed consent setelah screening dan sebelum treatment dimulai.
+            Booking ini sudah berstatus final sehingga treatment tidak dapat dicatat.
           </p>
-          <Link href={`/crm/consent/${bookingId}`} className="inline-flex h-12 items-center justify-center rounded-xl bg-[#205251] px-6 text-sm font-semibold text-white">
-            Buka Informed Consent →
-          </Link>
         </div>
       </div>
     );
   }
 
+  const readyToComplete = !!steps?.ready_to_complete;
+
   return (
     <div className="crm-page mx-auto max-w-2xl">
       <Link href={backHref} className="mb-3 inline-flex items-center gap-1 text-sm text-[#4d6060]"><ArrowLeft size={16} /> Kembali</Link>
+      <ClinicalStepNav bookingId={bookingId} active="treatment" steps={steps} />
       <div className="crm-page-header mb-5">
         <div className="min-w-0">
           <h2 className="crm-page-title">Treatment</h2>
@@ -161,6 +166,11 @@ export default function TreatmentPage() {
 
       {completed && <div className="mb-4 rounded-xl bg-[#D6EAEA] px-4 py-2 text-sm text-[#205251]">Treatment ini sudah ditandai selesai. Perubahan tetap bisa disimpan.</div>}
       {completed && !consentSigned && <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">Booking ini belum memiliki informed consent, sehingga perubahan tidak dapat disimpan sebelum consent ditandatangani.</div>}
+      {!completed && !readyToComplete && steps && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">
+          Belum bisa ditandai selesai: {steps.blockers.join(', ')}.
+        </div>
+      )}
 
       <Section title="Checklist Treatment">
         <div className="space-y-2">
@@ -190,7 +200,14 @@ export default function TreatmentPage() {
       {msg && <p className="mb-3 text-sm text-[#29808B]">{msg}</p>}
       <div className="sticky bottom-20 flex gap-2 md:bottom-4">
         <button onClick={() => save(false)} disabled={!!saving} className="h-12 flex-1 rounded-xl border border-[#205251] bg-white text-sm font-semibold text-[#205251] disabled:opacity-60">{saving === 'save' ? 'Menyimpan…' : 'Simpan'}</button>
-        <button onClick={() => save(true)} disabled={!!saving} className="h-12 flex-1 rounded-xl bg-[#205251] text-sm font-semibold text-white disabled:opacity-60">{saving === 'complete' ? 'Memproses…' : '✓ Mark as Completed'}</button>
+        <button
+          onClick={() => save(true)}
+          disabled={!!saving || (!completed && !readyToComplete)}
+          title={!completed && !readyToComplete ? steps?.blockers.join('; ') : undefined}
+          className="h-12 flex-1 rounded-xl bg-[#205251] text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {saving === 'complete' ? 'Memproses…' : '✓ Mark as Completed'}
+        </button>
       </div>
     </div>
   );
